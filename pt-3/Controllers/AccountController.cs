@@ -8,9 +8,9 @@ using System.Web.Mvc;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
-using pt_3.Models;
+using psychoTest.Models;
 
-namespace pt_3.Controllers
+namespace psychoTest.Controllers
 {
     [Authorize]
     public class AccountController : Controller

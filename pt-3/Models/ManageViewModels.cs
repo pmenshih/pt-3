@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNet.Identity;
 using Microsoft.Owin.Security;
 
-namespace pt_3.Models
+namespace psychoTest.Models
 {
     public class IndexViewModel
     {

@@ -5,7 +5,7 @@ using System.Web;
 using System.Web.Mvc;
 using System.Web.Routing;
 
-namespace pt_3
+namespace psychoTest
 {
     public class RouteConfig
     {

@@ -5,9 +5,9 @@ using Microsoft.Owin;
 using Microsoft.Owin.Security.Cookies;
 using Microsoft.Owin.Security.Google;
 using Owin;
-using pt_3.Models;
+using psychoTest.Models;
 
-namespace pt_3
+namespace psychoTest
 {
     public partial class Startup
     {

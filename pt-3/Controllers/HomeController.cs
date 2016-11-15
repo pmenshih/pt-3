@@ -4,7 +4,7 @@ using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 
-namespace pt_3.Controllers
+namespace psychoTest.Controllers
 {
     public class HomeController : Controller
     {

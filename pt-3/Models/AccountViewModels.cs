@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace pt_3.Models
+namespace psychoTest.Models
 {
     public class ExternalLoginConfirmationViewModel
     {

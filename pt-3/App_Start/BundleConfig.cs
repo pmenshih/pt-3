@@ -1,7 +1,7 @@
 ﻿using System.Web;
 using System.Web.Optimization;
 
-namespace pt_3
+namespace psychoTest
 {
     public class BundleConfig
     {
