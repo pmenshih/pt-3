@@ -16,6 +16,11 @@ namespace psychoTest.Models
             // Add custom user claims here
             return userIdentity;
         }
+
+        public string Surname { get; set; }
+        public string Name { get; set; }
+        public string Patronim { get; set; }
+        public byte? Sex { get; set; }
     }
 
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>

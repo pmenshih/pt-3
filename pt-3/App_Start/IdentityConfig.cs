@@ -11,15 +11,34 @@ using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin;
 using Microsoft.Owin.Security;
 using psychoTest.Models;
+using System.Net;
+using System.Net.Mail;
+using System.Configuration;
 
 namespace psychoTest
 {
     public class EmailService : IIdentityMessageService
     {
-        public Task SendAsync(IdentityMessage message)
+        public async Task SendAsync(IdentityMessage message)
         {
+            SmtpClient smtpClient = new SmtpClient(ConfigurationManager.AppSettings["EmailSystemHost"], 587);
+            smtpClient.EnableSsl = true;
+            smtpClient.UseDefaultCredentials = false;
+            smtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
+            smtpClient.Credentials = new System.Net.NetworkCredential(ConfigurationManager.AppSettings["EmailSystemAddress"], ConfigurationManager.AppSettings["EmailSystemPwd"]);
+
+            MailMessage mail = new MailMessage();
+            mail.IsBodyHtml = true;
+            mail.From = new MailAddress(ConfigurationManager.AppSettings["EmailSystemAddress"], ConfigurationManager.AppSettings["EmailSystemName"]);
+            mail.To.Add(new MailAddress(message.Destination));
+
+            mail.Body = message.Body;
+            mail.Subject = message.Subject;
+
+            smtpClient.Send(mail);
+
             // Plug in your email service here to send an email.
-            return Task.FromResult(0);
+            await Task.FromResult(0);
         }
     }
 
@@ -54,10 +73,10 @@ namespace psychoTest
             manager.PasswordValidator = new PasswordValidator
             {
                 RequiredLength = 6,
-                RequireNonLetterOrDigit = true,
-                RequireDigit = true,
-                RequireLowercase = true,
-                RequireUppercase = true,
+                RequireNonLetterOrDigit = false,
+                RequireDigit = false,
+                RequireLowercase = false,
+                RequireUppercase = false,
             };
 
             // Configure user lockout defaults
@@ -85,6 +104,15 @@ namespace psychoTest
                     new DataProtectorTokenProvider<ApplicationUser>(dataProtectionProvider.Create("ASP.NET Identity"));
             }
             return manager;
+        }
+
+        public async Task<ApplicationUser> FindByPhoneAsync(string phone)
+        {
+            DBMain db = new Models.DBMain();
+            string userId = db.AspNetUsers.Where(x => x.PhoneNumber == phone).Select(x => x.Id).Single();
+            var user = this.FindByIdAsync(userId);
+            db.Dispose();
+            return await user;
         }
     }
 

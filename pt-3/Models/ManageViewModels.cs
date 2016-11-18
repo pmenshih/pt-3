@@ -12,6 +12,14 @@ namespace psychoTest.Models
         public string PhoneNumber { get; set; }
         public bool TwoFactor { get; set; }
         public bool BrowserRemembered { get; set; }
+        public bool EmailConfirmed { get; set; }
+        public bool PhoneNumberConfirmed { get; set; }
+        public string email { get; set; }
+        public string phone { get; set; }
+        public string name { get; set; }
+        public string surname { get; set; }
+        public string patronim { get; set; }
+        public byte? sex { get; set; }
     }
 
     public class ManageLoginsViewModel
@@ -58,14 +66,6 @@ namespace psychoTest.Models
         public string ConfirmPassword { get; set; }
     }
 
-    public class AddPhoneNumberViewModel
-    {
-        [Required]
-        [Phone]
-        [Display(Name = "Phone Number")]
-        public string Number { get; set; }
-    }
-
     public class VerifyPhoneNumberViewModel
     {
         [Required]
@@ -76,11 +76,5 @@ namespace psychoTest.Models
         [Phone]
         [Display(Name = "Phone Number")]
         public string PhoneNumber { get; set; }
-    }
-
-    public class ConfigureTwoFactorViewModel
-    {
-        public string SelectedProvider { get; set; }
-        public ICollection<System.Web.Mvc.SelectListItem> Providers { get; set; }
     }
 }

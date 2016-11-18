@@ -60,8 +60,8 @@ namespace psychoTest
 
             //app.UseGoogleAuthentication(new GoogleOAuth2AuthenticationOptions()
             //{
-            //    ClientId = "",
-            //    ClientSecret = ""
+            //    ClientId = "16691032444-0mctf9d6e3uhi32j2scbuflt2dm0hv5k.apps.googleusercontent.com",
+            //    ClientSecret = "RM5-jHK-H1J4nhT_M-Y2I6JM"
             //});
         }
     }
