@@ -120,12 +120,16 @@ namespace psychoTest.Controllers
                 if (result.Succeeded)
                 {
                     await SignInManager.SignInAsync(user, isPersistent:false, rememberBrowser:false);
-                    
+
                     // For more information on how to enable account confirmation and password reset please visit http://go.microsoft.com/fwlink/?LinkID=320771
                     // Send an email with this link
-                    // string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
-                    // var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
-                    // await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
+                    string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
+                    var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
+                    await UserManager.SendEmailAsync(user.Id, "Подтверждение адреса электронной почты.", "Нажмите на <a href=\"" + callbackUrl + "\">ссылку</a>.");
+
+                    //обновление индекса
+                    DBMain db = new DBMain();
+                    Core.SearchIndexUpdate(db.AspNetUsers.Where(x => x.Id == user.Id).Single(), Core.CRUDType.Create);
 
                     return RedirectToAction("Index", "Home");
                 }
@@ -191,7 +195,7 @@ namespace psychoTest.Controllers
                         return View("ForgotPasswordConfirmation");
                     }
 
-                    string code = SystemController.GenerateRandomDigitCode(6);
+                    string code = Core.GenerateRandomDigitCode(6);
 
                     string phone = model.Email.TrimStart('+');
                     string message = "Новый пароль: " + code + ".";
@@ -199,7 +203,7 @@ namespace psychoTest.Controllers
                     UserManager.RemovePassword(user.Id);
                     UserManager.AddPassword(user.Id, code);
 
-                    await SystemController.SendSMS(phone, message);
+                    await Core.SendSMS(phone, message);
 
                     return RedirectToAction("ForgotPasswordConfirmation", "Account");
                 }

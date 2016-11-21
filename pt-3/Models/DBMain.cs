@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Data.Entity;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace psychoTest.Models
 {
@@ -11,6 +13,7 @@ namespace psychoTest.Models
         public DBMain(): base("DefaultConnection"){ }
 
         public DbSet<AspNetUser> AspNetUsers { get; set; }
+        public DbSet<SearchIndex> SearchIndexes { get; set; }
     }
 
     public class AspNetUser
@@ -31,5 +34,22 @@ namespace psychoTest.Models
         public string Name { get; set; }
         public string Patronim { get; set; }
         public byte? Sex { get; set; }
+    }
+
+    public class SearchIndex
+    {
+        [Key]
+        [MaxLength(128)]
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
+        public string instanceId { get; set; }
+        public string instanceType { get; set; }
+        public string searchString { get; set; }
+    }
+
+    //класс для получения списка ролей пользователя
+    public class UserRolesList
+    {
+        public string name { get; set; }
+        public string val { get; set; }
     }
 }

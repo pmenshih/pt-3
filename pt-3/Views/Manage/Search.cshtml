@@ -1,0 +1,16 @@
+﻿
+@{
+    ViewBag.Title = "Search";
+}
+
+<h2>Search</h2>
+@using (Html.BeginForm("Search", "Manage", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+    <input type="text" name="searchString" /><input type="button" value="Найти" />
+
+    if (ViewData.ContainsKey("result"))
+    {
+        @Html.Raw(ViewData["result"])
+    }
+}

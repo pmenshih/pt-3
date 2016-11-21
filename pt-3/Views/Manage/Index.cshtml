@@ -1,6 +1,13 @@
-﻿@model psychoTest.Models.IndexViewModel
+﻿@using Microsoft.AspNet.Identity;
+
+@model psychoTest.Models.IndexViewModel
 @{
     ViewBag.Title = "Manage";
+    var userId = Request.QueryString["userId"];
+    if (userId == null)
+    {
+        userId = User.Identity.GetUserId();
+    }
 }
 
 <h2>@ViewBag.Title.</h2>
@@ -12,34 +19,34 @@
         <dt>Фамилия:</dt>
         <dd>
             @Model.surname
-            &nbsp;<a href="/manage/SurnameChange?newval=123" target="_blank">изменить</a>
+            &nbsp;<a href="/manage/SurnameChange?newval=123&userId=@userId" target="_blank">изменить</a>
         </dd>
         <dt>Имя:</dt>
         <dd>
             @Model.name
-            &nbsp;<a href="/manage/NameChange?newval=456" target="_blank">изменить</a>
+            &nbsp;<a href="/manage/NameChange?newval=456&userId=@userId" target="_blank">изменить</a>
         </dd>
         <dt>Отчество:</dt>
         <dd>
             @Model.patronim
-            &nbsp;<a href="/manage/PatronimChange?newval=789" target="_blank">изменить</a>
+            &nbsp;<a href="/manage/PatronimChange?newval=789&userId=@userId" target="_blank">изменить</a>
         </dd>
         <dt>Пол:</dt>
         <dd>
             @Model.sex
-            &nbsp;<a href="/manage/SexChange?newval=0" target="_blank">изменить</a>
+            &nbsp;<a href="/manage/SexChange?newval=0&userId=@userId" target="_blank">изменить</a>
         </dd>
         <dt>Электронная почта:</dt>
         <dd>
             @Model.email
-            &nbsp;<a href="/manage/emailchange?newval=test@test.com" target="_blank">изменить</a>
+            &nbsp;<a href="/manage/emailchange?newval=test@test.com&userId=@userId" target="_blank">изменить</a>
             @if (Model.EmailConfirmed)
             {
                 @Html.Raw("подтверждена")
             }
             else
             {
-                <a href="/manage/ConfirmEmailRequest" target="_blank">подтвердить</a>
+                <a href="/manage/ConfirmEmailRequest&userId=@userId" target="_blank">подтвердить</a>
             }
         </dd>
         <dt>Номер телефона:</dt>
@@ -52,7 +59,7 @@
             }
             else
             {
-                <a href="/manage/verifyphonenumber" target="_blank">подтвердить</a>
+                <a href="/manage/verifyphonenumber&userId=@userId" target="_blank">подтвердить</a>
             }
         </dd>
         <dt>Password:</dt>
@@ -60,7 +67,7 @@
             [
             @if (Model.HasPassword)
             {
-                @Html.ActionLink("Change your password", "ChangePassword")
+                <a href="/manage/changepassword?userId=@userId">Сменить пароль</a>
             }
             else
             {
@@ -69,4 +76,8 @@
             ]
         </dd>
     </dl>
+
+    <div style="width: 200px; border: 1px solid black;">
+        <h3>блок назначения ролей, если у того, кто назначает, соответствующая роль</h3>
+    </div>
 </div>

@@ -8,6 +8,7 @@ using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using psychoTest.Models;
 using System.Net.Http;
+using System.Web.Script.Serialization;
 
 namespace psychoTest.Controllers
 {
@@ -65,6 +66,14 @@ namespace psychoTest.Controllers
                 : "";
 
             var userId = User.Identity.GetUserId();
+
+            if(Core.isAdmin(User))
+            {
+                //если в запросе есть параметр id, то отобразим данные другого человека
+                if (Request.QueryString["userId"] != null)
+                    userId = Request.QueryString["userId"].ToString();
+            }
+            
             var user = await UserManager.FindByIdAsync(userId);
             var model = new IndexViewModel
             {
@@ -112,6 +121,12 @@ namespace psychoTest.Controllers
         public async Task<ActionResult> ConfirmEmailRequest()
         {
             string userId = User.Identity.GetUserId();
+
+            if (userId != Request["userId"] && Core.isAdmin(User))
+            {
+                userId = Request["userId"];
+            }
+
             string code = await UserManager.GenerateEmailConfirmationTokenAsync(userId);
             var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = userId, code = code }, protocol: Request.Url.Scheme);
             await UserManager.SendEmailAsync(userId, "Подтверждение адреса электронной почты.", "Нажмите на <a href=\"" + callbackUrl + "\">ссылку</a>.");
@@ -122,12 +137,19 @@ namespace psychoTest.Controllers
         // GET: /Manage/VerifyPhoneNumber
         public async Task<ActionResult> VerifyPhoneNumber()
         {
-            var user = await UserManager.FindByIdAsync(User.Identity.GetUserId());
-            string phoneNumber = user.PhoneNumber;
-            var code = await UserManager.GenerateChangePhoneNumberTokenAsync(User.Identity.GetUserId(), phoneNumber);
-            string message = "Код подтверждения: " + code + ".";
+            string userId = User.Identity.GetUserId();
 
-            await SystemController.SendSMS(phoneNumber, message);
+            if (userId != Request["userId"] && Core.isAdmin(User))
+            {
+                userId = Request["userId"];
+            }
+
+            var user = await UserManager.FindByIdAsync(userId);
+            string phoneNumber = user.PhoneNumber;
+            var code = await UserManager.GenerateChangePhoneNumberTokenAsync(userId, phoneNumber);
+            string message = "Код подтверждения: " + code + ".";
+            
+            await Core.SendSMS(phoneNumber, message);
 
             return phoneNumber == null ? View("Error") : View(new VerifyPhoneNumberViewModel { PhoneNumber = phoneNumber });
         }
@@ -138,14 +160,21 @@ namespace psychoTest.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> VerifyPhoneNumber(VerifyPhoneNumberViewModel model)
         {
+            string userId = User.Identity.GetUserId();
+
+            if (userId != Request["userId"] && Core.isAdmin(User))
+            {
+                userId = Request["userId"];
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
-            var result = await UserManager.ChangePhoneNumberAsync(User.Identity.GetUserId(), model.PhoneNumber, model.Code);
+            var result = await UserManager.ChangePhoneNumberAsync(userId, model.PhoneNumber, model.Code);
             if (result.Succeeded)
             {
-                var user = await UserManager.FindByIdAsync(User.Identity.GetUserId());
+                var user = await UserManager.FindByIdAsync(userId);
                 if (user != null)
                 {
                     await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
@@ -174,10 +203,18 @@ namespace psychoTest.Controllers
             {
                 return View(model);
             }
-            var result = await UserManager.ChangePasswordAsync(User.Identity.GetUserId(), model.OldPassword, model.NewPassword);
+
+            string userId = User.Identity.GetUserId();
+
+            if (userId != Request["userId"] && Core.isAdmin(User))
+            {
+                userId = Request["userId"];
+            }
+
+            var result = await UserManager.ChangePasswordAsync(userId, model.OldPassword, model.NewPassword);
             if (result.Succeeded)
             {
-                var user = await UserManager.FindByIdAsync(User.Identity.GetUserId());
+                var user = await UserManager.FindByIdAsync(userId);
                 if (user != null)
                 {
                     await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
@@ -203,10 +240,17 @@ namespace psychoTest.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await UserManager.AddPasswordAsync(User.Identity.GetUserId(), model.NewPassword);
+                string userId = User.Identity.GetUserId();
+
+                if (userId != Request["userId"] && Core.isAdmin(User))
+                {
+                    userId = Request["userId"];
+                }
+
+                var result = await UserManager.AddPasswordAsync(userId, model.NewPassword);
                 if (result.Succeeded)
                 {
-                    var user = await UserManager.FindByIdAsync(User.Identity.GetUserId());
+                    var user = await UserManager.FindByIdAsync(userId);
                     if (user != null)
                     {
                         await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
@@ -277,68 +321,184 @@ namespace psychoTest.Controllers
             base.Dispose(disposing);
         }
 
-        public ActionResult SurnameChange(string newval)
+        public ActionResult SurnameChange(string newval, string userId)
         {
+            if (!Core.isAdmin(User))
+                return null;
+
             DBMain db = new DBMain();
-            string userId = User.Identity.GetUserId();
-            db.AspNetUsers.Where(x => x.Id == userId).Single().Surname = newval;
+            
+            AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
+            user.Surname = newval;
             db.SaveChanges();
+
+            //обновление индекса
+            Core.SearchIndexUpdate(user, Core.CRUDType.Update);
+
             db.Dispose();
             return Json(new { result = 0 });
         }
 
-        public ActionResult NameChange(string newval)
+        public ActionResult NameChange(string newval, string userId)
         {
+            if (!Core.isAdmin(User))
+                return null;
+
             DBMain db = new DBMain();
-            string userId = User.Identity.GetUserId();
-            db.AspNetUsers.Where(x => x.Id == userId).Single().Name = newval;
+            AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
+            user.Name = newval;
             db.SaveChanges();
+
+            //обновление индекса
+            Core.SearchIndexUpdate(user, Core.CRUDType.Update);
+
             db.Dispose();
             return Json(new { result = 0 });
         }
 
-        public ActionResult PatronimChange(string newval)
+        public ActionResult PatronimChange(string newval, string userId)
         {
+            if (!Core.isAdmin(User))
+                return null;
+
             DBMain db = new DBMain();
-            string userId = User.Identity.GetUserId();
-            db.AspNetUsers.Where(x => x.Id == userId).Single().Patronim = newval;
+            AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
+            user.Patronim = newval;
             db.SaveChanges();
+
+            //обновление индекса
+            Core.SearchIndexUpdate(user, Core.CRUDType.Update);
+
             db.Dispose();
             return Json(new { result = 0 });
         }
 
-        public ActionResult SexChange(string newval)
+        public ActionResult SexChange(string newval, string userId)
         {
+            if (!Core.isAdmin(User))
+                return null;
+
             DBMain db = new DBMain();
-            string userId = User.Identity.GetUserId();
-            db.AspNetUsers.Where(x => x.Id == userId).Single().Sex = Byte.Parse(newval);
+            AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
+            user.Sex = Byte.Parse(newval);
             db.SaveChanges();
+
+            //обновление индекса
+            Core.SearchIndexUpdate(user, Core.CRUDType.Update);
+
             db.Dispose();
             return Json(new { result = 0 });
         }
 
-        public ActionResult EmailChange(string newval)
+        public ActionResult EmailChange(string newval, string userId)
         {
+            if (!Core.isAdmin(User))
+                return null;
+
             DBMain db = new DBMain();
-            string userId = User.Identity.GetUserId();
             var user = db.AspNetUsers.Where(x => x.Id == userId).Single();
             user.Email = newval;
             user.EmailConfirmed = false;
             db.SaveChanges();
+
+            //обновление индекса
+            Core.SearchIndexUpdate(user, Core.CRUDType.Update);
+
             db.Dispose();
             return Json(new { result = 0 });
         }
 
-        public ActionResult PhoneChange(string newval)
+        public ActionResult PhoneChange(string newval, string userId)
         {
+            if (!Core.isAdmin(User))
+                return null;
+
             DBMain db = new DBMain();
-            string userId = User.Identity.GetUserId();
             var user = db.AspNetUsers.Where(x => x.Id == userId).Single();
             user.PhoneNumber = newval;
             user.PhoneNumberConfirmed = false;
             db.SaveChanges();
+
+            //обновление индекса
+            Core.SearchIndexUpdate(user, Core.CRUDType.Update);
+
             db.Dispose();
             return Json(new { result = 0 });
+        }
+
+        public ActionResult Search()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public ActionResult Search(FormCollection form)
+        {
+            DBMain db = new DBMain();
+            string searchString = form["searchString"];
+            string query = "SELECT * FROM SearchIndexes WHERE searchString LIKE N'%" + searchString + "%'";
+
+            string result = "<ul>";
+            if(Core.isAdmin(User))
+            {
+                foreach (SearchIndex si in db.Database.SqlQuery<SearchIndex>(query))
+                {
+                    if (si.instanceType == "AspNetUsers")
+                    {
+                        result += "<li><a href='/manage?userId=" + si.instanceId + "'>" + si.searchString + "</a></li>";
+                    }
+                }
+            }
+            result += "</ul>";
+            ViewData.Add("result", result);
+
+            return View();
+        }
+
+        public ActionResult RoleGetForUser(string userId)
+        {
+            if (!Core.isAdmin(User)) return null;
+
+            DBMain db = new DBMain();
+            string query = @"SELECT 
+	                            r.Name
+	                            ,(CASE 
+		                            WHEN (SELECT ur.UserId 
+				                            FROM AspNetUserRoles ur 
+				                            WHERE 
+					                            ur.RoleId=r.Id
+					                            AND ur.UserId='" + userId + @"') IS NOT NULL 
+			                            THEN '1' 
+		                            ELSE '0' 
+	                            END) as Val
+                            FROM AspNetRoles r";
+            
+            var jsonSerialiser = new JavaScriptSerializer();
+            System.Collections.Generic.List<UserRolesList> rList = db.Database.SqlQuery<UserRolesList>(query).ToList();
+            var json = jsonSerialiser.Serialize(rList);
+
+            return Json(json, JsonRequestBehavior.AllowGet);
+        }
+
+        public ActionResult RoleSetForUser(string userId, string roleName, string val)
+        {
+            if (!Core.isAdmin(User)) return null;
+
+            DBMain db = new DBMain();
+
+            string query = "";
+
+            if (val == "1")
+            {
+                query = @"INSERT INTO AspNetUserRoles VALUES ('" + userId + "', (SELECT r.Id FROM AspNetRoles r WHERE r.Name='" + roleName + "'))";
+            }
+            else
+            {
+                query = @"DELETE FROM AspNetUserRoles WHERE UserId='" + userId + "' AND RoleId=(SELECT Id FROM AspNetRoles WHERE Name='" + roleName + "')";
+            }
+            db.Database.ExecuteSqlCommand(query);
+
+            return Json(new { result = 0 }, JsonRequestBehavior.AllowGet);
         }
 
         #region Helpers

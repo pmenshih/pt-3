@@ -10,30 +10,46 @@ namespace psychoTest.Controllers
 {
     public class SystemController : Controller
     {
-        public static async Task<string> SendSMS(string phone, string message)
+        [Authorize(Roles = "admin")]
+        public ActionResult SearchIndexBuilder()
         {
-            message += " С уважением, команда psycho.ru.";
-            using (var client = new HttpClient())
-            {
-                phone = phone.TrimStart('+');
-                //string message = "Пароль — " + code + ". С уважением, команда psycho.ru.";
-                var responseString = await client.GetStringAsync("http://gate.smsaero.ru/send/?user=p.menshih@gmail.com&password=KXJ89D5fTLDE4jPC6V8P1RRMtfb&to=" + phone + "&text=" + message + "&from=psycho.ru&type=3");
-                return responseString;
-            }
+            return View();
         }
 
-        public static string GenerateRandomDigitCode(int len)
+        [HttpPost]
+        [Authorize(Roles = "admin")]
+        public ActionResult SearchIndexBuilder(FormCollection form)
         {
-            string chars = "1234567890";
-            string code = "";
-            Random rnd = new Random();
-            for (int i = 0; i < len; i++)
+            Models.DBMain db = new Models.DBMain();
+            string query;
+
+            query = "DELETE FROM SearchIndexes;";
+            db.Database.ExecuteSqlCommand(query);
+
+            //пользователи
+            foreach (Models.AspNetUser user in db.AspNetUsers)
             {
-                int next = rnd.Next(0, 10);
-                code += chars.Substring(next, 1);
+                Models.SearchIndex si = new Models.SearchIndex();
+                si.instanceId = user.Id;
+                si.instanceType = "AspNetUsers";
+
+                si.searchString = user.Surname;
+                si.searchString += " " + user.Name;
+                if (user.Patronim != null && user.Patronim.Length > 0)
+                    si.searchString += " " + user.Patronim;
+
+                si.searchString += "@#@";
+                si.searchString += user.Email;
+
+                si.searchString += "@#@";
+                si.searchString += user.PhoneNumber;
+
+                db.SearchIndexes.Add(si);
             }
 
-            return code;
+            db.SaveChanges();
+
+            return View();
         }
     }
 }
