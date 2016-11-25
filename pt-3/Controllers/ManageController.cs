@@ -9,6 +9,7 @@ using Microsoft.Owin.Security;
 using psychoTest.Models;
 using System.Net.Http;
 using System.Web.Script.Serialization;
+using System.Data.SqlClient;
 
 namespace psychoTest.Controllers
 {
@@ -122,9 +123,9 @@ namespace psychoTest.Controllers
         {
             string userId = User.Identity.GetUserId();
 
-            if (userId != Request["userId"] && Core.isAdmin(User))
+            if (userId != Request.QueryString["userId"] && Core.isAdmin(User))
             {
-                userId = Request["userId"];
+                userId = Request.QueryString["userId"];
             }
 
             string code = await UserManager.GenerateEmailConfirmationTokenAsync(userId);
@@ -139,9 +140,9 @@ namespace psychoTest.Controllers
         {
             string userId = User.Identity.GetUserId();
 
-            if (userId != Request["userId"] && Core.isAdmin(User))
+            if (userId != Request.QueryString["userId"] && Core.isAdmin(User))
             {
-                userId = Request["userId"];
+                userId = Request.QueryString["userId"];
             }
 
             var user = await UserManager.FindByIdAsync(userId);
@@ -161,12 +162,7 @@ namespace psychoTest.Controllers
         public async Task<ActionResult> VerifyPhoneNumber(VerifyPhoneNumberViewModel model)
         {
             string userId = User.Identity.GetUserId();
-
-            if (userId != Request["userId"] && Core.isAdmin(User))
-            {
-                userId = Request["userId"];
-            }
-
+            
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -206,9 +202,9 @@ namespace psychoTest.Controllers
 
             string userId = User.Identity.GetUserId();
 
-            if (userId != Request["userId"] && Core.isAdmin(User))
+            if (userId != model.userId && Core.isAdmin(User))
             {
-                userId = Request["userId"];
+                userId = model.userId;
             }
 
             var result = await UserManager.ChangePasswordAsync(userId, model.OldPassword, model.NewPassword);
@@ -242,9 +238,9 @@ namespace psychoTest.Controllers
             {
                 string userId = User.Identity.GetUserId();
 
-                if (userId != Request["userId"] && Core.isAdmin(User))
+                if (userId != model.userId && Core.isAdmin(User))
                 {
-                    userId = Request["userId"];
+                    userId = model.userId;
                 }
 
                 var result = await UserManager.AddPasswordAsync(userId, model.NewPassword);
@@ -323,8 +319,11 @@ namespace psychoTest.Controllers
 
         public ActionResult SurnameChange(string newval, string userId)
         {
-            if (!Core.isAdmin(User))
+            string curUserId = User.Identity.GetUserId();
+            if (userId != curUserId && !Core.isAdmin(User))
+            {
                 return null;
+            }
 
             DBMain db = new DBMain();
             
@@ -341,8 +340,11 @@ namespace psychoTest.Controllers
 
         public ActionResult NameChange(string newval, string userId)
         {
-            if (!Core.isAdmin(User))
+            string curUserId = User.Identity.GetUserId();
+            if (userId != curUserId && !Core.isAdmin(User))
+            {
                 return null;
+            }
 
             DBMain db = new DBMain();
             AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
@@ -358,8 +360,11 @@ namespace psychoTest.Controllers
 
         public ActionResult PatronimChange(string newval, string userId)
         {
-            if (!Core.isAdmin(User))
+            string curUserId = User.Identity.GetUserId();
+            if (userId != curUserId && !Core.isAdmin(User))
+            {
                 return null;
+            }
 
             DBMain db = new DBMain();
             AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
@@ -375,8 +380,11 @@ namespace psychoTest.Controllers
 
         public ActionResult SexChange(string newval, string userId)
         {
-            if (!Core.isAdmin(User))
+            string curUserId = User.Identity.GetUserId();
+            if (userId != curUserId && !Core.isAdmin(User))
+            {
                 return null;
+            }
 
             DBMain db = new DBMain();
             AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
@@ -392,8 +400,11 @@ namespace psychoTest.Controllers
 
         public ActionResult EmailChange(string newval, string userId)
         {
-            if (!Core.isAdmin(User))
+            string curUserId = User.Identity.GetUserId();
+            if (userId != curUserId && !Core.isAdmin(User))
+            {
                 return null;
+            }
 
             DBMain db = new DBMain();
             var user = db.AspNetUsers.Where(x => x.Id == userId).Single();
@@ -410,11 +421,23 @@ namespace psychoTest.Controllers
 
         public ActionResult PhoneChange(string newval, string userId)
         {
-            if (!Core.isAdmin(User))
+            string curUserId = User.Identity.GetUserId();
+            if (userId != curUserId && !Core.isAdmin(User))
+            {
                 return null;
+            }
 
             DBMain db = new DBMain();
             var user = db.AspNetUsers.Where(x => x.Id == userId).Single();
+
+            //проверка уникальности телефонного номера
+            if (newval.Length > 0 
+                && newval != user.PhoneNumber 
+                && db.AspNetUsers.Where(x => x.PhoneNumber == newval).Count() > 0)
+            {
+                return Json(new { result = -1 }, JsonRequestBehavior.AllowGet);
+            }
+
             user.PhoneNumber = newval;
             user.PhoneNumberConfirmed = false;
             db.SaveChanges();
@@ -423,7 +446,7 @@ namespace psychoTest.Controllers
             Core.SearchIndexUpdate(user, Core.CRUDType.Update);
 
             db.Dispose();
-            return Json(new { result = 0 });
+            return Json(new { result = 0 }, JsonRequestBehavior.AllowGet);
         }
 
         public ActionResult Search()
@@ -467,14 +490,14 @@ namespace psychoTest.Controllers
 				                            FROM AspNetUserRoles ur 
 				                            WHERE 
 					                            ur.RoleId=r.Id
-					                            AND ur.UserId='" + userId + @"') IS NOT NULL 
+					                            AND ur.UserId=@userId) IS NOT NULL 
 			                            THEN '1' 
 		                            ELSE '0' 
 	                            END) as Val
                             FROM AspNetRoles r";
             
             var jsonSerialiser = new JavaScriptSerializer();
-            System.Collections.Generic.List<UserRolesList> rList = db.Database.SqlQuery<UserRolesList>(query).ToList();
+            System.Collections.Generic.List<UserRolesList> rList = db.Database.SqlQuery<UserRolesList>(query, new SqlParameter("userId", userId)).ToList();
             var json = jsonSerialiser.Serialize(rList);
 
             return Json(json, JsonRequestBehavior.AllowGet);
@@ -490,13 +513,17 @@ namespace psychoTest.Controllers
 
             if (val == "1")
             {
-                query = @"INSERT INTO AspNetUserRoles VALUES ('" + userId + "', (SELECT r.Id FROM AspNetRoles r WHERE r.Name='" + roleName + "'))";
+                query = @"INSERT INTO AspNetUserRoles VALUES (@userId, (SELECT r.Id FROM AspNetRoles r WHERE r.Name=@roleName))";
             }
             else
             {
-                query = @"DELETE FROM AspNetUserRoles WHERE UserId='" + userId + "' AND RoleId=(SELECT Id FROM AspNetRoles WHERE Name='" + roleName + "')";
+                query = @"DELETE FROM AspNetUserRoles WHERE UserId=@userId AND RoleId=(SELECT Id FROM AspNetRoles WHERE Name=@roleName)";
             }
-            db.Database.ExecuteSqlCommand(query);
+            object[] sqlPars = {
+                new SqlParameter("userId", userId)
+                ,new SqlParameter("roleName", roleName)
+            };
+            db.Database.ExecuteSqlCommand(query, sqlPars);
 
             return Json(new { result = 0 }, JsonRequestBehavior.AllowGet);
         }

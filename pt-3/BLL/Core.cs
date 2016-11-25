@@ -11,12 +11,12 @@ namespace psychoTest
     {
         public static async Task<string> SendSMS(string phone, string message)
         {
-            message += " С уважением, команда psycho.ru.";
+            message += " С уважением, команда keyhabits.ru.";
             using (var client = new HttpClient())
             {
                 phone = phone.TrimStart('+');
-                //string message = "Пароль — " + code + ". С уважением, команда psycho.ru.";
-                var responseString = await client.GetStringAsync("http://gate.smsaero.ru/send/?user=p.menshih@gmail.com&password=KXJ89D5fTLDE4jPC6V8P1RRMtfb&to=" + phone + "&text=" + message + "&from=psycho.ru&type=3");
+                //string message = "Пароль — " + code + ". С уважением, команда keyhabits.ru.";
+                var responseString = await client.GetStringAsync("http://gate.smsaero.ru/send/?user=p.menshih@gmail.com&password=KXJ89D5fTLDE4jPC6V8P1RRMtfb&to=" + phone + "&text=" + message + "&from=Key habits&type=3");
                 return responseString;
             }
         }

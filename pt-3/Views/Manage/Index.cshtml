@@ -19,22 +19,22 @@
         <dt>Фамилия:</dt>
         <dd>
             @Model.surname
-            &nbsp;<a href="/manage/SurnameChange?newval=123&userId=@userId" target="_blank">изменить</a>
+            &nbsp;<a href="/manage/surnamechange?newval=123&userId=@userId" target="_blank">изменить</a>
         </dd>
         <dt>Имя:</dt>
         <dd>
             @Model.name
-            &nbsp;<a href="/manage/NameChange?newval=456&userId=@userId" target="_blank">изменить</a>
+            &nbsp;<a href="/manage/namechange?newval=456&userId=@userId" target="_blank">изменить</a>
         </dd>
         <dt>Отчество:</dt>
         <dd>
             @Model.patronim
-            &nbsp;<a href="/manage/PatronimChange?newval=789&userId=@userId" target="_blank">изменить</a>
+            &nbsp;<a href="/manage/patronimchange?newval=789&userId=@userId" target="_blank">изменить</a>
         </dd>
         <dt>Пол:</dt>
         <dd>
             @Model.sex
-            &nbsp;<a href="/manage/SexChange?newval=0&userId=@userId" target="_blank">изменить</a>
+            &nbsp;<a href="/manage/sexchange?newval=0&userId=@userId" target="_blank">изменить</a>
         </dd>
         <dt>Электронная почта:</dt>
         <dd>
@@ -46,20 +46,20 @@
             }
             else
             {
-                <a href="/manage/ConfirmEmailRequest&userId=@userId" target="_blank">подтвердить</a>
+                <a href="/manage/confirmemailrequest?userId=@userId" target="_blank">подтвердить</a>
             }
         </dd>
         <dt>Номер телефона:</dt>
         <dd>
             @Model.PhoneNumber
-            &nbsp;<a href="/manage/phonechange?newval=88007000000" target="_blank">изменить</a>
+            &nbsp;<a href="/manage/phonechange?newval=88007000000&userId=@userId" target="_blank">изменить</a>
             @if (Model.PhoneNumberConfirmed)
             {
                 @Html.Raw("подтвержден")
             }
             else
             {
-                <a href="/manage/verifyphonenumber&userId=@userId" target="_blank">подтвердить</a>
+                <a href="/manage/verifyphonenumber?userId=@userId" target="_blank">подтвердить</a>
             }
         </dd>
         <dt>Password:</dt>

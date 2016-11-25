@@ -21,7 +21,7 @@ namespace psychoTest
     {
         public async Task SendAsync(IdentityMessage message)
         {
-            SmtpClient smtpClient = new SmtpClient(ConfigurationManager.AppSettings["EmailSystemHost"], 587);
+            SmtpClient smtpClient = new SmtpClient(ConfigurationManager.AppSettings["EmailSystemHost"], Int32.Parse(ConfigurationManager.AppSettings["EmailSystemPort"]));
             smtpClient.EnableSsl = true;
             smtpClient.UseDefaultCredentials = false;
             smtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
