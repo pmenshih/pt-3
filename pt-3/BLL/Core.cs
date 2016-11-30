@@ -17,7 +17,7 @@ namespace psychoTest
                 phone = phone.TrimStart('+');
                 //string message = "Пароль — " + code + ". С уважением, команда keyhabits.ru.";
                 var responseString = await client.GetStringAsync("http://gate.smsaero.ru/send/?user=p.menshih@gmail.com&password=KXJ89D5fTLDE4jPC6V8P1RRMtfb&to=" + phone + "&text=" + message + "&from=Key habits&type=3");
-                return responseString;
+                return responseString; 
             }
         }
 
