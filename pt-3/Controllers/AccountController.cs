@@ -415,7 +415,7 @@ namespace psychoTest.Controllers
             {
                 return Redirect(returnUrl);
             }
-            return RedirectToAction("Index", "Home");
+            return Redirect("/cabinet");
         }
 
         internal class ChallengeResult : HttpUnauthorizedResult

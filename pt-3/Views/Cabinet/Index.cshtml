@@ -1,0 +1,33 @@
+﻿@{
+    ViewBag.Title = "Личный кабинет";
+}
+
+@if (!Core.isInAnyRole(User))
+{
+    <div>
+        <b>написать в этот блок текст!!!</b>
+    </div>
+    <div>
+        <h2>С чего начать</h2>
+        <div>
+            <a href="/about">Узнайте больше о сервисе</a>
+        </div>
+        <div>Если вы HR, создайте организацию.</div>
+        <div>
+            <i>Блок с созданием организации. при нажатиии кнопки создать всплывает подтверждение "я подтверждаю, что являюсь сотрудником указанной организации"</i>
+            @using (Html.BeginForm("Index", "Organisation", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="text" placeholder="Название организации" name="orgName" />
+                <input type="hidden" name="action" value="forceCreate" />
+                <input type="submit" value="Создать" />
+            }
+        </div>
+        <div>Если вы кто-то другой, найдите свою организацию и отправьте запрос на присоединение</div>
+        <div>
+            <i>Блок с принятием приглашения, если оно есть</i>
+        </div>
+        
+    </div>
+    
+}

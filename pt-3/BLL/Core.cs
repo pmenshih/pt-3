@@ -4,6 +4,8 @@ using System.Linq;
 using System.Web;
 using System.Threading.Tasks;
 using System.Net.Http;
+using psychoTest.Models;
+using Microsoft.AspNet.Identity;
 
 namespace psychoTest
 {
@@ -82,6 +84,21 @@ namespace psychoTest
         public static bool isAdmin(System.Security.Principal.IPrincipal User)
         {
             return User.IsInRole("admin");
+        }
+
+        public static bool isInAnyRole(System.Security.Principal.IPrincipal User)
+        {
+            if (User.IsInRole("admin")) return true;
+
+            DBMain db = new DBMain();
+            string query = @"SELECT COUNT(*) 
+                            FROM OrganisationUserRoles 
+                            WHERE userEmail=(SELECT Email 
+				                            FROM AspNetUsers 
+				                            WHERE Id='" + User.Identity.GetUserId() + "')";
+            int rolesCount = db.Database.SqlQuery<int>(query).Single();
+
+            return rolesCount > 0;
         }
 
         public enum CRUDType

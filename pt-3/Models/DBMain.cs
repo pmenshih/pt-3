@@ -14,6 +14,8 @@ namespace psychoTest.Models
 
         public DbSet<AspNetUser> AspNetUsers { get; set; }
         public DbSet<SearchIndex> SearchIndexes { get; set; }
+        public DbSet<Organisation> Organisations { get; set; }
+        public DbSet<OrganisationUserRole> OrganisationUserRoles { get; set; }
     }
 
     public class AspNetUser
@@ -46,10 +48,37 @@ namespace psychoTest.Models
         public string searchString { get; set; }
     }
 
+    //таблица организаций
+    public class Organisation
+    {
+        public Organisation()
+        {
+            id = Guid.NewGuid().ToString();
+            dateCreate = DateTime.Now;
+        }
+
+        [Key]
+        public string id { get; set; }
+        public string name { get; set; }
+        public DateTime dateCreate { get; set; }
+        public bool moderated { get; set; }
+    }
+
+    //таблица привязки ролей к пользователям организации
+    public class OrganisationUserRole
+    {
+        [Key, Column(Order = 0)]
+        public string roleName { get; set; }
+        [Key, Column(Order = 1)]
+        public string userEmail { get; set; }
+        [Key, Column(Order = 2)]
+        public string organisationId { get; set; }
+    }
+
     //класс для получения списка ролей пользователя
     public class UserRolesList
     {
         public string name { get; set; }
         public string val { get; set; }
-    }
+    }    
 }
