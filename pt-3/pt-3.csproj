@@ -180,6 +180,7 @@
     <Compile Include="Models\DBMain.cs" />
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Models\ManageViewModels.cs" />
+    <Compile Include="Models\OrganisationModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />
   </ItemGroup>
@@ -242,6 +243,7 @@
     <Content Include="Views\Cabinet\Index.cshtml" />
     <Content Include="Views\About\Index.cshtml" />
     <Content Include="Views\Organisation\Index.cshtml" />
+    <Content Include="Views\Shared\_Cabinet.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Code\" />

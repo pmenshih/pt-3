@@ -129,7 +129,7 @@ namespace psychoTest.Controllers
 
                     //обновление индекса
                     DBMain db = new DBMain();
-                    Core.SearchIndexUpdate(db.AspNetUsers.Where(x => x.Id == user.Id).Single(), Core.CRUDType.Create);
+                    Core.BLL.SearchIndexUpdate(db.AspNetUsers.Where(x => x.Id == user.Id).Single(), Core.CRUDType.Create);
 
                     return RedirectToAction("Index", "Home");
                 }
@@ -195,7 +195,7 @@ namespace psychoTest.Controllers
                         return View("ForgotPasswordConfirmation");
                     }
 
-                    string code = Core.GenerateRandomDigitCode(6);
+                    string code = Core.BLL.GenerateRandomDigitCode(6);
 
                     string phone = model.Email.TrimStart('+');
                     string message = "Новый пароль: " + code + ".";
@@ -203,7 +203,7 @@ namespace psychoTest.Controllers
                     UserManager.RemovePassword(user.Id);
                     UserManager.AddPassword(user.Id, code);
 
-                    await Core.SendSMS(phone, message);
+                    await Core.BLL.SendSMS(phone, message);
 
                     return RedirectToAction("ForgotPasswordConfirmation", "Account");
                 }

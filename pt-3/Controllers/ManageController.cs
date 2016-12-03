@@ -68,7 +68,7 @@ namespace psychoTest.Controllers
 
             var userId = User.Identity.GetUserId();
 
-            if(Core.isAdmin(User))
+            if(Core.Membership.isAdmin(User))
             {
                 //если в запросе есть параметр id, то отобразим данные другого человека
                 if (Request.QueryString["userId"] != null)
@@ -123,15 +123,32 @@ namespace psychoTest.Controllers
         {
             string userId = User.Identity.GetUserId();
 
-            if (userId != Request.QueryString["userId"] && Core.isAdmin(User))
+            if (userId != Request.QueryString["userId"] && Core.Membership.isAdmin(User))
             {
                 userId = Request.QueryString["userId"];
             }
 
-            string code = await UserManager.GenerateEmailConfirmationTokenAsync(userId);
-            var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = userId, code = code }, protocol: Request.Url.Scheme);
-            await UserManager.SendEmailAsync(userId, "Подтверждение адреса электронной почты.", "Нажмите на <a href=\"" + callbackUrl + "\">ссылку</a>.");
-            return Json(new { result = 0 });
+            Core.AjaxAnswer answer = new Core.AjaxAnswer();
+
+            if (UserManager.IsEmailConfirmed(userId))
+            {
+                answer.result = Core.AjaxResults.EmailConfirmed;
+                return answer.JsonContentResult();
+            }
+
+            try
+            {
+                string code = await UserManager.GenerateEmailConfirmationTokenAsync(userId);
+                var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = userId, code = code }, protocol: Request.Url.Scheme);
+                await UserManager.SendEmailAsync(userId, "Подтверждение адреса электронной почты.", "Нажмите на <a href=\"" + callbackUrl + "\">ссылку</a>.");
+                answer.result = Core.AjaxResults.Success;
+            }
+            catch (Exception)
+            {
+                answer.result = Core.AjaxResults.CodeError;
+            }
+            
+            return answer.JsonContentResult();
         }
 
         //
@@ -140,7 +157,7 @@ namespace psychoTest.Controllers
         {
             string userId = User.Identity.GetUserId();
 
-            if (userId != Request.QueryString["userId"] && Core.isAdmin(User))
+            if (userId != Request.QueryString["userId"] && Core.Membership.isAdmin(User))
             {
                 userId = Request.QueryString["userId"];
             }
@@ -150,7 +167,7 @@ namespace psychoTest.Controllers
             var code = await UserManager.GenerateChangePhoneNumberTokenAsync(userId, phoneNumber);
             string message = "Код подтверждения: " + code + ".";
             
-            await Core.SendSMS(phoneNumber, message);
+            await Core.BLL.SendSMS(phoneNumber, message);
 
             return phoneNumber == null ? View("Error") : View(new VerifyPhoneNumberViewModel { PhoneNumber = phoneNumber });
         }
@@ -202,7 +219,7 @@ namespace psychoTest.Controllers
 
             string userId = User.Identity.GetUserId();
 
-            if (userId != model.userId && Core.isAdmin(User))
+            if (userId != model.userId && Core.Membership.isAdmin(User))
             {
                 userId = model.userId;
             }
@@ -238,7 +255,7 @@ namespace psychoTest.Controllers
             {
                 string userId = User.Identity.GetUserId();
 
-                if (userId != model.userId && Core.isAdmin(User))
+                if (userId != model.userId && Core.Membership.isAdmin(User))
                 {
                     userId = model.userId;
                 }
@@ -319,134 +336,213 @@ namespace psychoTest.Controllers
 
         public ActionResult SurnameChange(string newval, string userId)
         {
+            Core.AjaxAnswer ans = new Core.AjaxAnswer();
+
             string curUserId = User.Identity.GetUserId();
-            if (userId != curUserId && !Core.isAdmin(User))
+            if (userId != curUserId && !Core.Membership.isAdmin(User))
             {
-                return null;
+                ans.result = Core.AjaxResults.NoRights;
+                return ans.JsonContentResult();
             }
 
-            DBMain db = new DBMain();
-            
-            AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
-            user.Surname = newval;
-            db.SaveChanges();
+            using (DBMain db = new DBMain())
+            {
+                try
+                {
+                    AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
+                    user.Surname = newval;
+                    db.SaveChanges();
 
-            //обновление индекса
-            Core.SearchIndexUpdate(user, Core.CRUDType.Update);
+                    //обновление индекса
+                    Core.BLL.SearchIndexUpdate(user, Core.CRUDType.Update);
+                }
+                catch (Exception)
+                {
+                    ans.result = Core.AjaxResults.CodeError;
+                    return ans.JsonContentResult();
+                }
+            }
 
-            db.Dispose();
-            return Json(new { result = 0 });
+            ans.result = Core.AjaxResults.Success;
+            return ans.JsonContentResult();
         }
 
         public ActionResult NameChange(string newval, string userId)
         {
+            Core.AjaxAnswer ans = new Core.AjaxAnswer();
+
             string curUserId = User.Identity.GetUserId();
-            if (userId != curUserId && !Core.isAdmin(User))
+            if (userId != curUserId && !Core.Membership.isAdmin(User))
             {
-                return null;
+                ans.result = Core.AjaxResults.NoRights;
+                return ans.JsonContentResult();
             }
 
-            DBMain db = new DBMain();
-            AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
-            user.Name = newval;
-            db.SaveChanges();
+            using (DBMain db = new DBMain())
+            {
+                try
+                {
+                    AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
+                    user.Name = newval;
+                    db.SaveChanges();
 
-            //обновление индекса
-            Core.SearchIndexUpdate(user, Core.CRUDType.Update);
+                    //обновление индекса
+                    Core.BLL.SearchIndexUpdate(user, Core.CRUDType.Update);
+                }
+                catch (Exception)
+                {
+                    ans.result = Core.AjaxResults.CodeError;
+                    return ans.JsonContentResult();
+                }
+            }
 
-            db.Dispose();
-            return Json(new { result = 0 });
+            ans.result = Core.AjaxResults.Success;
+            return ans.JsonContentResult();
         }
 
         public ActionResult PatronimChange(string newval, string userId)
         {
+            Core.AjaxAnswer ans = new Core.AjaxAnswer();
+
             string curUserId = User.Identity.GetUserId();
-            if (userId != curUserId && !Core.isAdmin(User))
+            if (userId != curUserId && !Core.Membership.isAdmin(User))
             {
-                return null;
+                ans.result = Core.AjaxResults.NoRights;
+                return ans.JsonContentResult();
             }
 
-            DBMain db = new DBMain();
-            AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
-            user.Patronim = newval;
-            db.SaveChanges();
+            using (DBMain db = new DBMain())
+            {
+                try
+                {
+                    AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
+                    user.Patronim = newval;
+                    db.SaveChanges();
 
-            //обновление индекса
-            Core.SearchIndexUpdate(user, Core.CRUDType.Update);
+                    //обновление индекса
+                    Core.BLL.SearchIndexUpdate(user, Core.CRUDType.Update);
+                }
+                catch (Exception)
+                {
+                    ans.result = Core.AjaxResults.CodeError;
+                    return ans.JsonContentResult();
+                }
+            }
 
-            db.Dispose();
-            return Json(new { result = 0 });
+            ans.result = Core.AjaxResults.Success;
+            return ans.JsonContentResult();
         }
 
         public ActionResult SexChange(string newval, string userId)
         {
+            Core.AjaxAnswer ans = new Core.AjaxAnswer();
+
             string curUserId = User.Identity.GetUserId();
-            if (userId != curUserId && !Core.isAdmin(User))
+            if (userId != curUserId && !Core.Membership.isAdmin(User))
             {
-                return null;
+                ans.result = Core.AjaxResults.NoRights;
+                return ans.JsonContentResult();
             }
 
-            DBMain db = new DBMain();
-            AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
-            user.Sex = Byte.Parse(newval);
-            db.SaveChanges();
+            using (DBMain db = new DBMain())
+            {
+                try
+                {
+                    AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
+                    user.Sex = Byte.Parse(newval);
+                    db.SaveChanges();
 
-            //обновление индекса
-            Core.SearchIndexUpdate(user, Core.CRUDType.Update);
+                    //обновление индекса
+                    Core.BLL.SearchIndexUpdate(user, Core.CRUDType.Update);
+                }
+                catch (Exception)
+                {
+                    ans.result = Core.AjaxResults.CodeError;
+                    return ans.JsonContentResult();
+                }
+            }
 
-            db.Dispose();
-            return Json(new { result = 0 });
+            ans.result = Core.AjaxResults.Success;
+            return ans.JsonContentResult();
         }
 
         public ActionResult EmailChange(string newval, string userId)
         {
+            Core.AjaxAnswer ans = new Core.AjaxAnswer();
+
             string curUserId = User.Identity.GetUserId();
-            if (userId != curUserId && !Core.isAdmin(User))
+            if (userId != curUserId && !Core.Membership.isAdmin(User))
             {
-                return null;
+                ans.result = Core.AjaxResults.NoRights;
+                return ans.JsonContentResult();
             }
 
-            DBMain db = new DBMain();
-            var user = db.AspNetUsers.Where(x => x.Id == userId).Single();
-            user.Email = newval;
-            user.EmailConfirmed = false;
-            db.SaveChanges();
+            using (DBMain db = new DBMain())
+            {
+                try
+                {
+                    AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
+                    user.Email = newval;
+                    user.EmailConfirmed = false;
+                    db.SaveChanges();
 
-            //обновление индекса
-            Core.SearchIndexUpdate(user, Core.CRUDType.Update);
+                    //обновление индекса
+                    Core.BLL.SearchIndexUpdate(user, Core.CRUDType.Update);
+                }
+                catch (Exception)
+                {
+                    ans.result = Core.AjaxResults.CodeError;
+                    return ans.JsonContentResult();
+                }
+            }
 
-            db.Dispose();
-            return Json(new { result = 0 });
+            ans.result = Core.AjaxResults.Success;
+            return ans.JsonContentResult();
         }
 
         public ActionResult PhoneChange(string newval, string userId)
         {
+            Core.AjaxAnswer ans = new Core.AjaxAnswer();
+
             string curUserId = User.Identity.GetUserId();
-            if (userId != curUserId && !Core.isAdmin(User))
+            if (userId != curUserId && !Core.Membership.isAdmin(User))
             {
-                return null;
+                ans.result = Core.AjaxResults.NoRights;
+                return ans.JsonContentResult();
             }
 
-            DBMain db = new DBMain();
-            var user = db.AspNetUsers.Where(x => x.Id == userId).Single();
-
-            //проверка уникальности телефонного номера
-            if (newval.Length > 0 
-                && newval != user.PhoneNumber 
-                && db.AspNetUsers.Where(x => x.PhoneNumber == newval).Count() > 0)
+            using (DBMain db = new DBMain())
             {
-                return Json(new { result = -1 }, JsonRequestBehavior.AllowGet);
+                try
+                {
+                    AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
+                    
+                    //проверка уникальности телефонного номера
+                    if (newval.Length > 0
+                        && newval != user.PhoneNumber
+                        && db.AspNetUsers.Where(x => x.PhoneNumber == newval).Count() > 0)
+                    {
+                        ans.result = Core.AjaxResults.PhoneAllreadyExist;
+                        return ans.JsonContentResult();
+                    }
+
+                    user.PhoneNumber = newval;
+                    user.PhoneNumberConfirmed = false;
+
+                    db.SaveChanges();
+
+                    //обновление индекса
+                    Core.BLL.SearchIndexUpdate(user, Core.CRUDType.Update);
+                }
+                catch (Exception)
+                {
+                    ans.result = Core.AjaxResults.CodeError;
+                    return ans.JsonContentResult();
+                }
             }
 
-            user.PhoneNumber = newval;
-            user.PhoneNumberConfirmed = false;
-            db.SaveChanges();
-
-            //обновление индекса
-            Core.SearchIndexUpdate(user, Core.CRUDType.Update);
-
-            db.Dispose();
-            return Json(new { result = 0 }, JsonRequestBehavior.AllowGet);
+            ans.result = Core.AjaxResults.Success;
+            return ans.JsonContentResult();
         }
 
         public ActionResult Search()
@@ -462,7 +558,7 @@ namespace psychoTest.Controllers
             string query = "SELECT * FROM SearchIndexes WHERE searchString LIKE N'%" + searchString + "%'";
 
             string result = "<ul>";
-            if(Core.isAdmin(User))
+            if(Core.Membership.isAdmin(User))
             {
                 foreach (SearchIndex si in db.Database.SqlQuery<SearchIndex>(query))
                 {
@@ -478,54 +574,100 @@ namespace psychoTest.Controllers
             return View();
         }
 
-        public ActionResult RoleGetForUser(string userId)
+        public ActionResult RoleGetForUser(string userId, string orgId)
         {
-            if (!Core.isAdmin(User)) return null;
+            Core.AjaxAnswer ans = new Core.AjaxAnswer();
 
-            DBMain db = new DBMain();
-            string query = @"SELECT 
+            if (!Core.Membership.isAdmin(User) && !Models.Organisation.Organisation.isManager(User, orgId))
+            {
+                ans.result = Core.AjaxResults.NoRights;
+                return ans.JsonContentResult();
+            }
+
+            using (DBMain db = new DBMain())
+            {
+                try
+                {
+                    string query = @"SELECT 
 	                            r.Name
 	                            ,(CASE 
-		                            WHEN (SELECT ur.UserId 
-				                            FROM AspNetUserRoles ur 
+		                            WHEN (SELECT ur.userEmail 
+				                            FROM OrganisationUserRoles ur 
 				                            WHERE 
-					                            ur.RoleId=r.Id
-					                            AND ur.UserId=@userId) IS NOT NULL 
+					                            ur.roleName=r.Name
+					                            AND ur.userEmail=@email) IS NOT NULL 
 			                            THEN '1' 
 		                            ELSE '0' 
 	                            END) as Val
-                            FROM AspNetRoles r";
-            
-            var jsonSerialiser = new JavaScriptSerializer();
-            System.Collections.Generic.List<UserRolesList> rList = db.Database.SqlQuery<UserRolesList>(query, new SqlParameter("userId", userId)).ToList();
-            var json = jsonSerialiser.Serialize(rList);
+                            FROM AspNetRoles r
+                            WHERE (r.Name <> 'admin' AND r.Name <> 'coach')";
 
-            return Json(json, JsonRequestBehavior.AllowGet);
+                    var jsonSerialiser = new JavaScriptSerializer();
+                    string email = System.Web.HttpContext.Current.GetOwinContext().GetUserManager<ApplicationUserManager>().FindById(userId).UserName; ;
+                    System.Collections.Generic.List<UserRolesList> rList = db.Database.SqlQuery<UserRolesList>(query, new SqlParameter("email", email)).ToList();
+                    var json = jsonSerialiser.Serialize(rList);
+                    return Content(json, "application/json");
+                }
+                catch (Exception)
+                {
+                    ans.result = Core.AjaxResults.CodeError;
+                    return ans.JsonContentResult();
+                }
+            }
         }
 
-        public ActionResult RoleSetForUser(string userId, string roleName, string val)
+        public ActionResult RoleSetForUser(string userId, string orgId, string roleName, string val)
         {
-            if (!Core.isAdmin(User)) return null;
+            Core.AjaxAnswer ans = new Core.AjaxAnswer();
 
-            DBMain db = new DBMain();
-
-            string query = "";
-
-            if (val == "1")
+            if (!Core.Membership.isAdmin(User) && !Models.Organisation.Organisation.isManager(User, orgId))
             {
-                query = @"INSERT INTO AspNetUserRoles VALUES (@userId, (SELECT r.Id FROM AspNetRoles r WHERE r.Name=@roleName))";
+                ans.result = Core.AjaxResults.NoRights;
+                return ans.JsonContentResult();
             }
-            else
-            {
-                query = @"DELETE FROM AspNetUserRoles WHERE UserId=@userId AND RoleId=(SELECT Id FROM AspNetRoles WHERE Name=@roleName)";
-            }
-            object[] sqlPars = {
-                new SqlParameter("userId", userId)
-                ,new SqlParameter("roleName", roleName)
-            };
-            db.Database.ExecuteSqlCommand(query, sqlPars);
 
-            return Json(new { result = 0 }, JsonRequestBehavior.AllowGet);
+            using (DBMain db = new DBMain())
+            {
+                try
+                {
+                    string query = "";
+
+                    if (val == "1")
+                    {
+                        query = @"INSERT INTO OrganisationUserRoles VALUES (@roleName, @userEmail, @orgId)";
+                    }
+                    else if (val == "0")
+                    {
+                        if (User.Identity.GetUserId() == userId && Models.Organisation.Organisation.isManager(User, orgId))
+                        {
+                            ans.result = Core.AjaxResults.NoManagerSuicide;
+                            return ans.JsonContentResult();
+                        }
+
+                        query = @"DELETE FROM OrganisationUserRoles WHERE organisationId=@orgId AND roleName=@roleName AND userEmail=@userEmail";
+                    }
+                    else
+                    {
+                        ans.result = Core.AjaxResults.IncorrectParameters;
+                        return ans.JsonContentResult();
+                    }
+                    string email = System.Web.HttpContext.Current.GetOwinContext().GetUserManager<ApplicationUserManager>().FindById(userId).UserName;
+                    object[] sqlPars = {
+                        new SqlParameter("roleName", roleName)
+                        ,new SqlParameter("userEmail", email)
+                        ,new SqlParameter("orgId", orgId)
+                    };
+                    db.Database.ExecuteSqlCommand(query, sqlPars);
+                }
+                catch (Exception)
+                {
+                    ans.result = Core.AjaxResults.CodeError;
+                    return ans.JsonContentResult();
+                }
+            }
+
+            ans.result = Core.AjaxResults.Success;
+            return ans.JsonContentResult();
         }
 
         #region Helpers

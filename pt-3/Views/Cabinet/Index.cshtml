@@ -1,8 +1,9 @@
 ﻿@{
+    Layout = "/Views/Shared/_Cabinet.cshtml";
     ViewBag.Title = "Личный кабинет";
 }
 
-@if (!Core.isInAnyRole(User))
+@if (!psychoTest.Core.Membership.isInAnyRole(User))
 {
     <div>
         <b>написать в этот блок текст!!!</b>
@@ -13,16 +14,25 @@
             <a href="/about">Узнайте больше о сервисе</a>
         </div>
         <div>Если вы HR, создайте организацию.</div>
-        <div>
-            <i>Блок с созданием организации. при нажатиии кнопки создать всплывает подтверждение "я подтверждаю, что являюсь сотрудником указанной организации"</i>
-            @using (Html.BeginForm("Index", "Organisation", FormMethod.Post))
-            {
-                @Html.AntiForgeryToken()
-                <input type="text" placeholder="Название организации" name="orgName" />
-                <input type="hidden" name="action" value="forceCreate" />
-                <input type="submit" value="Создать" />
-            }
-        </div>
+        @if ((bool)ViewData["confirmed"])
+        {
+            <div>
+                <i>Блок с созданием организации. при нажатиии кнопки создать всплывает подтверждение "я подтверждаю, что являюсь сотрудником указанной организации"</i>
+                @using (Html.BeginForm("Index", "Organisation", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="text" placeholder="Название организации" name="orgName" />
+                    <input type="hidden" name="action" value="forceCreate" />
+                    <input type="submit" value="Создать" />
+                }
+            </div>
+        }
+        else
+        {
+            <div>
+                Чтобы её создать, вам необходимо подтвердить адрес электронной почты и номер телефона в <a href="/manage">вашей учетной записи</a>.
+            </div>
+        }
         <div>Если вы кто-то другой, найдите свою организацию и отправьте запрос на присоединение</div>
         <div>
             <i>Блок с принятием приглашения, если оно есть</i>

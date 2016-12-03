@@ -1,7 +1,21 @@
-﻿
+﻿@model psychoTest.Models.Organisation.Views.Index
+
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = Model.name;
+    Layout = Layout = "/Views/Shared/_Cabinet.cshtml";
 }
 
-<h2>Index</h2>
+<h2>@Model.name</h2>
+<ul>
+    <li><a href="/organisation/changename?id=@Model.id&newval=новое название">изменить название</a></li>
+    <li>
+        Дата создания: @Model.dateCreate
+    </li>
+    <li>
+        Статус: @(Model.moderated ? "подтверждена" : "на модерации")
+    </li>
+    <li>
+        <a href="/organisation/users">Пользователи</a>: @Model.usersCount
+    </li>
+</ul>
 

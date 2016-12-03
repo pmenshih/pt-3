@@ -1,0 +1,18 @@
+﻿
+@{
+    Layout = "/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Личный кабинет";
+}
+
+<div style="background-color: #e2e2e2;">
+    <p>Меню личного кабинета</p>
+    <!-- #1 код генерации пунктов меню в зависимости от ролей пользователя -->
+        @if (psychoTest.Models.Organisation.Organisation.isManager(User))
+        {
+            <a href="/organisation">Организация</a>
+        }
+    <!-- #1 конец блока -->
+</div>
+
+@RenderBody()
+

@@ -2,14 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
+using System.Web.Mvc;
 using System.Threading.Tasks;
 using System.Net.Http;
 using psychoTest.Models;
 using Microsoft.AspNet.Identity;
+using System.Data.SqlClient;
+using System.Web.Script.Serialization;
 
-namespace psychoTest
+namespace psychoTest.Core
 {
-    public class Core
+    public class BLL
     {
         public static async Task<string> SendSMS(string phone, string message)
         {
@@ -80,7 +83,10 @@ namespace psychoTest
                 db.SaveChanges();
             }
         }
+    }
 
+    public class Membership
+    {
         public static bool isAdmin(System.Security.Principal.IPrincipal User)
         {
             return User.IsInRole("admin");
@@ -100,13 +106,42 @@ namespace psychoTest
 
             return rolesCount > 0;
         }
+    }
 
-        public enum CRUDType
+    public class AjaxAnswer
+    {
+        public AjaxResults result;
+
+        public ContentResult JsonContentResult()
         {
-            Create = 1
-            ,Read
-            ,Update
-            ,Delete
+            ContentResult content = new ContentResult();
+            
+            JsonResult answer = new JsonResult();
+            answer.JsonRequestBehavior = JsonRequestBehavior.AllowGet;
+
+            content.ContentType = "application/json";
+            content.Content = new JavaScriptSerializer().Serialize(this);
+
+            return content;
         }
+    }
+
+    public enum CRUDType
+    {
+        Create = 1
+            , Read
+            , Update
+            , Delete
+    }
+
+    public enum AjaxResults
+    {
+        Success = 0
+        , NoRights = 1
+        , CodeError = 2
+        ,EmailConfirmed = 3                     //почта уже подтверждена
+        ,PhoneAllreadyExist = 4                 //такой номер телефона уже занят
+        ,IncorrectParameters = 5                //неверные входные параметры
+        ,NoManagerSuicide = 6                   //менеджер не может сам с себя снять роль менеджера
     }
 }
