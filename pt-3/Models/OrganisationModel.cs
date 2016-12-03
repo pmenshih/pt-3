@@ -62,7 +62,9 @@ namespace psychoTest.Models.Organisations
                                     FROM Organisations o
                                     WHERE o.id IN (SELECT ou.orgId 
 				                                    FROM OrganisationsUsers ou
-				                                    WHERE ou.userEmail=@email)";
+				                                    WHERE ou.userEmail=@email
+                                                        AND ou.active = 1
+                                                        AND ou.dateStop < GETDATE())";
                     return db.Database.SqlQuery<Organisation>(query, new SqlParameter("email", email)).Single();
                 }
             }
@@ -89,7 +91,7 @@ namespace psychoTest.Models.Organisations
             return rolesCount > 0;
         }
 
-        public bool SetManager(System.Security.Principal.IPrincipal User)
+        public bool UserAddRole(string email, string roleName)
         {
             try
             {
@@ -98,8 +100,8 @@ namespace psychoTest.Models.Organisations
                     string query = @"INSERT INTO OrganisationsUsersRoles 
                                     VALUES (@roleName, @userEmail, @orgId)";
                     db.Database.ExecuteSqlCommand(query
-                                                    , new SqlParameter("roleName", "manager")
-                                                    , new SqlParameter("userEmail", User.Identity.Name)
+                                                    , new SqlParameter("roleName", roleName)
+                                                    , new SqlParameter("userEmail", email)
                                                     , new SqlParameter("orgId", this.id));
                     return true;
                 }
@@ -107,7 +109,57 @@ namespace psychoTest.Models.Organisations
             catch (Exception) { return false; }
         }
 
-        public bool AddUser(System.Security.Principal.IPrincipal User)
+        public static bool UserRemoveRoles(string userEmail, string orgId)
+        {
+            try
+            {
+                using (DBMain db = new DBMain())
+                {
+                    string query = @"DELETE FROM OrganisationsUsersRoles 
+                                    WHERE userEmail=@userEmail AND orgId=@orgId";
+                    db.Database.ExecuteSqlCommand(query
+                                                    , new SqlParameter("userEmail", userEmail)
+                                                    , new SqlParameter("orgId", orgId));
+                    return true;
+                }
+            }
+            catch (Exception) { return false; }
+        }
+
+        public static bool UserIsActive(string orgId, string userEmail)
+        {
+            try
+            {
+                using (DBMain db = new DBMain())
+                {
+                    OrganisationsUsers ou = db.OrganisationUsers.Where(x => x.active == true && x.orgId == orgId && x.userEmail == userEmail && x.dateStop > DateTime.Now).Single();
+                    if (ou != null) return true;
+                    else return false;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public static string RolesGetAsString(string orgId, string userEmail)
+        {
+            string roles = "";
+
+            using (DBMain db = new DBMain())
+            {
+                foreach (Models.Organisations.OrganisationsUsersRole role in db.OrganisationsUsersRoles.Where(x => x.userEmail == userEmail && x.orgId == orgId))
+                {
+                    roles += role.roleName + ",";
+                }
+                roles = roles.TrimEnd(',');
+            }
+
+            return roles;
+        }
+
+        public bool AddUser(string email)
         {
             try
             {
@@ -116,8 +168,9 @@ namespace psychoTest.Models.Organisations
                     OrganisationsUsers ou = new OrganisationsUsers();
                     ou.active = true;
                     ou.dateStart = DateTime.Now;
+                    ou.dateStop = new DateTime(2222, 1, 1);
                     ou.orgId = this.id;
-                    ou.userEmail = User.Identity.Name;
+                    ou.userEmail = email;
 
                     db.OrganisationUsers.Add(ou);
                     db.SaveChanges();
@@ -197,7 +250,8 @@ namespace psychoTest.Models.Organisations
                                     WHERE u.email IN (SELECT userEmail
                                                         FROM OrganisationsUsers
                                                         WHERE orgId=@orgId
-                                                            AND active=0)";
+                                                            AND active=0
+                                                            AND dateStop > GETDATE())";
                     joinRequests = db.Database.SqlQuery<AspNetUser>(query, new SqlParameter("orgId", id)).ToList();
                 }
             }
@@ -214,6 +268,38 @@ namespace psychoTest.Models.Organisations
         {
             public string id { get; set; }
             public string name { get; set; }
+        }
+
+        public class Users
+        {
+            public string orgId { get; set; }
+            public List<UsersUserEntity> orgUsers { get; set; }
+        }
+
+        public class UsersUserEntity
+        {
+            public string id { get; set; }
+            public string surname { get; set; }
+            public string name { get; set; }
+            public string patronim { get; set; }
+            public string email { get; set; }
+            public string phone { get; set; }
+            public string roles { get; set; }
+            public bool active { get; set; }
+        }
+
+        public class UserCU
+        {
+            public string orgId { get; set; }
+            public string userId { get; set; }
+            public string surname { get; set; }
+            public string name { get; set; }
+            public string patronim { get; set; }
+            public string email { get; set; }
+            public string phone { get; set; }
+            public string roles { get; set; }
+            public byte? sex { get; set; }
+            public string password { get; set; }
         }
     }
 }

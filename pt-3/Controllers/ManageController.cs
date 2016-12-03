@@ -675,6 +675,48 @@ namespace psychoTest.Controllers
             return ans.JsonContentResult();
         }
 
+        public ActionResult CheckEmailExist(string email, string userId = null)
+        {
+            Core.AjaxAnswer ans = new Core.AjaxAnswer();
+
+            using (DBMain db = new DBMain())
+            {
+                if (userId == null)
+                {
+                    if (db.AspNetUsers.Where(x => x.Email == email).Count() == 0) ans.result = Core.AjaxResults.Success;
+                    else ans.result = Core.AjaxResults.EmailAllreadyExist;
+                }
+                else
+                {
+                    if (db.AspNetUsers.Where(x => x.Email == email && x.Id != userId).Count() == 0) ans.result = Core.AjaxResults.Success;
+                    else ans.result = Core.AjaxResults.EmailAllreadyExist;
+                }
+
+                return ans.JsonContentResult();
+            }
+        }
+
+        public ActionResult CheckPhoneExist(string phone, string userId = null)
+        {
+            Core.AjaxAnswer ans = new Core.AjaxAnswer();
+
+            using (DBMain db = new DBMain())
+            {
+                if (userId == null)
+                {
+                    if (db.AspNetUsers.Where(x => x.PhoneNumber == phone).Count() == 0) ans.result = Core.AjaxResults.Success;
+                    else ans.result = Core.AjaxResults.PhoneAllreadyExist;
+                }
+                else
+                {
+                    if (db.AspNetUsers.Where(x => x.PhoneNumber == phone && x.Id != userId).Count() == 0) ans.result = Core.AjaxResults.Success;
+                    else ans.result = Core.AjaxResults.PhoneAllreadyExist;
+                }
+                
+                return ans.JsonContentResult();
+            }
+        }
+
         #region Helpers
         // Used for XSRF protection when adding external logins
         private const string XsrfKey = "XsrfId";

@@ -64,6 +64,7 @@ namespace psychoTest.Core
                 {
                     si.instanceId = user.Id;
                     si.instanceType = "AspNetUsers";
+                    cType = CRUDType.Create;
                 }
                 si.searchString = user.Surname + " " + user.Name;
                 if (user.Patronim != null && user.Patronim.Length > 0)
@@ -173,5 +174,6 @@ namespace psychoTest.Core
         ,NoManagerSuicide = 6                   //менеджер не может сам с себя снять роль менеджера
         ,UserAllreadyInOrg = 7                  //пользователь уже состоит в указанной организации
         ,NoMultipleJoinRequests = 8             //нельзя подавать несколько заявок на присоединение к организации
+        ,EmailAllreadyExist = 9                 //почта уже занята
     }
 }

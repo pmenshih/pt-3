@@ -1,7 +1,66 @@
-﻿
+﻿@model psychoTest.Models.Organisations.Views.Users
 @{
-    ViewBag.Title = "Users";
+    ViewBag.Title = "Пользователи";
+    Layout = Layout = "/Views/Shared/_Cabinet.cshtml";
 }
 
-<h2>Users</h2>
+<h2>@ViewBag.Title</h2>
 
+<a href="/organisation/usercu?orgId=@Model.orgId">Добавить пользователя</a> | <a href="/organisation/usersimport">Загрузка из файла</a>
+<div>
+    Показать: <a href="#">Акторов</a> | <a href="#">Контролёров</a> | <a href="#">Зрителей</a> | <a href="#">Менеджеров</a>
+</div>
+<table class="table">
+    <tr>
+        <th>
+            Фамилия
+        </th>
+        <th>
+            Имя
+        </th>
+        <th>
+            Отчество
+        </th>
+        <th>
+            Почта
+        </th>
+        <th>
+            Телефон
+        </th>
+        <th>
+            Роли
+        </th>
+        <th>
+
+        </th>
+    </tr>
+    @foreach (psychoTest.Models.Organisations.Views.UsersUserEntity user in Model.orgUsers)
+    {
+        <tr>
+            <td>
+                @user.surname
+            </td>
+            <td>
+                @user.name
+            </td>
+            <td>
+                @user.patronim
+            </td>
+            <td>
+                @user.email
+            </td>
+            <td>
+                @user.phone
+            </td>
+            <td>
+                @if (user.roles != null)
+                {
+                    @user.roles.Replace("manager", "Менеджер").Replace("actor", "Актор").Replace("inspector", "Контролёр").Replace("viewer", "Зритель")
+                }
+            </td>
+            <td>
+                <a href="/organisation/usercu?orgId=@Model.orgId&userId=@user.id">Редактировать</a> | <a href="/organisation/userdelete?orgId=@Model.orgId&userId=@user.id">Удалить</a>
+            </td>
+        </tr>
+    }
+</table>
