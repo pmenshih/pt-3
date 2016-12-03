@@ -25,6 +25,20 @@ namespace psychoTest.Controllers
                     string userId = User.Identity.GetUserId();
                     AspNetUser user = db.AspNetUsers.Where(x => x.Id == userId).Single();
                     ViewData.Add("confirmed", (user.EmailConfirmed && user.PhoneNumberConfirmed));
+
+                    //если у пользователя уже есть заявка на присоединение к организации
+                    if (db.OrganisationUsers.Where(x => x.userEmail == User.Identity.Name && x.active == false).Count() > 0)
+                    {
+                        ViewData.Add("requestedallready", "1");
+                    }
+                }
+            }
+            //если пользователь с правами администратора, добавим ему список не модерированных организаций
+            else if (Core.Membership.isAdmin(User))
+            {
+                using (DBMain db = new DBMain())
+                {
+                    ViewData.Add("unmoderated", db.Organisations.Where(x => x.moderated == false).ToList());
                 }
             }
 

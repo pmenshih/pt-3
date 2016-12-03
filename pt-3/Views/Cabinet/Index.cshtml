@@ -35,9 +35,38 @@
         }
         <div>Если вы кто-то другой, найдите свою организацию и отправьте запрос на присоединение</div>
         <div>
-            <i>Блок с принятием приглашения, если оно есть</i>
+            <i>Блок отправки запросов на присоединение к организации</i>
+            @if (ViewData["requestedallready"] == null)
+            {
+                using (Html.BeginForm("JoinRequest", "Organisation", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="text" placeholder="Название организации" name="orgName" />
+                    <input type="hidden" name="userEmail" value="@User.Identity.Name" />
+                    <input type="submit" value="Отправить запрос" />
+                }
+            }
+            else
+            {
+                <div style="background-color: gray;">
+                    Вы уже отправили запрос на присоединение к организации, ожидайте ответа.
+                </div>
+            }
         </div>
-        
     </div>
-    
+}
+else if (psychoTest.Core.Membership.isAdmin(User))
+{
+    <div>
+        @if (((List<psychoTest.Models.Organisations.Organisation>)ViewData["unmoderated"]).Count > 0)
+        {
+            <h3>Организации для проверки</h3>
+            <ul>
+            @foreach (psychoTest.Models.Organisations.Organisation org in (List<psychoTest.Models.Organisations.Organisation>)ViewData["unmoderated"])
+            {
+                <a href="/organisation?id=@org.id">@org.name</a>
+            }
+            </ul>
+        }
+    </div>
 }

@@ -62,12 +62,8 @@ namespace psychoTest.Core
                 }
                 catch (Exception)
                 {
-                    if (cType == CRUDType.Create)
-                    {
-                        si.instanceId = user.Id;
-                        si.instanceType = "AspNetUsers";
-                    }
-                    else return;
+                    si.instanceId = user.Id;
+                    si.instanceType = "AspNetUsers";
                 }
                 si.searchString = user.Surname + " " + user.Name;
                 if (user.Patronim != null && user.Patronim.Length > 0)
@@ -81,6 +77,38 @@ namespace psychoTest.Core
                     db.SearchIndexes.Add(si);
                 }
                 db.SaveChanges();
+                return;
+            }
+
+            var organisation = entity as Models.Organisations.Organisation;
+            if (organisation != null)
+            {
+                if (delelteOp)
+                {
+                    db.Database.ExecuteSqlCommand(query + organisation.id + "'");
+                    return;
+                }
+
+                Models.SearchIndex si = new Models.SearchIndex();
+                try
+                {
+                    si = db.SearchIndexes.Where(x => x.instanceId == user.Id).Single();
+                }
+                catch (Exception)
+                {
+                    si.instanceId = organisation.id;
+                    si.instanceType = "Organisations";
+                    cType = CRUDType.Create;
+                }
+                si.searchString = organisation.name;
+                si.searchString += "@#@";
+                if (cType == CRUDType.Create)
+                {
+                    db.SearchIndexes.Add(si);
+                }
+                db.SaveChanges();
+
+                return;
             }
         }
     }
@@ -98,7 +126,7 @@ namespace psychoTest.Core
 
             DBMain db = new DBMain();
             string query = @"SELECT COUNT(*) 
-                            FROM OrganisationUserRoles 
+                            FROM OrganisationsUsersRoles 
                             WHERE userEmail=(SELECT Email 
 				                            FROM AspNetUsers 
 				                            WHERE Id='" + User.Identity.GetUserId() + "')";
@@ -143,5 +171,7 @@ namespace psychoTest.Core
         ,PhoneAllreadyExist = 4                 //такой номер телефона уже занят
         ,IncorrectParameters = 5                //неверные входные параметры
         ,NoManagerSuicide = 6                   //менеджер не может сам с себя снять роль менеджера
+        ,UserAllreadyInOrg = 7                  //пользователь уже состоит в указанной организации
+        ,NoMultipleJoinRequests = 8             //нельзя подавать несколько заявок на присоединение к организации
     }
 }

@@ -1,4 +1,4 @@
-﻿@model psychoTest.Models.Organisation.Views.Index
+﻿@model psychoTest.Models.Organisations.Views.Index
 
 @{
     ViewBag.Title = Model.name;
@@ -12,10 +12,31 @@
         Дата создания: @Model.dateCreate
     </li>
     <li>
-        Статус: @(Model.moderated ? "подтверждена" : "на модерации")
+        @if (!Model.moderated && psychoTest.Core.Membership.isAdmin(User))
+        {
+            @:Статус: <a href="/organisation/moderate?id=@Model.id">подтвердить</a>
+        }
+        else
+        {
+            @("Статус: " + (Model.moderated ? "подтверждена" : "на модерации"))
+        }
     </li>
     <li>
         <a href="/organisation/users">Пользователи</a>: @Model.usersCount
     </li>
 </ul>
 
+@if (Model.joinRequests.Count() > 0)
+{
+    <h4>Заявки на присоединение</h4>
+    <ul>
+        @foreach (psychoTest.Models.AspNetUser user in Model.joinRequests)
+        {
+            <li>
+                @user.Email, @user.Surname @user.Name @user.Patronim, @user.PhoneNumber
+                <br/>
+                <a href="/organisation/acceptjoinrequest?userEmail=@user.Email&orgId=@Model.id">Принять</a>
+            </li>
+        }
+    </ul>
+}

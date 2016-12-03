@@ -91,6 +91,7 @@ namespace psychoTest.Controllers
                 sex = user.Sex,
                 email = user.Email,
                 phone = user.PhoneNumber
+                ,organisation = Models.Organisations.Organisation.GetByUserEmail(user.Email)
             };
             return View(model);
         }
@@ -566,6 +567,10 @@ namespace psychoTest.Controllers
                     {
                         result += "<li><a href='/manage?userId=" + si.instanceId + "'>" + si.searchString + "</a></li>";
                     }
+                    else if (si.instanceType == "Organisations")
+                    {
+                        result += "<li><a href='/organisation?id=" + si.instanceId + "'>" + si.searchString + "</a></li>";
+                    }
                 }
             }
             result += "</ul>";
@@ -578,7 +583,7 @@ namespace psychoTest.Controllers
         {
             Core.AjaxAnswer ans = new Core.AjaxAnswer();
 
-            if (!Core.Membership.isAdmin(User) && !Models.Organisation.Organisation.isManager(User, orgId))
+            if (!Core.Membership.isAdmin(User) && !Models.Organisations.Organisation.isManager(User, orgId))
             {
                 ans.result = Core.AjaxResults.NoRights;
                 return ans.JsonContentResult();
@@ -592,7 +597,7 @@ namespace psychoTest.Controllers
 	                            r.Name
 	                            ,(CASE 
 		                            WHEN (SELECT ur.userEmail 
-				                            FROM OrganisationUserRoles ur 
+				                            FROM OrganisationsUsersRoles ur 
 				                            WHERE 
 					                            ur.roleName=r.Name
 					                            AND ur.userEmail=@email) IS NOT NULL 
@@ -620,7 +625,7 @@ namespace psychoTest.Controllers
         {
             Core.AjaxAnswer ans = new Core.AjaxAnswer();
 
-            if (!Core.Membership.isAdmin(User) && !Models.Organisation.Organisation.isManager(User, orgId))
+            if (!Core.Membership.isAdmin(User) && !Models.Organisations.Organisation.isManager(User, orgId))
             {
                 ans.result = Core.AjaxResults.NoRights;
                 return ans.JsonContentResult();
@@ -634,17 +639,17 @@ namespace psychoTest.Controllers
 
                     if (val == "1")
                     {
-                        query = @"INSERT INTO OrganisationUserRoles VALUES (@roleName, @userEmail, @orgId)";
+                        query = @"INSERT INTO OrganisationsUsersRoles VALUES (@roleName, @userEmail, @orgId)";
                     }
                     else if (val == "0")
                     {
-                        if (User.Identity.GetUserId() == userId && Models.Organisation.Organisation.isManager(User, orgId))
+                        if (User.Identity.GetUserId() == userId && Models.Organisations.Organisation.isManager(User, orgId))
                         {
                             ans.result = Core.AjaxResults.NoManagerSuicide;
                             return ans.JsonContentResult();
                         }
 
-                        query = @"DELETE FROM OrganisationUserRoles WHERE organisationId=@orgId AND roleName=@roleName AND userEmail=@userEmail";
+                        query = @"DELETE FROM OrganisationsUsersRoles WHERE orgId=@orgId AND roleName=@roleName AND userEmail=@userEmail";
                     }
                     else
                     {

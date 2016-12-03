@@ -75,6 +75,24 @@
             }
             ]
         </dd>
+        @if (Model.organisation != null)
+        {
+            <dt>Организация:</dt>
+            <dd>@Model.organisation.name</dd>
+        }
+        else if (User.IsInRole("admin"))
+        {
+            <dt>Организация:</dt>
+            <dd>
+                @using (Html.BeginForm("JoinRequest", "Organisation", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="text" placeholder="Название организации" name="orgName" />
+                    <input type="hidden" name="userEmail" value="@Model.email" />
+                    <input type="submit" value="Отправить запрос" />
+                }
+            </dd>
+        }
     </dl>
 
     <div style="width: 200px; border: 1px solid black;">

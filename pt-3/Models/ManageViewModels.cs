@@ -20,6 +20,7 @@ namespace psychoTest.Models
         public string surname { get; set; }
         public string patronim { get; set; }
         public byte? sex { get; set; }
+        public Organisations.Organisation organisation { get; set; }
     }
 
     public class ManageLoginsViewModel

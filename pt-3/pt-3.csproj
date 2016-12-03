@@ -244,6 +244,7 @@
     <Content Include="Views\About\Index.cshtml" />
     <Content Include="Views\Organisation\Index.cshtml" />
     <Content Include="Views\Shared\_Cabinet.cshtml" />
+    <Content Include="Views\Organisation\Users.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Code\" />
