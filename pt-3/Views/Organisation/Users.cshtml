@@ -31,6 +31,9 @@
             Роли
         </th>
         <th>
+            Результаты
+        </th>
+        <th>
 
         </th>
     </tr>
@@ -57,6 +60,9 @@
                 {
                     @user.roles.Replace("manager", "Менеджер").Replace("actor", "Актор").Replace("inspector", "Контролёр").Replace("viewer", "Зритель")
                 }
+            </td>
+            <td>
+                <a href="#">Ссылка</a>
             </td>
             <td>
                 <a href="/organisation/usercu?orgId=@Model.orgId&userId=@user.id">Редактировать</a> | <a href="/organisation/userdelete?orgId=@Model.orgId&userId=@user.id">Удалить</a>

@@ -27,7 +27,7 @@ namespace psychoTest.Controllers
                     ViewData.Add("confirmed", (user.EmailConfirmed && user.PhoneNumberConfirmed));
 
                     //если у пользователя уже есть заявка на присоединение к организации
-                    if (db.OrganisationUsers.Where(x => x.userEmail == User.Identity.Name && x.active == false).Count() > 0)
+                    if (db.OrganisationUsers.Where(x => x.userEmail == User.Identity.Name && x.active == false && x.dateStop > DateTime.Now).Count() > 0)
                     {
                         ViewData.Add("requestedallready", "1");
                     }

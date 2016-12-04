@@ -224,6 +224,7 @@ namespace psychoTest.Controllers
             {
                 userId = model.userId;
             }
+            else return Redirect("/manage");
 
             var result = await UserManager.ChangePasswordAsync(userId, model.OldPassword, model.NewPassword);
             if (result.Succeeded)

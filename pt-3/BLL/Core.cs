@@ -179,7 +179,8 @@ namespace psychoTest.Core
 
     public static class ErrorMessages
     {
-        public const string LoginFail = "Неверный логин или пароль";
-        public const string LoginIncorrect = "Введен некорректный логин";
+        public const string LoginFail = "Неверный логин или пароль.";
+        public const string LoginIncorrect = "Введен некорректный логин.";
+        public const string EmailRegistered = "Указанный адрес электронной почты уже зарегистрирован.";
     }
 }

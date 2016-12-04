@@ -140,9 +140,9 @@ namespace psychoTest.Controllers
                     DBMain db = new DBMain();
                     Core.BLL.SearchIndexUpdate(db.AspNetUsers.Where(x => x.Id == user.Id).Single(), Core.CRUDType.Create);
 
-                    return RedirectToAction("Index", "Home");
+                    return Redirect("/cabinet");
                 }
-                AddErrors(result);
+                ViewData["serverError"] = Core.ErrorMessages.EmailRegistered;
             }
 
             // If we got this far, something failed, redisplay form
