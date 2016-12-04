@@ -24,6 +24,12 @@
         </div>
     </div>
     <div class="container body-content">
+        @if (ViewData["serverError"] != null)
+        {
+            <div class="text-danger">
+                @ViewData["serverError"]
+            </div>
+        }
         @RenderBody()
         <hr />
         <footer>

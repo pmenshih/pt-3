@@ -76,8 +76,16 @@ namespace psychoTest.Controllers
             //если введен номер телефона
             if (!model.Login.Contains("@"))
             {
-                DBMain db = new DBMain();
-                model.Login = db.AspNetUsers.Where(x => x.PhoneNumber == model.Login).Select(x => x.Email).Single();
+                try
+                {
+                    DBMain db = new DBMain();
+                    model.Login = db.AspNetUsers.Where(x => x.PhoneNumber == model.Login).Select(x => x.Email).Single();
+                }
+                catch (Exception)
+                {
+                    ViewData["serverError"] = Core.ErrorMessages.LoginIncorrect;
+                    return View(model);
+                }
             }
 
             // This doesn't count login failures towards account lockout
@@ -93,7 +101,8 @@ namespace psychoTest.Controllers
                     return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = model.RememberMe });
                 case SignInStatus.Failure:
                 default:
-                    ModelState.AddModelError("", "Invalid login attempt.");
+                    //ModelState.AddModelError("", "Invalid login attempt.");
+                    ViewData["serverError"] = Core.ErrorMessages.LoginFail;
                     return View(model);
             }
         }

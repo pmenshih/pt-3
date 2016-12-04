@@ -166,8 +166,8 @@ namespace psychoTest.Core
     public enum AjaxResults
     {
         Success = 0
-        , NoRights = 1
-        , CodeError = 2
+        ,NoRights = 1
+        ,CodeError = 2
         ,EmailConfirmed = 3                     //почта уже подтверждена
         ,PhoneAllreadyExist = 4                 //такой номер телефона уже занят
         ,IncorrectParameters = 5                //неверные входные параметры
@@ -175,5 +175,11 @@ namespace psychoTest.Core
         ,UserAllreadyInOrg = 7                  //пользователь уже состоит в указанной организации
         ,NoMultipleJoinRequests = 8             //нельзя подавать несколько заявок на присоединение к организации
         ,EmailAllreadyExist = 9                 //почта уже занята
+    }
+
+    public static class ErrorMessages
+    {
+        public const string LoginFail = "Неверный логин или пароль";
+        public const string LoginIncorrect = "Введен некорректный логин";
     }
 }
