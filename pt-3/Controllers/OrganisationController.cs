@@ -464,5 +464,10 @@ ORDER BY surname, name, patronim, email";
 
             return answer.JsonContentResult();
         }
+
+        public ActionResult UsersImport()
+        {
+            return View();
+        }
     }
 }

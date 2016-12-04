@@ -169,6 +169,7 @@
     <Compile Include="Controllers\AboutController.cs" />
     <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\CabinetController.cs" />
+    <Compile Include="Controllers\HelpController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ManageController.cs" />
     <Compile Include="Controllers\OrganisationController.cs" />
@@ -246,6 +247,11 @@
     <Content Include="Views\Shared\_Cabinet.cshtml" />
     <Content Include="Views\Organisation\Users.cshtml" />
     <Content Include="Views\Organisation\UserCU.cshtml" />
+    <Content Include="Views\Organisation\UsersImport.cshtml" />
+    <Content Include="Views\Shared\_About.cshtml" />
+    <Content Include="Views\About\Service.cshtml" />
+    <Content Include="Views\Help\Index.cshtml" />
+    <Content Include="Views\Help\UsersImport.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Code\" />

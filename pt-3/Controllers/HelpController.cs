@@ -6,15 +6,15 @@ using System.Web.Mvc;
 
 namespace psychoTest.Controllers
 {
-    public class AboutController : Controller
+    public class HelpController : Controller
     {
-        // GET: About
+        // GET: Help
         public ActionResult Index()
         {
             return View();
         }
 
-        public ActionResult Service()
+        public ActionResult UsersImport()
         {
             return View();
         }

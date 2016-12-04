@@ -54,7 +54,7 @@
             </div>
         </div>
         <div class="form-group">
-            @if (Model.userId.Length > 30)
+            @if (Model.userId != null && Model.userId.Length > 30)
             {
                 <div class="col-md-2">
                     <label class="control-label">Новый пароль</label>
@@ -75,7 +75,7 @@
                 <b>Чекбоксы или что-то другое с выбором 4-ёх ролей: Актор, Контролёр, Зритель, Менеджер. Рузльтат выбора попдает в hidden с именем roles</b>
             </div>
         </div>
-        @if (Model.userId.Length > 30)
+        @if (Model.userId != null && Model.userId.Length > 30)
         {
             <input type="hidden" name="roles" value="@Model.roles" />
         }
