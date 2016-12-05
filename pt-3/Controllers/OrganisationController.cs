@@ -507,6 +507,13 @@ ORDER BY dateCreate DESC";
                 return View(model);
             }
 
+            //если не указан сепаратор
+            if (String.IsNullOrEmpty(model.separator))
+            {
+                ViewData["serverError"] = Core.ErrorMessages.UploadFileNoSeparator;
+                return View(model);
+            }
+
             //очистим все счетчики и журналы
             model.errorLog.Clear();
             model.rowsCount = 0;

@@ -203,5 +203,6 @@ namespace psychoTest.Core
         public const string UploadFileNotSelect = "Не выбран файл для загрузки.";
         public const string UploadUsersFileLessTwoStrings = "В загруженном файле меньше двух строк.";
         public const string UploadUsersFileNoEmail = "В файле отсутствует поле \"email\".";
+        public const string UploadFileNoSeparator = "Не указан разделитель столбцов.";
     }
 }
