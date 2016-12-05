@@ -1,8 +1,44 @@
-﻿
+﻿@model psychoTest.Models.Organisations.Views.UsersImport
 @{
     ViewBag.Title = "Загрузка из файла";
 }
 
 <h2>@ViewBag.Title</h2>
-<a href="/organisation/users?orgId=@Request.QueryString["orgId"]">Вернуться к списку</a>
+<div>
+    Предыдущие загрузки
+</div>
+<a href="/organisation/users?orgId=@Model.orgId">Вернуться к списку</a>
 <br />Узнайте всё о том, каким должен быть <a href="/help/usersimport">формат файла для загрузки</a> пользовталей.
+@using (Html.BeginForm("usersimport", "organisation", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    @:Сепаратор:
+    <input type="text" value="@Model.separator" name="separator" />
+    <input type="file" name="filename" />
+    <input type="submit" value="Загрузить" />
+}
+
+@if (Model.showResult)
+{
+    <div>
+        Всего строк данных: @Model.rowsCount
+        <br/>Из них:
+        @if (Model.rowsIncorrect > 0)
+        {
+            @:<br />с отсутсвующим полем "email": @Model.rowsIncorrect.ToString()
+        }
+        <br/>успешно распознано: @Model.rowsCorrect
+        <br/>Добавлено пользователей: @Model.usersAdded
+        @if (Model.usersNotAdded > 0)
+        {
+            @:<br />Не добавлено пользователей: @Model.usersNotAdded
+        }
+        <br />Недобавленные пользователи:
+            @foreach (psychoTest.Core.UploadFailedString log in Model.errorLog)
+            {
+                <div style="padding-left: 20px; padding-bottom: 5px;">
+                    <i>Строка @log.rowNumber.ToString()</i> : <span style="background-color: #e2e2e2;">@log.rowData</span>
+                    <br /><u>Причина:</u> некорректное поле <b>@log.failedColumnName:</b> @log.failedColumnData
+                </div>
+            }
+    </div>
+}

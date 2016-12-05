@@ -301,5 +301,19 @@ namespace psychoTest.Models.Organisations
             public byte? sex { get; set; }
             public string password { get; set; }
         }
+
+        public class UsersImport
+        {
+            public string orgId { get; set; }
+            public string separator { get; set; } = ";";
+            public string filename { get; set; } = null;
+            public bool showResult { get; set; } = false;
+            public int rowsCount { get; set; } = 0;
+            public int rowsCorrect { get; set; } = 0;
+            public int rowsIncorrect { get; set; } = 0;
+            public int usersAdded { get; set; } = 0;
+            public int usersNotAdded { get; set; } = 0;
+            public List<Core.UploadFailedString> errorLog { get; set; } = new List<Core.UploadFailedString>();
+        }
     }
 }

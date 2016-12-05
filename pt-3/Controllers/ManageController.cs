@@ -196,7 +196,7 @@ namespace psychoTest.Controllers
                 return RedirectToAction("Index", new { Message = ManageMessageId.AddPhoneSuccess });
             }
             // If we got this far, something failed, redisplay form
-            ModelState.AddModelError("", "Failed to verify phone");
+            ViewData["serverError"] = Core.ErrorMessages.SMSCodeIncorrect;
             return View(model);
         }
 
@@ -223,8 +223,11 @@ namespace psychoTest.Controllers
             if (userId != model.userId && Core.Membership.isAdmin(User))
             {
                 userId = model.userId;
+                ApplicationUserManager aum = HttpContext.GetOwinContext().GetUserManager<ApplicationUserManager>();
+                aum.RemovePassword(userId);
+                aum.AddPassword(userId, model.NewPassword);
+                return Redirect("/manage?userId=" + userId);
             }
-            else return Redirect("/manage");
 
             var result = await UserManager.ChangePasswordAsync(userId, model.OldPassword, model.NewPassword);
             if (result.Succeeded)

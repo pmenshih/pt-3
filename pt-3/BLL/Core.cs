@@ -155,6 +155,14 @@ namespace psychoTest.Core
         }
     }
 
+    public class UploadFailedString
+    {
+        public int rowNumber { get; set; }
+        public string rowData { get; set; }
+        public string failedColumnName { get; set; }
+        public string failedColumnData { get; set; }
+    }
+
     public enum CRUDType
     {
         Create = 1
@@ -182,5 +190,10 @@ namespace psychoTest.Core
         public const string LoginFail = "Неверный логин или пароль.";
         public const string LoginIncorrect = "Введен некорректный логин.";
         public const string EmailRegistered = "Указанный адрес электронной почты уже зарегистрирован.";
+        public const string EmailIncorrect = "Указан неверный адрес электронной почты.";
+        public const string SMSCodeIncorrect = "Указан неверный код из СМС.";
+        public const string UploadFileNotSelect = "Не выбран файл для загрузки.";
+        public const string UploadUsersFileLessTwoStrings = "В загруженном файле меньше двух строк.";
+        public const string UploadUsersFileNoEmail = "В файле отсутствует поле \"email\".";
     }
 }

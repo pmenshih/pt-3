@@ -90,7 +90,7 @@ namespace psychoTest.Controllers
 
             // This doesn't count login failures towards account lockout
             // To enable password failures to trigger account lockout, change to shouldLockout: true
-            var result = await SignInManager.PasswordSignInAsync(model.Login, model.Password, model.RememberMe, shouldLockout: false);
+            var result = await SignInManager.PasswordSignInAsync(model.Login, model.Password, model.RememberMe, shouldLockout: true);
             switch (result)
             {
                 case SignInStatus.Success:
@@ -247,6 +247,7 @@ namespace psychoTest.Controllers
         {
             if (!ModelState.IsValid)
             {
+                ViewData["serverError"] = Core.ErrorMessages.EmailIncorrect;
                 return View(model);
             }
             //сброс по адресу почты
@@ -263,12 +264,13 @@ namespace psychoTest.Controllers
                 {
                     return RedirectToAction("ResetPasswordConfirmation", "Account");
                 }
-                AddErrors(result);
+                ViewData["serverError"] = Core.ErrorMessages.EmailIncorrect;
             }
             //сброс по номеру телефона
             else
             {
                 //var user = 
+                ViewData["serverError"] = Core.ErrorMessages.EmailIncorrect;
             }
             return View();
         }

@@ -11,6 +11,8 @@ using Microsoft.Owin.Security;
 using psychoTest.Models;
 using psychoTest.Models.Organisations;
 using System.Web.Script.Serialization;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace psychoTest.Controllers
 {
@@ -162,8 +164,8 @@ namespace psychoTest.Controllers
             {
                 try
                 {
-                    //проверим, не состоит ли пользователь в запрашиваемой организации
-                    if (db.OrganisationUsers.Where(x => x.orgId == orgId && x.userEmail == userEmail && x.dateStop > DateTime.Now).Count() > 0)
+                    //если пользователь уже состоит в какой-либо организации, то досвидания
+                    if(db.OrganisationUsers.Where(x => x.userEmail == userEmail && x.active && x.dateStop > DateTime.Now).Count() > 0)
                     {
                         answer.result = Core.AjaxResults.UserAllreadyInOrg;
                         return answer.JsonContentResult();
@@ -187,6 +189,7 @@ namespace psychoTest.Controllers
                 catch (Exception)
                 {
                     answer.result = Core.AjaxResults.CodeError;
+                    return answer.JsonContentResult();
                 }
             }
             answer.result = Core.AjaxResults.Success;
@@ -465,10 +468,195 @@ ORDER BY surname, name, patronim, email";
             return answer.JsonContentResult();
         }
 
-        public ActionResult UsersImport()
+        public ActionResult UsersImport(string orgId)
         {
-            //123
-            return View();
+            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, orgId))
+            {
+                return Redirect("/cabinet");
+            }
+
+            var model = new Models.Organisations.Views.UsersImport();
+            model.orgId = orgId;
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public ActionResult UsersImport(Models.Organisations.Views.UsersImport model)
+        {
+            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, model.orgId))
+            {
+                return Redirect("/cabinet");
+            }
+
+            if (model.filename == null)
+            {
+                ViewData["serverError"] = Core.ErrorMessages.UploadFileNotSelect;
+                return View(model);
+            }
+
+            //очистим все счетчики и журналы
+            model.errorLog.Clear();
+            model.rowsCount = 0;
+            model.rowsCorrect = 0;
+            model.rowsIncorrect = 0;
+            model.usersAdded = 0;
+            model.usersNotAdded = 0;
+
+            //прочитаем файл в строку
+            HttpPostedFileBase file = Request.Files["filename"];
+            byte[] fileBytes = new byte[file.ContentLength];
+            var data = file.InputStream.Read(fileBytes, 0, Convert.ToInt32(file.ContentLength));
+            string usersFile = Encoding.UTF8.GetString(fileBytes);
+
+            //рассплитуем файл построчно
+            string [] ufStrings = Regex.Split(usersFile, "\r\n");
+            //в файле меньше двух строк
+            if (ufStrings.Count() < 2)
+            {
+                ViewData["serverError"] = Core.ErrorMessages.UploadUsersFileLessTwoStrings;
+                return View(model);
+            }
+
+            int cnEmail = -1;
+            int cnSurname = 1;
+            int cnName = 2;
+            int cnPatronim = 3;
+            int cnSex = 4;
+            int cnPhone = 5;
+            int cnPwd = 6;
+            int cnRoles = 7;
+
+            //разберем первую строку-заголовок
+            int cCounter = 0;
+            foreach (string s in Regex.Split(ufStrings[0], model.separator))
+            {
+                //узнаем индексы нужных полей
+                switch(s)
+                {
+                    case "email":
+                        cnEmail = cCounter;
+                        break;
+                    case "surname":
+                        cnSurname = cCounter;
+                        break;
+                    case "name":
+                        cnName = cCounter;
+                        break;
+                    case "patronim":
+                        cnPatronim = cCounter;
+                        break;
+                    case "sex":
+                        cnSex = cCounter;
+                        break;
+                    case "phone":
+                        cnPhone = cCounter;
+                        break;
+                    case "pwd":
+                        cnPwd = cCounter;
+                        break;
+                    case "roles":
+                        cnRoles = cCounter;
+                        break;
+                    default:
+                        break;
+                }
+                cCounter++;
+            }
+
+            //если поля email нет, то сообщим об этом
+            if (cnEmail == -1)
+            {
+                ViewData["serverError"] = Core.ErrorMessages.UploadUsersFileNoEmail;
+                return View(model);
+            }
+
+            //начинаем собирать записи пользователей и добавлять их
+            cCounter = 0;
+            foreach (string fileString in ufStrings)
+            {
+                cCounter++;
+
+                //первую строку пропустим
+                if (cCounter-1 == 0)
+                {    
+                    continue;
+                }
+
+                //если строка пустая, тоже пропустим
+                if (fileString.Length < 1)
+                {
+                    continue;
+                }
+
+                model.rowsCount++;
+
+                string[] columns = Regex.Split(fileString, model.separator);
+
+                //проверим поля на корректность
+                //почта
+                string email;
+                try
+                {
+                    email = columns[cnEmail];
+                }
+                catch (Exception)
+                {
+                    model.rowsIncorrect++;
+                    continue;
+                }
+                Regex regex = new Regex(@"^[\w!#$%&'*+\-/=?\^_`{|}~]+(\.[\w!#$%&'*+\-/=?\^_`{|}~]+)*" + "@" + @"((([\-\w]+\.)+[a-zA-Z]{2,4})|(([0-9]{1,3}\.){3}[0-9]{1,3}))$");
+                Match match = regex.Match(email);
+                if (!match.Success)
+                {
+                    model.rowsIncorrect++;
+
+                    //добавим подробности в журнал ошибок
+                    Core.UploadFailedString log = new Core.UploadFailedString();
+                    log.rowNumber = cCounter;
+                    log.rowData = fileString;
+                    log.failedColumnName = "email";
+                    log.failedColumnData = email;
+                    model.errorLog.Add(log);
+
+                    continue;
+                }
+                else
+                {
+                    model.rowsCorrect++;
+                }
+
+                //если почта верная, увеличим счетчик распознанного как строки пользователей
+
+                /*var newUser = new ApplicationUser { UserName = model.email, Email = model.email };
+                newUser.Surname = model.surname;
+                newUser.Patronim = model.patronim;
+                newUser.Name = model.name;
+                newUser.PhoneNumber = model.phone;
+                newUser.Sex = model.sex;
+                var result = HttpContext.GetOwinContext().GetUserManager<ApplicationUserManager>().Create(newUser, model.password);
+
+                //добавим пользователя в организацию
+                //присвоим ему роли
+                if (result.Succeeded)
+                {
+                    Organisation org = Organisation.GetById(model.orgId);
+                    org.AddUser(newUser.Email);
+
+                    foreach (string role in model.roles.Split(','))
+                    {
+                        org.UserAddRole(newUser.Email, role);
+                    }
+
+                    //обновление индекса
+                    Core.BLL.SearchIndexUpdate(newUser, Core.CRUDType.Create);
+                }*/
+            }
+
+            //разрешим показать результаты
+            model.showResult = true;
+
+            return View(model);
         }
     }
 }
