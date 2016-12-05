@@ -228,6 +228,17 @@ namespace psychoTest.Models.Organisations
         }
     }
 
+    public class OrganisationsUsersFile
+    {
+        [Key]
+        public string id { get; set; }
+        public string orgId { get; set; }
+        public DateTime dateCreate { get; set; }
+        public bool deleted { get; set; }
+        public string usersData { get; set; }
+        public int usersCount { get; set; }
+    }
+
     namespace Views
     {
         [NotMapped]
@@ -313,7 +324,17 @@ namespace psychoTest.Models.Organisations
             public int rowsIncorrect { get; set; } = 0;
             public int usersAdded { get; set; } = 0;
             public int usersNotAdded { get; set; } = 0;
-            public List<Core.UploadFailedString> errorLog { get; set; } = new List<Core.UploadFailedString>();
+            public List<Core.UploadFailedString> errorLog { get; set; } 
+                = new List<Core.UploadFailedString>();
+            public List<UsersUploadHistoryViewEntity> uploadHistory { get; set; }
+                = new List<UsersUploadHistoryViewEntity>();
+        }
+
+        public class UsersUploadHistoryViewEntity
+        {
+            public string id { get; set; }
+            public DateTime dateCreate { get; set; }
+            public int usersCount { get; set; }
         }
     }
 }

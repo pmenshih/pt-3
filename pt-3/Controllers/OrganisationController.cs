@@ -477,7 +477,19 @@ ORDER BY surname, name, patronim, email";
 
             var model = new Models.Organisations.Views.UsersImport();
             model.orgId = orgId;
-
+            using (DBMain db = new DBMain())
+            {
+                string query = @"
+SELECT id, dateCreate, usersCount
+FROM OrganisationsUsersFiles
+WHERE orgId=@orgId
+    AND deleted=0
+ORDER BY dateCreate DESC";
+                model.uploadHistory = db.Database.SqlQuery
+                    <Models.Organisations.Views.UsersUploadHistoryViewEntity>
+                    (query, new SqlParameter("orgId", model.orgId)).ToList();
+            }
+            
             return View(model);
         }
 
@@ -518,88 +530,147 @@ ORDER BY surname, name, patronim, email";
                 return View(model);
             }
 
-            int cnEmail = -1;
-            int cnSurname = 1;
-            int cnName = 2;
-            int cnPatronim = 3;
-            int cnSex = 4;
-            int cnPhone = 5;
-            int cnPwd = 6;
-            int cnRoles = 7;
+            int scnEmail = -1;
+            int scnSurname = -1;
+            int scnName = -1;
+            int scnPatronim = -1;
+            int scnSex = -1;
+            int scnPhone = -1;
+            int scnPwd = -1;
+            int scnRoles = -1;
+
+            int dcnEmail = -1;
+            int dcnSurname = -1;
+            int dcnName = -1;
+            int dcnPatronim = -1;
+            int dcnSex = -1;
+            int dcnPhone = -1;
+            int dcnPwd = -1;
+            int dcnRoles = -1;
+            int destColumnCounter = 0;
+
+            string historyFile = "";
 
             //разберем первую строку-заголовок
-            int cCounter = 0;
+            int dataColumnCounter = 0;
             foreach (string s in Regex.Split(ufStrings[0], model.separator))
             {
                 //узнаем индексы нужных полей
                 switch(s)
                 {
                     case "email":
-                        cnEmail = cCounter;
+                        scnEmail = dataColumnCounter;
+                        historyFile += s + model.separator;
+                        dcnEmail = destColumnCounter;
+                        destColumnCounter++;
                         break;
                     case "surname":
-                        cnSurname = cCounter;
+                        scnSurname = dataColumnCounter;
+                        historyFile += s + model.separator;
+                        dcnSurname = destColumnCounter;
+                        destColumnCounter++;
                         break;
                     case "name":
-                        cnName = cCounter;
+                        scnName = dataColumnCounter;
+                        historyFile += s + model.separator;
+                        dcnName = destColumnCounter;
+                        destColumnCounter++;
                         break;
                     case "patronim":
-                        cnPatronim = cCounter;
+                        scnPatronim = dataColumnCounter;
+                        historyFile += s + model.separator;
+                        dcnPatronim = destColumnCounter;
+                        destColumnCounter++;
                         break;
                     case "sex":
-                        cnSex = cCounter;
+                        scnSex = dataColumnCounter;
+                        historyFile += s + model.separator;
+                        dcnSex = destColumnCounter;
+                        destColumnCounter++;
                         break;
                     case "phone":
-                        cnPhone = cCounter;
+                        scnPhone = dataColumnCounter;
+                        historyFile += s + model.separator;
+                        dcnPhone = destColumnCounter;
+                        destColumnCounter++;
                         break;
                     case "pwd":
-                        cnPwd = cCounter;
+                        scnPwd = dataColumnCounter;
+                        historyFile += s + model.separator;
+                        dcnPwd = destColumnCounter;
+                        destColumnCounter++;
                         break;
                     case "roles":
-                        cnRoles = cCounter;
+                        scnRoles = dataColumnCounter;
+                        historyFile += s + model.separator;
+                        dcnRoles = destColumnCounter;
+                        destColumnCounter++;
                         break;
                     default:
                         break;
                 }
-                cCounter++;
+                dataColumnCounter++;
+            }
+
+            //если в исходном файле нет ИЛИ поля с паролем, ИЛИ поля с ролями
+            //то нам нужно добавить их в конец таблицы для истории загрузок
+            if (dcnPwd == -1)
+            {
+                historyFile += "pwd" + model.separator;
+                dcnPwd = destColumnCounter;
+                destColumnCounter++;
+            }
+            if (dcnRoles == -1)
+            {
+                historyFile += "roles" + model.separator;
+                dcnRoles = destColumnCounter;
+                destColumnCounter++;
             }
 
             //если поля email нет, то сообщим об этом
-            if (cnEmail == -1)
+            if (scnEmail == -1)
             {
                 ViewData["serverError"] = Core.ErrorMessages.UploadUsersFileNoEmail;
                 return View(model);
             }
 
+            DBMain db = new DBMain();
+
             //начинаем собирать записи пользователей и добавлять их
-            cCounter = 0;
+            int rowsCounter = 0;
             foreach (string fileString in ufStrings)
             {
-                cCounter++;
+                string [] historyString = new string[destColumnCounter];
+
+                rowsCounter++;
 
                 //первую строку пропустим
-                if (cCounter-1 == 0)
-                {    
-                    continue;
-                }
+                if (rowsCounter - 1 == 0) continue;
 
                 //если строка пустая, тоже пропустим
-                if (fileString.Length < 1)
-                {
-                    continue;
-                }
+                if (fileString.Length < 1) continue;
 
                 model.rowsCount++;
 
                 string[] columns = Regex.Split(fileString, model.separator);
 
+                if (columns.Length < dataColumnCounter)
+                {
+                    model.rowsIncorrect++;
+                    string a = "Количество стобцов меньше чем в заголовке";
+                    string b = columns.Length.ToString() + " из " + dataColumnCounter.ToString();
+                    Core.UploadFailedString log = new Core.UploadFailedString(rowsCounter
+                                                                                , fileString
+                                                                                , a
+                                                                                , b);
+                    model.errorLog.Add(log);
+                    continue;
+                }
+                
                 //проверим поля на корректность
                 //почта
-                string email;
-                try
-                {
-                    email = columns[cnEmail];
-                }
+                string email = null;
+                try { email = columns[scnEmail]; }
                 catch (Exception)
                 {
                     model.rowsIncorrect++;
@@ -607,56 +678,272 @@ ORDER BY surname, name, patronim, email";
                 }
                 Regex regex = new Regex(@"^[\w!#$%&'*+\-/=?\^_`{|}~]+(\.[\w!#$%&'*+\-/=?\^_`{|}~]+)*" + "@" + @"((([\-\w]+\.)+[a-zA-Z]{2,4})|(([0-9]{1,3}\.){3}[0-9]{1,3}))$");
                 Match match = regex.Match(email);
+                //если адрес почты не соответствует шаблону
                 if (!match.Success)
                 {
                     model.rowsIncorrect++;
 
                     //добавим подробности в журнал ошибок
-                    Core.UploadFailedString log = new Core.UploadFailedString();
-                    log.rowNumber = cCounter;
-                    log.rowData = fileString;
-                    log.failedColumnName = "email";
-                    log.failedColumnData = email;
+                    Core.UploadFailedString log = new Core.UploadFailedString(rowsCounter
+                                                                                , fileString
+                                                                                , "email"
+                                                                                , email);
                     model.errorLog.Add(log);
 
                     continue;
                 }
-                else
+                else if (db.AspNetUsers.Where(x => x.Email == email).Count() > 0)
                 {
                     model.rowsCorrect++;
+                    model.usersNotAdded++;
+                    string b = "адрес уже зарегистрирован";
+                    Core.UploadFailedString log = new Core.UploadFailedString(rowsCounter
+                                                                                , fileString
+                                                                                , "email"
+                                                                                , b);
+                    model.errorLog.Add(log);
+                    continue;
                 }
+                historyString[dcnEmail] = email;
 
-                //если почта верная, увеличим счетчик распознанного как строки пользователей
+                //фамилия
+                string surname = null;
+                if (scnSurname != -1 && columns[scnSurname] != String.Empty)
+                {
+                    surname = columns[scnSurname];
+                    if (surname.Length > 30)
+                    {
+                        model.rowsIncorrect++;
+                        Core.UploadFailedString log = new Core.UploadFailedString(rowsCounter
+                                                                                    , fileString
+                                                                                    , "surname"
+                                                                                    , columns[scnSurname]);
+                        model.errorLog.Add(log);
+                        continue;
+                    }
+                }
+                if(scnSurname != -1) historyString[dcnSurname] = surname;
 
-                /*var newUser = new ApplicationUser { UserName = model.email, Email = model.email };
-                newUser.Surname = model.surname;
-                newUser.Patronim = model.patronim;
-                newUser.Name = model.name;
-                newUser.PhoneNumber = model.phone;
-                newUser.Sex = model.sex;
-                var result = HttpContext.GetOwinContext().GetUserManager<ApplicationUserManager>().Create(newUser, model.password);
+                //имя
+                string name = null;
+                if (scnName != -1 && columns[scnName] != String.Empty)
+                {
+                    name = columns[scnName];
+                    if (name.Length > 30)
+                    {
+                        model.rowsIncorrect++;
+                        Core.UploadFailedString log = new Core.UploadFailedString(rowsCounter
+                                                                                    , fileString
+                                                                                    , "name"
+                                                                                    , columns[scnName]);
+                        model.errorLog.Add(log);
+                        continue;
+                    }
+                }
+                if (scnName != -1) historyString[dcnName] = name;
 
-                //добавим пользователя в организацию
-                //присвоим ему роли
+                //отчество
+                string patronim = null;
+                if (scnPatronim != -1 && columns[scnPatronim] != String.Empty)
+                {
+                    patronim = columns[scnPatronim];
+                    if (patronim.Length > 30)
+                    {
+                        model.rowsIncorrect++;
+                        Core.UploadFailedString log = new Core.UploadFailedString(rowsCounter
+                                                                                    , fileString
+                                                                                    , "patronim"
+                                                                                    , columns[scnPatronim]);
+                        model.errorLog.Add(log);
+                        continue;
+                    }
+                }
+                if (scnPatronim != -1) historyString[dcnPatronim] = patronim;
+
+                //пол
+                byte? sex = null;
+                if (scnSex != -1 && columns[scnSex] != String.Empty)
+                {
+                    if (columns[scnSex] == "1" || columns[scnSex] == "0")
+                        sex = Byte.Parse(columns[scnSex]);
+                    else
+                    {
+                        model.rowsIncorrect++;
+                        Core.UploadFailedString log = new Core.UploadFailedString(rowsCounter
+                                                                                    , fileString
+                                                                                    , "sex"
+                                                                                    , columns[scnSex]);
+                        model.errorLog.Add(log);
+                        continue;
+                    }
+                }
+                if (scnSex != -1) historyString[dcnSex] = sex.ToString();
+
+                //телефон
+                string phone = null;
+                if (scnPhone != -1 && columns[scnPhone] != String.Empty)
+                {
+                    phone = columns[scnPhone];
+                    regex = new Regex(@"^\d{11,15}$");
+                    match = regex.Match(phone);
+                    phone = "+" + phone;
+                    //если номер телефона не соответствует шаблону
+                    if (!match.Success)
+                    {
+                        model.rowsIncorrect++;
+                        Core.UploadFailedString log = new Core.UploadFailedString(rowsCounter
+                                                                                    , fileString
+                                                                                    , "phone"
+                                                                                    , columns[scnPhone]);
+                        model.errorLog.Add(log);
+                        continue;
+                    }
+                    else if (db.AspNetUsers.Where(x => x.PhoneNumber == phone).Count() > 0)
+                    {
+                        model.rowsCorrect++;
+                        model.usersNotAdded++;
+                        string b = "номер телефона уже зарегистрирован";
+                        Core.UploadFailedString log = new Core.UploadFailedString(rowsCounter
+                                                                                    , fileString
+                                                                                    , "phone"
+                                                                                    , b);
+                        model.errorLog.Add(log);
+                        continue;
+                    }
+                }
+                if (scnPhone != -1) historyString[dcnPhone] = phone;
+
+                //пароль
+                string password = null;
+                if (scnPwd != -1 && columns[scnPwd] != String.Empty)
+                {
+                    password = columns[scnPwd];
+                    //минимум 1 латинская буква, минимум 1 НЕбуква, минимум 6 символов
+                    regex = new Regex(@"^(.{0,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{4,})|(.{1,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{3,})|(.{2,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{2,})|(.{3,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{1,})|(.{4,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{0,})$");
+                    match = regex.Match(password);
+                    //если пароль не соответствует шаблону
+                    if (!match.Success)
+                    {
+                        model.rowsIncorrect++;
+                        Core.UploadFailedString log = new Core.UploadFailedString(rowsCounter
+                                                                                    , fileString
+                                                                                    , "pwd"
+                                                                                    , columns[scnPwd]);
+                        model.errorLog.Add(log);
+                        continue;
+                    }
+                }
+                else
+                {
+                    password = Core.BLL.GenerateRandomDigitCode(6);
+                }
+                historyString[dcnPwd] = password;
+
+                //роли
+                string roles = null;
+                if (scnRoles != -1 && !String.IsNullOrEmpty(columns[scnRoles]))
+                {
+                    foreach (string s in Regex.Split(columns[scnRoles], ","))
+                    {
+                        if ((s != "actor" && s != "manager" && s != "viewer" && s != "inspector")
+                            || s.Length > 32)
+                        {
+                            model.rowsIncorrect++;
+                            Core.UploadFailedString log = new Core.UploadFailedString(rowsCounter
+                                                                                        , fileString
+                                                                                        , "roles"
+                                                                                        , columns[scnRoles]);
+                            model.errorLog.Add(log);
+                            continue;
+                        }
+                        else if (roles == null) roles = s + ",";
+                        else if (!roles.Contains(s)) roles += s + ",";
+                    }
+                    if (roles != null) roles = roles.TrimEnd(',');
+                }
+                else roles = "actor";
+                historyString[dcnRoles] = roles;
+
+                //если все проверки пройдены, увеличим счетчик распознанного как строки пользователей
+                model.rowsCorrect++;
+
+                //добавим пользователя в БД
+                var newUser = new ApplicationUser { UserName = email, Email = email };
+                newUser.Surname = surname;
+                newUser.Patronim = patronim;
+                newUser.Name = name;
+                newUser.PhoneNumber = phone;
+                newUser.Sex = sex;
+                var result = HttpContext.GetOwinContext().GetUserManager<ApplicationUserManager>()
+                    .Create(newUser, password);
                 if (result.Succeeded)
                 {
+                    //добавим пользователя к организации
                     Organisation org = Organisation.GetById(model.orgId);
-                    org.AddUser(newUser.Email);
+                    org.AddUser(email);
 
-                    foreach (string role in model.roles.Split(','))
+                    //добавим пользователю роли
+                    foreach (string role in roles.Split(','))
                     {
-                        org.UserAddRole(newUser.Email, role);
+                        org.UserAddRole(email, role);
                     }
 
-                    //обновление индекса
+                    //обновление поискового индекса
                     Core.BLL.SearchIndexUpdate(newUser, Core.CRUDType.Create);
-                }*/
-            }
 
-            //разрешим показать результаты
+                    model.usersAdded++;
+                }
+
+                //сформируем строку параметров пользователя для файла в историю загрузок
+                historyFile += "\r\n";
+                foreach (string s in historyString)
+                {
+                    historyFile += s + model.separator;
+                }
+            }
+            
+            //если пользователи добавлены, сохраним файл историй в БД
+            if(model.usersAdded > 0)
+            {
+                OrganisationsUsersFile oufs = new OrganisationsUsersFile();
+                oufs.dateCreate = DateTime.Now;
+                oufs.deleted = false;
+                oufs.id = Guid.NewGuid().ToString();
+                oufs.orgId = model.orgId;
+                oufs.usersCount = model.usersAdded;
+                oufs.usersData = historyFile;
+                db.OrganisationsUsersFiles.Add(oufs);
+                db.SaveChanges();
+                db.Dispose();
+            }
+            
             model.showResult = true;
 
             return View(model);
+        }
+
+        public ActionResult UsersUploadFile(string id)
+        {
+            DBMain db = new DBMain();
+            OrganisationsUsersFile ouf = db.OrganisationsUsersFiles.Single(x => x.id == id);
+
+            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, ouf.orgId))
+            {
+                return new EmptyResult();
+            }
+
+            //здесь начинается костыль со сменой кодировки результатов из UTF-8 в WIN1251. 
+            //временное решение
+            Encoding srcEnc = Encoding.UTF8;
+            Encoding destEnc = Encoding.GetEncoding(1251);
+            byte[] srcBytes = srcEnc.GetBytes(ouf.usersData);
+            byte[] destBytes = Encoding.Convert(srcEnc, destEnc, srcBytes);
+            ouf.usersData = destEnc.GetString(destBytes);
+
+            string filename = String.Format("kh-usersupload-{0}-{1}.csv"
+                                            ,ouf.dateCreate.ToString("dd.MM.yyyy HH:mm:ss")
+                                            ,ouf.usersCount);
+            return File(destEnc.GetBytes(ouf.usersData), "text/csv", filename);
         }
     }
 }

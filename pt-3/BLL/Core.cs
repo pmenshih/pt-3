@@ -157,6 +157,14 @@ namespace psychoTest.Core
 
     public class UploadFailedString
     {
+        public UploadFailedString() { }
+        public UploadFailedString(int rN, string rD, string fCN, string fCD)
+        {
+            rowNumber = rN;
+            rowData = rD;
+            failedColumnName = fCN;
+            failedColumnData = fCD;
+        }
         public int rowNumber { get; set; }
         public string rowData { get; set; }
         public string failedColumnName { get; set; }

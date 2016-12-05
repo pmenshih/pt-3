@@ -18,6 +18,7 @@ namespace psychoTest.Models
         public DbSet<Organisations.Organisation> Organisations { get; set; }
         public DbSet<Organisations.OrganisationsUsersRole> OrganisationsUsersRoles { get; set; }
         public DbSet<Organisations.OrganisationsUsers> OrganisationUsers { get; set; }
+        public DbSet<Organisations.OrganisationsUsersFile> OrganisationsUsersFiles { get; set; }
     }
 
     public class AspNetUser
