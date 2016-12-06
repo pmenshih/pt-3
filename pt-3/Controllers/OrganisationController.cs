@@ -90,6 +90,7 @@ namespace psychoTest.Controllers
                     catch (Exception)
                     {
                         answer.result = Core.AjaxResults.CodeError;
+                        return answer.JsonContentResult();
                     }
                 }
                 answer.result = Core.AjaxResults.Success;
@@ -117,6 +118,7 @@ namespace psychoTest.Controllers
                     catch (Exception)
                     {
                         answer.result = Core.AjaxResults.CodeError;
+                        return answer.JsonContentResult();
                     }
                 }
                 answer.result = Core.AjaxResults.Success;
@@ -142,11 +144,9 @@ namespace psychoTest.Controllers
                 catch (Exception)
                 {
                     answer.result = Core.AjaxResults.CodeError;
+                    return answer.JsonContentResult();
                 }
             }
-            answer.result = Core.AjaxResults.Success;
-
-            return answer.JsonContentResult();
         }
 
         /*[HttpPost]*/
@@ -225,6 +225,7 @@ namespace psychoTest.Controllers
                 catch (Exception)
                 {
                     answer.result = Core.AjaxResults.CodeError;
+                    return answer.JsonContentResult();
                 }
             }
             answer.result = Core.AjaxResults.Success;
@@ -253,6 +254,7 @@ namespace psychoTest.Controllers
                 catch (Exception)
                 {
                     answer.result = Core.AjaxResults.CodeError;
+                    return answer.JsonContentResult();
                 }
             }
             answer.result = Core.AjaxResults.Success;
@@ -460,11 +462,13 @@ ORDER BY surname, name, patronim, email";
                     {
                         // - его самого из таблицы пользователей
                         query = @"
-DELETE FROM AspNetUsers WHERE email=@email";
+DELETE FROM AspNetUsers WHERE Email=@userEmail";
+                        sqlParEmail = new SqlParameter("userEmail", user.Email);
                         db.Database.ExecuteSqlCommand(query, sqlParEmail);
                         // - историю его скитаний по организациям из таблицы привязки пользователей к организациям
                         query = @"
-DELETE FROM OrganisationsUsers WHERE userEmail=@email";
+DELETE FROM OrganisationsUsers WHERE userEmail=@userEmail";
+                        sqlParEmail = new SqlParameter("userEmail", user.Email);
                         db.Database.ExecuteSqlCommand(query, sqlParEmail);
                     }
                     else
@@ -476,9 +480,10 @@ DELETE FROM OrganisationsUsers WHERE userEmail=@email";
                         db.SaveChanges();
                     }
                 }
-                catch (Exception)
+                catch (Exception exc)
                 {
                     answer.result = Core.AjaxResults.CodeError;
+                    return answer.JsonContentResult();
                 }
             }
             answer.result = Core.AjaxResults.Success;
