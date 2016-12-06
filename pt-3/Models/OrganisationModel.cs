@@ -199,6 +199,27 @@ namespace psychoTest.Models.Organisations
                 return db.Database.SqlQuery<Views.OrganisationUsers>(query, new SqlParameter("orgId", id)).ToList<Views.OrganisationUsers>();
             }
         }
+
+        public static List<Views.UsersUploadHistoryViewEntity> GetUploadHistory(
+            string orgId
+            ,bool getDeleted = false)
+        {
+            using (DBMain db = new DBMain())
+            {
+                string query = @"
+SELECT id, dateCreate, usersCount
+FROM OrganisationsUsersFiles
+WHERE orgId=@orgId
+    AND deleted=0
+ORDER BY dateCreate DESC";
+                if (getDeleted)
+                    query = query.Replace("AND deleted=0", "");
+                List<Views.UsersUploadHistoryViewEntity> uploadHistory = db.Database.SqlQuery
+                    <Models.Organisations.Views.UsersUploadHistoryViewEntity>
+                    (query, new SqlParameter("orgId", orgId)).ToList();
+                return uploadHistory;
+            }
+        }
     }
 
     //таблица привязки ролей к пользователям организации

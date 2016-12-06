@@ -35,16 +35,8 @@
     <div>
         Всего строк данных: @Model.rowsCount
         <br/>Из них:
-        @if (Model.rowsIncorrect > 0)
-        {
-            @:<br />не распознано: @Model.rowsIncorrect.ToString()
-        }
         <br/>успешно распознано: @Model.rowsCorrect
         <br/>Добавлено пользователей: @Model.usersAdded
-        @if (Model.usersNotAdded > 0)
-        {
-            @:<br />Не добавлено пользователей: @Model.usersNotAdded
-        }
         @if (Model.errorLog.Count > 0)
         {
             @:<br />Нераспознанные строки и недобавленные пользователи:

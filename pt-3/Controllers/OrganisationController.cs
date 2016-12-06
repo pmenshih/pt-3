@@ -447,16 +447,34 @@ ORDER BY surname, name, patronim, email";
                     {
                         answer.result = Core.AjaxResults.NoRights;
                         return answer.JsonContentResult();
-                    } 
+                    }
 
                     //снимаем с пользователя роли
                     string query = @"DELETE FROM OrganisationsUsersRoles WHERE userEmail=@userEmail AND orgId=@orgId";
-                    db.Database.ExecuteSqlCommand(query, new SqlParameter("userEmail", user.Email), new SqlParameter("orgId", orgId));
-                    //меняем статус активности и дату увольнения
-                    OrganisationsUsers ou = db.OrganisationUsers.Where(x => x.userEmail == user.Email && x.orgId == orgId).Single();
-                    ou.dateStop = DateTime.Now;
-                    ou.active = false;
-                    db.SaveChanges();
+                    SqlParameter sqlParEmail = new SqlParameter("userEmail", user.Email);
+                    SqlParameter sqlParOrgId = new SqlParameter("orgId", orgId);
+                    db.Database.ExecuteSqlCommand(query, sqlParEmail, sqlParOrgId);
+
+                    //если у пользователя не подтвержден ни номер телефона, ни адрес почты, то удалим:
+                    if (!user.EmailConfirmed && !user.PhoneNumberConfirmed)
+                    {
+                        // - его самого из таблицы пользователей
+                        query = @"
+DELETE FROM AspNetUsers WHERE email=@email";
+                        db.Database.ExecuteSqlCommand(query, sqlParEmail);
+                        // - историю его скитаний по организациям из таблицы привязки пользователей к организациям
+                        query = @"
+DELETE FROM OrganisationsUsers WHERE userEmail=@email";
+                        db.Database.ExecuteSqlCommand(query, sqlParEmail);
+                    }
+                    else
+                    {
+                        //меняем статус активности и дату увольнения
+                        OrganisationsUsers ou = db.OrganisationUsers.Where(x => x.userEmail == user.Email && x.orgId == orgId).Single();
+                        ou.dateStop = DateTime.Now;
+                        ou.active = false;
+                        db.SaveChanges();
+                    }
                 }
                 catch (Exception)
                 {
@@ -477,18 +495,7 @@ ORDER BY surname, name, patronim, email";
 
             var model = new Models.Organisations.Views.UsersImport();
             model.orgId = orgId;
-            using (DBMain db = new DBMain())
-            {
-                string query = @"
-SELECT id, dateCreate, usersCount
-FROM OrganisationsUsersFiles
-WHERE orgId=@orgId
-    AND deleted=0
-ORDER BY dateCreate DESC";
-                model.uploadHistory = db.Database.SqlQuery
-                    <Models.Organisations.Views.UsersUploadHistoryViewEntity>
-                    (query, new SqlParameter("orgId", model.orgId)).ToList();
-            }
+            model.uploadHistory = Organisation.GetUploadHistory(orgId);
             
             return View(model);
         }
@@ -500,6 +507,8 @@ ORDER BY dateCreate DESC";
             {
                 return Redirect("/cabinet");
             }
+
+            model.uploadHistory = Organisation.GetUploadHistory(model.orgId);
 
             if (model.filename == null)
             {
@@ -923,7 +932,7 @@ ORDER BY dateCreate DESC";
                 db.SaveChanges();
                 db.Dispose();
             }
-            
+                       
             model.showResult = true;
 
             return View(model);
@@ -938,19 +947,13 @@ ORDER BY dateCreate DESC";
             {
                 return new EmptyResult();
             }
-
-            //здесь начинается костыль со сменой кодировки результатов из UTF-8 в WIN1251. 
-            //временное решение
+            
             Encoding srcEnc = Encoding.UTF8;
-            Encoding destEnc = Encoding.GetEncoding(1251);
-            byte[] srcBytes = srcEnc.GetBytes(ouf.usersData);
-            byte[] destBytes = Encoding.Convert(srcEnc, destEnc, srcBytes);
-            ouf.usersData = destEnc.GetString(destBytes);
 
             string filename = String.Format("kh-usersupload-{0}-{1}.csv"
                                             ,ouf.dateCreate.ToString("dd.MM.yyyy HH:mm:ss")
                                             ,ouf.usersCount);
-            return File(destEnc.GetBytes(ouf.usersData), "text/csv", filename);
+            return File(srcEnc.GetBytes(ouf.usersData), "text/csv", filename);
         }
     }
 }
