@@ -1,9 +1,10 @@
-﻿@{
+﻿@model psychoTest.Models.Cabinets.Views.Index
+@{
     Layout = "/Views/Shared/_Cabinet.cshtml";
     ViewBag.Title = "Личный кабинет";
 }
 
-@if (!psychoTest.Core.Membership.isInAnyRole(User))
+@if (!Model.userHaveAnyRole)
 {
     <div>
         <b>написать в этот блок текст!!!</b>

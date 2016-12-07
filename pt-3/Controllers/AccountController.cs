@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Globalization;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
@@ -15,28 +13,18 @@ namespace psychoTest.Controllers
     [Authorize]
     public class AccountController : Controller
     {
+        #region Variables
         private ApplicationSignInManager _signInManager;
         private ApplicationUserManager _userManager;
-
-        public AccountController()
-        {
-        }
-
-        public AccountController(ApplicationUserManager userManager, ApplicationSignInManager signInManager )
-        {
-            UserManager = userManager;
-            SignInManager = signInManager;
-        }
-
         public ApplicationSignInManager SignInManager
         {
             get
             {
                 return _signInManager ?? HttpContext.GetOwinContext().Get<ApplicationSignInManager>();
             }
-            private set 
-            { 
-                _signInManager = value; 
+            private set
+            {
+                _signInManager = value;
             }
         }
 
@@ -51,18 +39,29 @@ namespace psychoTest.Controllers
                 _userManager = value;
             }
         }
+        #endregion
 
-        //
-        // GET: /Account/Login
+        #region Constructors
+        public AccountController()
+        {
+        }
+
+        public AccountController(ApplicationUserManager userManager, ApplicationSignInManager signInManager )
+        {
+            UserManager = userManager;
+            SignInManager = signInManager;
+        }
+
+        
+        #endregion
+
         [AllowAnonymous]
         public ActionResult Login(string returnUrl)
         {
             ViewBag.ReturnUrl = returnUrl;
             return View();
         }
-
-        //
-        // POST: /Account/Login
+        
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
@@ -76,12 +75,8 @@ namespace psychoTest.Controllers
             //если введен номер телефона
             if (!model.Login.Contains("@"))
             {
-                try
-                {
-                    DBMain db = new DBMain();
-                    model.Login = db.AspNetUsers.Where(x => x.PhoneNumber == model.Login).Select(x => x.Email).Single();
-                }
-                catch (Exception)
+                model.Login = Models.Users.User.GetByPhone(model.Login)?.Email;
+                if(model.Login == null)
                 {
                     ViewData["serverError"] = Core.ErrorMessages.LoginIncorrect;
                     return View(model);
@@ -101,22 +96,17 @@ namespace psychoTest.Controllers
                     return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = model.RememberMe });
                 case SignInStatus.Failure:
                 default:
-                    //ModelState.AddModelError("", "Invalid login attempt.");
                     ViewData["serverError"] = Core.ErrorMessages.LoginFail;
                     return View(model);
             }
         }
-
-        //
-        // GET: /Account/Register
+        
         [AllowAnonymous]
         public ActionResult Register()
         {
             return View();
         }
 
-        //
-        // POST: /Account/Register
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]

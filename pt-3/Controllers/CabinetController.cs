@@ -17,8 +17,12 @@ namespace psychoTest.Controllers
         // GET: Cabinet
         public ActionResult Index()
         {
-            //если у пользователя нет ролей, посмотрим, подтвердил ли он почту и телефон. информацию об этом положим во вьюстэйт
-            if (!Core.Membership.isInAnyRole(User))
+            Models.Cabinets.Views.Index model = new Models.Cabinets.Views.Index();
+            model.userHaveAnyRole = Core.Membership.isInAnyRole();
+
+            //если у пользователя нет ролей, посмотрим, подтвердил ли он почту и телефон. 
+            //информацию об этом положим в ViewData
+            if (!model.userHaveAnyRole)
             {
                 using (DBMain db = new DBMain())
                 {
@@ -42,7 +46,7 @@ namespace psychoTest.Controllers
                 }
             }
 
-            return View();
+            return View(model);
         }
     }
 }

@@ -21,21 +21,7 @@ namespace psychoTest
     {
         public async Task SendAsync(IdentityMessage message)
         {
-            SmtpClient smtpClient = new SmtpClient(ConfigurationManager.AppSettings["EmailSystemHost"], Int32.Parse(ConfigurationManager.AppSettings["EmailSystemPort"]));
-            smtpClient.EnableSsl = true;
-            smtpClient.UseDefaultCredentials = false;
-            smtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
-            smtpClient.Credentials = new System.Net.NetworkCredential(ConfigurationManager.AppSettings["EmailSystemAddress"], ConfigurationManager.AppSettings["EmailSystemPwd"]);
-
-            MailMessage mail = new MailMessage();
-            mail.IsBodyHtml = true;
-            mail.From = new MailAddress(ConfigurationManager.AppSettings["EmailSystemAddress"], ConfigurationManager.AppSettings["EmailSystemName"]);
-            mail.To.Add(new MailAddress(message.Destination));
-
-            mail.Body = message.Body;
-            mail.Subject = message.Subject;
-
-            smtpClient.Send(mail);
+            Core.BLL.SendEmail(message.Destination, message.Subject, message.Body);
 
             // Plug in your email service here to send an email.
             await Task.FromResult(0);

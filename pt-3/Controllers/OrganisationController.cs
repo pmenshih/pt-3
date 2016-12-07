@@ -7,7 +7,6 @@ using System.Data.SqlClient;
 using System.Data.Entity;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
-using Microsoft.Owin.Security;
 using psychoTest.Models;
 using psychoTest.Models.Organisations;
 using System.Web.Script.Serialization;
@@ -19,19 +18,14 @@ namespace psychoTest.Controllers
     [Authorize]
     public class OrganisationController : Controller
     {
-        // GET: Organisation
+        #region Контроллеры страниц
         public ActionResult Index(string id)
         {
             Organisation org = new Organisation();
 
-            try
-            {
-                org = Organisation.GetById(id);
-            }
-            catch (Exception) { return Redirect("/cabinet"); }
-
-            if (!Organisation.isManager(User, org.id) && !Core.Membership.isAdmin(User))
-                return Redirect("/cabinet");
+            org = Organisation.GetById(id);
+            if(org == null || !Core.Membership.isInAnyRole("admin,manager", id))
+                return Redirect("/cabinet"); 
 
             var model = new Models.Organisations.Views.Index(org);
             model.usersCount = org.GetActiveUsers().Count();
@@ -43,231 +37,32 @@ namespace psychoTest.Controllers
         public ActionResult Index(FormCollection form)
         {
             //блок быстрого создания организации пользователем без ролей
-            //для начала посмотрим, что он действительно без ролей. если это не так, отправляем его в индекс личного кабинета
-            if (Core.Membership.isInAnyRole(User)) return Redirect("/cabinet");
+            //для начала посмотрим, что он действительно без ролей. 
+            //если это не так, отправляем его в индекс личного кабинета
+            if (Core.Membership.isInAnyRole() || form["action"] != "forceCreate")
+                return Redirect("/cabinet");
+
             //в противном случае пробуем создать организацию и назначить пользователю роль "Менеджер"
-            if (form["action"] == "forceCreate")
-            {
-                Organisation newOrg = new Organisation();
-                newOrg.name = form["orgName"];
-                using (DBMain db = new DBMain())
-                {
-                    db.Organisations.Add(newOrg);
-                    db.SaveChanges();
+            Organisation newOrg = new Organisation();
+            newOrg.name = form["orgName"];
+            newOrg.Create();
+                
+            //Перестроим поисковый индекс
+            Core.BLL.SearchIndexUpdate(newOrg, Core.CRUDType.Create);
 
-                    //Перестроим поисковый индекс
-                    Core.BLL.SearchIndexUpdate(newOrg, Core.CRUDType.Create);
+            //добавим пользователя к созданной организации
+            newOrg.AddUser(User.Identity.Name);
 
-                    //добавим пользователя к созданной организации
-                    newOrg.AddUser(User.Identity.Name);
-                    //присвоим пользователю роль менеджера созданной организации
-                    newOrg.UserAddRole(User.Identity.Name, "manager");
-                }
-                return Index(newOrg.id);
-            }
-            else return Redirect("/cabinet");
+            //присвоим пользователю роль менеджера созданной организации
+            newOrg.UserAddRole(User.Identity.Name, "manager");
+
+            return Index(newOrg.id);
         }
-
-        public ActionResult ChangeName(string id, string newval)
-        {
-            Core.AjaxAnswer answer = new Core.AjaxAnswer();
-            string orgId = id;
-
-            if (Core.Membership.isAdmin(User) || Organisation.isManager(User, orgId))
-            {
-                using (DBMain db = new DBMain())
-                {
-                    try
-                    {
-                        Organisation org = db.Organisations.Where(x => x.id == orgId).Single();
-                        org.name = newval;
-                        org.moderated = false;
-                        db.SaveChanges();
-
-                        //Перестроим поисковый индекс
-                        Core.BLL.SearchIndexUpdate(org, Core.CRUDType.Update);
-                    }
-                    catch (Exception)
-                    {
-                        answer.result = Core.AjaxResults.CodeError;
-                        return answer.JsonContentResult();
-                    }
-                }
-                answer.result = Core.AjaxResults.Success;
-            }
-            else answer.result = Core.AjaxResults.NoRights;
-
-            return answer.JsonContentResult();
-        }
-
-        public ActionResult Moderate(string id)
-        {
-            Core.AjaxAnswer answer = new Core.AjaxAnswer();
-            string orgId = id;
-
-            if (Core.Membership.isAdmin(User))
-            {
-                using (DBMain db = new DBMain())
-                {
-                    try
-                    {
-                        Organisation org = db.Organisations.Where(x => x.id == orgId).Single();
-                        org.moderated = true;
-                        db.SaveChanges();
-                    }
-                    catch (Exception)
-                    {
-                        answer.result = Core.AjaxResults.CodeError;
-                        return answer.JsonContentResult();
-                    }
-                }
-                answer.result = Core.AjaxResults.Success;
-            }
-            else answer.result = Core.AjaxResults.NoRights;
-
-            return answer.JsonContentResult();
-        }
-
-        public ActionResult ListAll()
-        {
-            Core.AjaxAnswer answer = new Core.AjaxAnswer();
-
-            using (DBMain db = new DBMain())
-            {
-                try
-                {
-                    List<Models.Organisations.Views.ShortInfo> orgs = db.Database.SqlQuery<Models.Organisations.Views.ShortInfo>("SELECT id, name FROM Organisations ORDER BY name ASC").ToList();
-                    var jsonSerialiser = new JavaScriptSerializer();
-                    var json = jsonSerialiser.Serialize(orgs);
-                    return Content(json, "application/json");
-                }
-                catch (Exception)
-                {
-                    answer.result = Core.AjaxResults.CodeError;
-                    return answer.JsonContentResult();
-                }
-            }
-        }
-
-        /*[HttpPost]*/
-        public ActionResult JoinRequest(string orgId, string userEmail)
-        {
-            Core.AjaxAnswer answer = new Core.AjaxAnswer();
-
-            if (User.Identity.Name != userEmail)
-            {
-                answer.result = Core.AjaxResults.NoRights;
-                return answer.JsonContentResult();
-            }
-
-            using (DBMain db = new DBMain())
-            {
-                try
-                {
-                    //если пользователь уже состоит в какой-либо организации, то досвидания
-                    if(db.OrganisationUsers.Where(x => x.userEmail == userEmail && x.active && x.dateStop > DateTime.Now).Count() > 0)
-                    {
-                        answer.result = Core.AjaxResults.UserAllreadyInOrg;
-                        return answer.JsonContentResult();
-                    }
-                    //теперь выясним, нет ли у пользователя других заявок
-                    if (db.OrganisationUsers.Where(x => x.userEmail == userEmail && x.active == false && x.dateStop < DateTime.Now).Count() > 0)
-                    {
-                        answer.result = Core.AjaxResults.NoMultipleJoinRequests;
-                        return answer.JsonContentResult();
-                    }
-
-                    OrganisationsUsers ou = new OrganisationsUsers();
-                    ou.active = false;
-                    ou.dateStart = DateTime.Now;
-                    ou.dateStop = new DateTime(2222, 1, 1);
-                    ou.orgId = orgId;
-                    ou.userEmail = userEmail;
-                    db.OrganisationUsers.Add(ou);
-                    db.SaveChanges();
-                }
-                catch (Exception)
-                {
-                    answer.result = Core.AjaxResults.CodeError;
-                    return answer.JsonContentResult();
-                }
-            }
-            answer.result = Core.AjaxResults.Success;
-
-            return answer.JsonContentResult();
-        }
-
-        public ActionResult AcceptJoinRequest(string orgId, string userEmail)
-        {
-            Core.AjaxAnswer answer = new Core.AjaxAnswer();
-
-            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, orgId))
-            {
-                answer.result = Core.AjaxResults.NoRights;
-                return answer.JsonContentResult();
-            }
-
-            using (DBMain db = new DBMain())
-            {
-                try
-                {
-                    OrganisationsUsers ou = db.OrganisationUsers.Where(x => x.orgId == orgId && x.userEmail == userEmail).Single();
-
-                    OrganisationsUsersRole our = new OrganisationsUsersRole();
-                    our.orgId = ou.orgId;
-                    our.roleName = "actor";
-                    our.userEmail = ou.userEmail;
-                    db.OrganisationsUsersRoles.Add(our);
-
-                    ou.active = true;
-                    db.SaveChanges();
-                }
-                catch (Exception)
-                {
-                    answer.result = Core.AjaxResults.CodeError;
-                    return answer.JsonContentResult();
-                }
-            }
-            answer.result = Core.AjaxResults.Success;
-
-            return answer.JsonContentResult();
-        }
-
-        public ActionResult RejectJoinRequest(string orgId, string userEmail)
-        {
-            Core.AjaxAnswer answer = new Core.AjaxAnswer();
-
-            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, orgId))
-            {
-                answer.result = Core.AjaxResults.NoRights;
-                return answer.JsonContentResult();
-            }
-
-            using (DBMain db = new DBMain())
-            {
-                try
-                {
-                    OrganisationsUsers ou = db.OrganisationUsers.Where(x => x.orgId == orgId && x.userEmail == userEmail).Single();
-                    db.OrganisationUsers.Remove(ou);
-                    db.SaveChanges();
-                }
-                catch (Exception)
-                {
-                    answer.result = Core.AjaxResults.CodeError;
-                    return answer.JsonContentResult();
-                }
-            }
-            answer.result = Core.AjaxResults.Success;
-
-            return answer.JsonContentResult();
-        }
-
+        
         public ActionResult Users(string orgId)
         {
-            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, orgId))
-            {
+            if (!Core.Membership.isInAnyRole("admin,manager", orgId))
                 return Redirect("/cabinet");
-            }
 
             Models.Organisations.Views.Users model = new Models.Organisations.Views.Users();
             model.orgId = orgId;
@@ -428,69 +223,7 @@ ORDER BY surname, name, patronim, email";
 
             return Redirect("/organisation/users?orgId=" + model.orgId);
         }
-
-        public ActionResult UserDelete(string orgId, string userId)
-        {
-            Core.AjaxAnswer answer = new Core.AjaxAnswer();
-
-            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, orgId))
-            {
-                answer.result = Core.AjaxResults.NoRights;
-                return answer.JsonContentResult();
-            }
-
-            using (DBMain db = new DBMain())
-            {
-                try
-                {
-                    AspNetUser user = db.AspNetUsers.Find(userId);
-
-                    if (!Organisation.UserIsActive(orgId, user.Email))
-                    {
-                        answer.result = Core.AjaxResults.NoRights;
-                        return answer.JsonContentResult();
-                    }
-
-                    //снимаем с пользователя роли
-                    string query = @"DELETE FROM OrganisationsUsersRoles WHERE userEmail=@userEmail AND orgId=@orgId";
-                    SqlParameter sqlParEmail = new SqlParameter("userEmail", user.Email);
-                    SqlParameter sqlParOrgId = new SqlParameter("orgId", orgId);
-                    db.Database.ExecuteSqlCommand(query, sqlParEmail, sqlParOrgId);
-
-                    //если у пользователя не подтвержден ни номер телефона, ни адрес почты, то удалим:
-                    if (!user.EmailConfirmed && !user.PhoneNumberConfirmed)
-                    {
-                        // - его самого из таблицы пользователей
-                        query = @"
-DELETE FROM AspNetUsers WHERE Email=@userEmail";
-                        sqlParEmail = new SqlParameter("userEmail", user.Email);
-                        db.Database.ExecuteSqlCommand(query, sqlParEmail);
-                        // - историю его скитаний по организациям из таблицы привязки пользователей к организациям
-                        query = @"
-DELETE FROM OrganisationsUsers WHERE userEmail=@userEmail";
-                        sqlParEmail = new SqlParameter("userEmail", user.Email);
-                        db.Database.ExecuteSqlCommand(query, sqlParEmail);
-                    }
-                    else
-                    {
-                        //меняем статус активности и дату увольнения
-                        OrganisationsUsers ou = db.OrganisationUsers.Where(x => x.userEmail == user.Email && x.orgId == orgId).Single();
-                        ou.dateStop = DateTime.Now;
-                        ou.active = false;
-                        db.SaveChanges();
-                    }
-                }
-                catch (Exception exc)
-                {
-                    answer.result = Core.AjaxResults.CodeError;
-                    return answer.JsonContentResult();
-                }
-            }
-            answer.result = Core.AjaxResults.Success;
-
-            return answer.JsonContentResult();
-        }
-
+        
         public ActionResult UsersImport(string orgId)
         {
             if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, orgId))
@@ -937,7 +670,8 @@ DELETE FROM OrganisationsUsers WHERE userEmail=@userEmail";
                 db.SaveChanges();
                 db.Dispose();
             }
-                       
+
+            model.uploadHistory = Organisation.GetUploadHistory(model.orgId);
             model.showResult = true;
 
             return View(model);
@@ -960,5 +694,264 @@ DELETE FROM OrganisationsUsers WHERE userEmail=@userEmail";
                                             ,ouf.usersCount);
             return File(srcEnc.GetBytes(ouf.usersData), "text/csv", filename);
         }
+        #endregion
+
+        #region AJAX-методы
+        public ActionResult ChangeName(string id, string newval)
+        {
+            Core.AjaxAnswer answer = new Core.AjaxAnswer();
+            string orgId = id;
+
+            if (Core.Membership.isAdmin(User) || Organisation.isManager(User, orgId))
+            {
+                using (DBMain db = new DBMain())
+                {
+                    try
+                    {
+                        Organisation org = db.Organisations.Where(x => x.id == orgId).Single();
+                        org.name = newval;
+                        org.moderated = false;
+                        db.SaveChanges();
+
+                        //Перестроим поисковый индекс
+                        Core.BLL.SearchIndexUpdate(org, Core.CRUDType.Update);
+                    }
+                    catch (Exception)
+                    {
+                        answer.result = Core.AjaxResults.CodeError;
+                        return answer.JsonContentResult();
+                    }
+                }
+                answer.result = Core.AjaxResults.Success;
+            }
+            else answer.result = Core.AjaxResults.NoRights;
+
+            return answer.JsonContentResult();
+        }
+
+        public ActionResult Moderate(string id)
+        {
+            Core.AjaxAnswer answer = new Core.AjaxAnswer();
+            string orgId = id;
+
+            if (Core.Membership.isAdmin(User))
+            {
+                using (DBMain db = new DBMain())
+                {
+                    try
+                    {
+                        Organisation org = db.Organisations.Where(x => x.id == orgId).Single();
+                        org.moderated = true;
+                        db.SaveChanges();
+                    }
+                    catch (Exception)
+                    {
+                        answer.result = Core.AjaxResults.CodeError;
+                        return answer.JsonContentResult();
+                    }
+                }
+                answer.result = Core.AjaxResults.Success;
+            }
+            else answer.result = Core.AjaxResults.NoRights;
+
+            return answer.JsonContentResult();
+        }
+
+        public ActionResult ListAll()
+        {
+            Core.AjaxAnswer answer = new Core.AjaxAnswer();
+
+            using (DBMain db = new DBMain())
+            {
+                try
+                {
+                    List<Models.Organisations.Views.ShortInfo> orgs = db.Database.SqlQuery<Models.Organisations.Views.ShortInfo>("SELECT id, name FROM Organisations ORDER BY name ASC").ToList();
+                    var jsonSerialiser = new JavaScriptSerializer();
+                    var json = jsonSerialiser.Serialize(orgs);
+                    return Content(json, "application/json");
+                }
+                catch (Exception)
+                {
+                    answer.result = Core.AjaxResults.CodeError;
+                    return answer.JsonContentResult();
+                }
+            }
+        }
+
+        /*[HttpPost]*/
+        public ActionResult JoinRequest(string orgId, string userEmail)
+        {
+            Core.AjaxAnswer answer = new Core.AjaxAnswer();
+
+            if (User.Identity.Name != userEmail)
+            {
+                answer.result = Core.AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            using (DBMain db = new DBMain())
+            {
+                try
+                {
+                    //если пользователь уже состоит в какой-либо организации, то досвидания
+                    if (db.OrganisationUsers.Where(x => x.userEmail == userEmail && x.active && x.dateStop > DateTime.Now).Count() > 0)
+                    {
+                        answer.result = Core.AjaxResults.UserAllreadyInOrg;
+                        return answer.JsonContentResult();
+                    }
+                    //теперь выясним, нет ли у пользователя других заявок
+                    if (db.OrganisationUsers.Where(x => x.userEmail == userEmail && x.active == false && x.dateStop < DateTime.Now).Count() > 0)
+                    {
+                        answer.result = Core.AjaxResults.NoMultipleJoinRequests;
+                        return answer.JsonContentResult();
+                    }
+
+                    OrganisationsUsers ou = new OrganisationsUsers();
+                    ou.active = false;
+                    ou.dateStart = DateTime.Now;
+                    ou.dateStop = new DateTime(2222, 1, 1);
+                    ou.orgId = orgId;
+                    ou.userEmail = userEmail;
+                    db.OrganisationUsers.Add(ou);
+                    db.SaveChanges();
+                }
+                catch (Exception)
+                {
+                    answer.result = Core.AjaxResults.CodeError;
+                    return answer.JsonContentResult();
+                }
+            }
+            answer.result = Core.AjaxResults.Success;
+
+            return answer.JsonContentResult();
+        }
+
+        public ActionResult AcceptJoinRequest(string orgId, string userEmail)
+        {
+            Core.AjaxAnswer answer = new Core.AjaxAnswer();
+
+            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, orgId))
+            {
+                answer.result = Core.AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            using (DBMain db = new DBMain())
+            {
+                try
+                {
+                    OrganisationsUsers ou = db.OrganisationUsers.Where(x => x.orgId == orgId && x.userEmail == userEmail).Single();
+
+                    OrganisationsUsersRole our = new OrganisationsUsersRole();
+                    our.orgId = ou.orgId;
+                    our.roleName = "actor";
+                    our.userEmail = ou.userEmail;
+                    db.OrganisationsUsersRoles.Add(our);
+
+                    ou.active = true;
+                    db.SaveChanges();
+                }
+                catch (Exception)
+                {
+                    answer.result = Core.AjaxResults.CodeError;
+                    return answer.JsonContentResult();
+                }
+            }
+            answer.result = Core.AjaxResults.Success;
+
+            return answer.JsonContentResult();
+        }
+
+        public ActionResult RejectJoinRequest(string orgId, string userEmail)
+        {
+            Core.AjaxAnswer answer = new Core.AjaxAnswer();
+
+            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, orgId))
+            {
+                answer.result = Core.AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            using (DBMain db = new DBMain())
+            {
+                try
+                {
+                    OrganisationsUsers ou = db.OrganisationUsers.Where(x => x.orgId == orgId && x.userEmail == userEmail).Single();
+                    db.OrganisationUsers.Remove(ou);
+                    db.SaveChanges();
+                }
+                catch (Exception)
+                {
+                    answer.result = Core.AjaxResults.CodeError;
+                    return answer.JsonContentResult();
+                }
+            }
+            answer.result = Core.AjaxResults.Success;
+
+            return answer.JsonContentResult();
+        }
+
+        public ActionResult UserDelete(string orgId, string userId)
+        {
+            Core.AjaxAnswer answer = new Core.AjaxAnswer();
+
+            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, orgId))
+            {
+                answer.result = Core.AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            using (DBMain db = new DBMain())
+            {
+                try
+                {
+                    AspNetUser user = db.AspNetUsers.Find(userId);
+
+                    if (!Organisation.UserIsActive(orgId, user.Email))
+                    {
+                        answer.result = Core.AjaxResults.NoRights;
+                        return answer.JsonContentResult();
+                    }
+
+                    //снимаем с пользователя роли
+                    string query = @"DELETE FROM OrganisationsUsersRoles WHERE userEmail=@userEmail AND orgId=@orgId";
+                    SqlParameter sqlParEmail = new SqlParameter("userEmail", user.Email);
+                    SqlParameter sqlParOrgId = new SqlParameter("orgId", orgId);
+                    db.Database.ExecuteSqlCommand(query, sqlParEmail, sqlParOrgId);
+
+                    //если у пользователя не подтвержден ни номер телефона, ни адрес почты, то удалим:
+                    if (!user.EmailConfirmed && !user.PhoneNumberConfirmed)
+                    {
+                        // - его самого из таблицы пользователей
+                        query = @"
+DELETE FROM AspNetUsers WHERE Email=@userEmail";
+                        sqlParEmail = new SqlParameter("userEmail", user.Email);
+                        db.Database.ExecuteSqlCommand(query, sqlParEmail);
+                        // - историю его скитаний по организациям из таблицы привязки пользователей к организациям
+                        query = @"
+DELETE FROM OrganisationsUsers WHERE userEmail=@userEmail";
+                        sqlParEmail = new SqlParameter("userEmail", user.Email);
+                        db.Database.ExecuteSqlCommand(query, sqlParEmail);
+                    }
+                    else
+                    {
+                        //меняем статус активности и дату увольнения
+                        OrganisationsUsers ou = db.OrganisationUsers.Where(x => x.userEmail == user.Email && x.orgId == orgId).Single();
+                        ou.dateStop = DateTime.Now;
+                        ou.active = false;
+                        db.SaveChanges();
+                    }
+                }
+                catch (Exception)
+                {
+                    answer.result = Core.AjaxResults.CodeError;
+                    return answer.JsonContentResult();
+                }
+            }
+            answer.result = Core.AjaxResults.Success;
+
+            return answer.JsonContentResult();
+        }
+        #endregion
     }
 }

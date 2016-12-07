@@ -11,6 +11,21 @@ namespace psychoTest.Models
 {
     public class DBMain : DbContext
     {
+        public static DBMain db
+        {
+            get
+            {
+                DBMain _db = (DBMain)HttpContext.Current.Items["db"];
+
+                if (_db == null)
+                {
+                    _db = new DBMain();
+                    HttpContext.Current.Items["db"] = _db;
+                }
+                return _db;
+            }
+        }
+
         public DBMain(): base("DefaultConnection"){ }
 
         public DbSet<AspNetUser> AspNetUsers { get; set; }

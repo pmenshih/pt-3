@@ -9,11 +9,35 @@ using psychoTest.Models;
 using Microsoft.AspNet.Identity;
 using System.Data.SqlClient;
 using System.Web.Script.Serialization;
+using System.Net.Mail;
+using System.Configuration;
 
 namespace psychoTest.Core
 {
     public class BLL
     {
+        public static void SendEmail(string to, string subject, string message)
+        {
+            SmtpClient smtpClient = new SmtpClient(ConfigurationManager.AppSettings["EmailSystemHost"], 
+                                            Int32.Parse(ConfigurationManager.AppSettings["EmailSystemPort"]));
+            smtpClient.EnableSsl = true;
+            smtpClient.UseDefaultCredentials = false;
+            smtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
+            smtpClient.Credentials = new System.Net.NetworkCredential(
+                                            ConfigurationManager.AppSettings["EmailSystemAddress"], 
+                                            ConfigurationManager.AppSettings["EmailSystemPwd"]);
+
+            MailMessage mail = new MailMessage();
+            mail.IsBodyHtml = true;
+            mail.From = new MailAddress(ConfigurationManager.AppSettings["EmailSystemAddress"], 
+                                        ConfigurationManager.AppSettings["EmailSystemName"]);
+            mail.To.Add(new MailAddress(to));
+
+            mail.Body = message;
+            mail.Subject = subject;
+
+            smtpClient.Send(mail);
+        }
         public static async Task<string> SendSMS(string phone, string message)
         {
             message += " С уважением, команда keyhabits.ru.";
@@ -121,19 +145,45 @@ namespace psychoTest.Core
             return User.IsInRole("admin");
         }
 
-        public static bool isInAnyRole(System.Security.Principal.IPrincipal User)
+        public static bool isInAnyRole(string roles=null, string orgId = null)
         {
-            if (User.IsInRole("admin")) return true;
+            bool result = false;
 
-            DBMain db = new DBMain();
-            string query = @"SELECT COUNT(*) 
-                            FROM OrganisationsUsersRoles 
-                            WHERE userEmail=(SELECT Email 
-				                            FROM AspNetUsers 
-				                            WHERE Id='" + User.Identity.GetUserId() + "')";
-            int rolesCount = db.Database.SqlQuery<int>(query).Single();
+            System.Security.Claims.ClaimsPrincipal user 
+                = HttpContext.Current.GetOwinContext().Authentication.User;
+            string userEmail = user.Identity.GetEmail();
 
-            return rolesCount > 0;
+            if (roles == null)
+            {
+                if (user.IsInRole("admin")) return true;
+
+                int rolesCnt = DBMain.db.OrganisationsUsersRoles.Count(x => x.userEmail == userEmail);
+
+                return rolesCnt > 0;
+            }
+            else foreach (string roleName in roles.Split(','))
+            {
+                if (roleName == "admin" && user.IsInRole(roleName))
+                {
+                    result = true;
+                    break;
+                }
+                else
+                {
+                    Models.Organisations.OrganisationsUsersRole our =
+                        DBMain.db.OrganisationsUsersRoles.SingleOrDefault(x =>
+                            x.userEmail == userEmail
+                            && x.orgId == orgId
+                            && x.roleName == roleName);
+                    if (our != null)
+                    {
+                        result = true;
+                        break;
+                    }
+                }
+            }
+
+            return result;
         }
     }
 

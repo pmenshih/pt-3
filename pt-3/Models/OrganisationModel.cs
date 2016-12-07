@@ -1,37 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.SqlClient;
 
 namespace psychoTest.Models.Organisations
 {
+    //модель организации
     public class Organisation
     {
+        #region Поля таблицы Organisation в БД
         [Key]
-        public string id { get; set; }
-        public string name { get; set; }
-        public DateTime dateCreate { get; set; }
-        public bool moderated { get; set; }
-
-        public Organisation()
-        {
-            id = Guid.NewGuid().ToString();
-            dateCreate = DateTime.Now;
-        }
-
+        public string id { get; set; } = Guid.NewGuid().ToString();
+        public string name { get; set; } = null;
+        public DateTime dateCreate { get; set; } = DateTime.Now;
+        public bool moderated { get; set; } = false;
+        public bool deleted { get; set; } = false;
+        #endregion
+        
         public static Organisation GetById(string id)
         {
-            try
-            {
-                using (DBMain db = new DBMain())
-                {
-                    return db.Organisations.Where(x => x.id == id).Single();
-                }
-            }
-            catch (Exception) { return null; }
+            return DBMain.db.Organisations.SingleOrDefault(x => x.id == id);
         }
 
         public static Organisation GetByManager(System.Security.Principal.IPrincipal User)
@@ -220,6 +210,15 @@ ORDER BY dateCreate DESC";
                 return uploadHistory;
             }
         }
+
+        //создание организации
+        public bool Create()
+        {
+            DBMain.db.Organisations.Add(this);
+            DBMain.db.SaveChanges();
+
+            return true;
+        }
     }
 
     //таблица привязки ролей к пользователям организации
@@ -233,6 +232,7 @@ ORDER BY dateCreate DESC";
         public string orgId { get; set; }
     }
 
+    //таблица привязки пользователей к организации
     public class OrganisationsUsers
     {
         [Key, Column(Order = 1)]
@@ -249,6 +249,7 @@ ORDER BY dateCreate DESC";
         }
     }
 
+    //таблица файлов со списками пользователей, которые загружались через инструмент импорта из файла
     public class OrganisationsUsersFile
     {
         [Key]
