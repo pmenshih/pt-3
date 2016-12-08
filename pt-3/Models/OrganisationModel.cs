@@ -4,6 +4,7 @@ using System.Linq;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.SqlClient;
+using System.Web;
 
 namespace psychoTest.Models.Organisations
 {
@@ -19,27 +20,35 @@ namespace psychoTest.Models.Organisations
         public bool deleted { get; set; } = false;
         #endregion
         
-        public static Organisation GetById(string id)
+        public static Organisation GetById(string orgId)
         {
-            return DBMain.db.Organisations.SingleOrDefault(x => x.id == id);
+            return DBMain.db.Organisations.SingleOrDefault(x => x.id == orgId);
         }
 
-        public static Organisation GetByManager(System.Security.Principal.IPrincipal User)
+        //кривоватый метод получения организации без указания Id
+        //если его нет, то выбирается первая (сортировка по Id) организация
+        //для которой авторизованный пользователь является менеджером
+        public static Organisation GetByIdOrDefaultManaged(string orgId = null)
         {
-            try
+            System.Security.Claims.ClaimsPrincipal user
+                = HttpContext.Current.GetOwinContext().Authentication.User;
+
+            if (orgId != null) return GetById(orgId);
+            else
             {
-                using (DBMain db = new DBMain())
-                {
-                    string query = @"SELECT * 
-                                    FROM Organisations o
-                                    WHERE o.id IN (SELECT our.orgId 
-				                                    FROM OrganisationsUsersRoles our
-				                                    WHERE our.userEmail=@email
-                                                        AND roleName='manager')";
-                    return db.Database.SqlQuery<Organisation>(query, new SqlParameter("email", User.Identity.Name)).Single();
-                }
+                SqlParameter[] pars = {
+                    new SqlParameter("userEmail", user.Identity.GetEmail())
+                    ,new SqlParameter("roleName", Core.Membership.manager)};
+                var query = $@"
+SELECT * 
+FROM Organisations o
+WHERE o.id = (SELECT TOP 1 our.orgId 
+				FROM OrganisationsUsersRoles our
+				WHERE our.userEmail=@userEmail
+                    AND roleName=@roleName
+                ORDER BY our.orgId ASC)";
+                return DBMain.db.Database.SqlQuery<Organisation>(query, pars).SingleOrDefault();
             }
-            catch (Exception) { return null; }
         }
 
         public static Organisation GetByUserEmail(string email)
@@ -60,27 +69,7 @@ namespace psychoTest.Models.Organisations
             }
             catch (Exception) { return null; }
         }
-
-        public static bool isManager(System.Security.Principal.IPrincipal User, string orgId = null)
-        {
-            int rolesCount = 0;
-            using (DBMain db = new DBMain())
-            {
-                string query = @"SELECT COUNT(*) FROM OrganisationsUsersRoles WHERE userEmail=@email AND roleName='manager'";
-
-                List<SqlParameter> pars = new List<SqlParameter>();
-                pars.Add(new SqlParameter("email", User.Identity.Name));
-                if (orgId != null)
-                {
-                    query += " AND orgId=@orgId";
-                    pars.Add(new SqlParameter("orgId", orgId));
-                }
-
-                rolesCount = db.Database.SqlQuery<int>(query, pars.ToArray()).Single();
-            }
-            return rolesCount > 0;
-        }
-
+        
         public bool UserAddRole(string email, string roleName)
         {
             try
@@ -218,6 +207,19 @@ ORDER BY dateCreate DESC";
             DBMain.db.SaveChanges();
 
             return true;
+        }
+
+        public List<string> RolesGetForUser()
+        {
+            System.Security.Claims.ClaimsPrincipal user
+                = HttpContext.Current.GetOwinContext().Authentication.User;
+
+            string userEmail = user.Identity.GetEmail();
+
+            return DBMain.db.OrganisationsUsersRoles
+                    .Where(x => x.userEmail == userEmail && x.orgId == this.id)
+                    .Select(x => x.roleName)
+                    .ToList<string>();
         }
     }
 

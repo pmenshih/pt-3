@@ -38,7 +38,7 @@ namespace psychoTest.Controllers
                 }
             }
             //если пользователь с правами администратора, добавим ему список не модерированных организаций
-            else if (Core.Membership.isAdmin(User))
+            else if (Core.Membership.isAdmin())
             {
                 using (DBMain db = new DBMain())
                 {

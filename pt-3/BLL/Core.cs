@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
@@ -7,10 +6,10 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using psychoTest.Models;
 using Microsoft.AspNet.Identity;
-using System.Data.SqlClient;
 using System.Web.Script.Serialization;
 using System.Net.Mail;
 using System.Configuration;
+using System.Collections.Generic;
 
 namespace psychoTest.Core
 {
@@ -140,50 +139,73 @@ namespace psychoTest.Core
 
     public class Membership
     {
-        public static bool isAdmin(System.Security.Principal.IPrincipal User)
+        //системные роли, назначаемые только администратором вручную через бд
+        public const string admin = "admin";
+        public const string coach = "coach";
+
+        //пользовательские роли по убыванию уровня доступа
+        public const string manager = "manager";
+        public const string viewer = "viewer";
+        public const string inspector = "inspector";
+        public const string actor = "actor";
+
+        public static List<string> rolesList = new List<string>((IEnumerable<string>)
+            new string[] { actor, inspector, viewer, manager, coach, admin });
+
+        public static bool HaveSpecifiedOrStrongerUsersTypeRole(string roleName, string orgId = null)
         {
-            return User.IsInRole("admin");
+            System.Security.Claims.ClaimsPrincipal user
+                = HttpContext.Current.GetOwinContext().Authentication.User;
+
+            if (rolesList.IndexOf(roleName) >= rolesList.IndexOf(coach))
+                return false;
+
+            if (orgId == null)
+                orgId = Models.Organisations.Organisation.GetByIdOrDefaultManaged()?.id;
+            if (orgId == null)
+                return false;
+
+            Models.Organisations.Organisation org = Models.Organisations.Organisation.GetById(orgId);
+
+            var userRoles = org.RolesGetForUser();
+            foreach (string s in userRoles)
+                if (rolesList.IndexOf(s) >= rolesList.IndexOf(roleName))
+                    return true;
+
+            return false;
         }
 
-        public static bool isInAnyRole(string roles=null, string orgId = null)
+        public static bool isAdmin()
         {
-            bool result = false;
+            System.Security.Claims.ClaimsPrincipal user
+                = HttpContext.Current.GetOwinContext().Authentication.User;
 
+            return user.IsInRole(admin);
+        }
+
+        public static bool isManager(string orgId)
+        {
+            System.Security.Claims.ClaimsPrincipal user
+                = HttpContext.Current.GetOwinContext().Authentication.User;
+            string userEmail = user.Identity.GetEmail();
+            
+            int rolesCnt = DBMain.db.OrganisationsUsersRoles.Count(x => x.userEmail == userEmail
+                                                                    && x.roleName == Membership.manager);
+
+            return rolesCnt > 0;
+        }
+
+        public static bool isInAnyRole()
+        {
             System.Security.Claims.ClaimsPrincipal user 
                 = HttpContext.Current.GetOwinContext().Authentication.User;
             string userEmail = user.Identity.GetEmail();
+            
+            if (user.IsInRole(Membership.admin)) return true;
 
-            if (roles == null)
-            {
-                if (user.IsInRole("admin")) return true;
+            int rolesCnt = DBMain.db.OrganisationsUsersRoles.Count(x => x.userEmail == userEmail);
 
-                int rolesCnt = DBMain.db.OrganisationsUsersRoles.Count(x => x.userEmail == userEmail);
-
-                return rolesCnt > 0;
-            }
-            else foreach (string roleName in roles.Split(','))
-            {
-                if (roleName == "admin" && user.IsInRole(roleName))
-                {
-                    result = true;
-                    break;
-                }
-                else
-                {
-                    Models.Organisations.OrganisationsUsersRole our =
-                        DBMain.db.OrganisationsUsersRoles.SingleOrDefault(x =>
-                            x.userEmail == userEmail
-                            && x.orgId == orgId
-                            && x.roleName == roleName);
-                    if (our != null)
-                    {
-                        result = true;
-                        break;
-                    }
-                }
-            }
-
-            return result;
+            return rolesCnt > 0;
         }
     }
 

@@ -68,7 +68,7 @@ namespace psychoTest.Controllers
 
             var userId = User.Identity.GetUserId();
 
-            if(Core.Membership.isAdmin(User))
+            if(Core.Membership.isAdmin())
             {
                 //если в запросе есть параметр id, то отобразим данные другого человека
                 if (Request.QueryString["userId"] != null)
@@ -124,7 +124,7 @@ namespace psychoTest.Controllers
         {
             string userId = User.Identity.GetUserId();
 
-            if (userId != Request.QueryString["userId"] && Core.Membership.isAdmin(User))
+            if (userId != Request.QueryString["userId"] && Core.Membership.isAdmin())
             {
                 userId = Request.QueryString["userId"];
             }
@@ -158,7 +158,7 @@ namespace psychoTest.Controllers
         {
             string userId = User.Identity.GetUserId();
 
-            if (userId != Request.QueryString["userId"] && Core.Membership.isAdmin(User))
+            if (userId != Request.QueryString["userId"] && Core.Membership.isAdmin())
             {
                 userId = Request.QueryString["userId"];
             }
@@ -220,7 +220,7 @@ namespace psychoTest.Controllers
 
             string userId = User.Identity.GetUserId();
 
-            if (userId != model.userId && Core.Membership.isAdmin(User))
+            if (userId != model.userId && Core.Membership.isAdmin())
             {
                 userId = model.userId;
                 ApplicationUserManager aum = HttpContext.GetOwinContext().GetUserManager<ApplicationUserManager>();
@@ -260,7 +260,7 @@ namespace psychoTest.Controllers
             {
                 string userId = User.Identity.GetUserId();
 
-                if (userId != model.userId && Core.Membership.isAdmin(User))
+                if (userId != model.userId && Core.Membership.isAdmin())
                 {
                     userId = model.userId;
                 }
@@ -344,7 +344,7 @@ namespace psychoTest.Controllers
             Core.AjaxAnswer ans = new Core.AjaxAnswer();
 
             string curUserId = User.Identity.GetUserId();
-            if (userId != curUserId && !Core.Membership.isAdmin(User))
+            if (userId != curUserId && !Core.Membership.isAdmin())
             {
                 ans.result = Core.AjaxResults.NoRights;
                 return ans.JsonContentResult();
@@ -377,7 +377,7 @@ namespace psychoTest.Controllers
             Core.AjaxAnswer ans = new Core.AjaxAnswer();
 
             string curUserId = User.Identity.GetUserId();
-            if (userId != curUserId && !Core.Membership.isAdmin(User))
+            if (userId != curUserId && !Core.Membership.isAdmin())
             {
                 ans.result = Core.AjaxResults.NoRights;
                 return ans.JsonContentResult();
@@ -410,7 +410,7 @@ namespace psychoTest.Controllers
             Core.AjaxAnswer ans = new Core.AjaxAnswer();
 
             string curUserId = User.Identity.GetUserId();
-            if (userId != curUserId && !Core.Membership.isAdmin(User))
+            if (userId != curUserId && !Core.Membership.isAdmin())
             {
                 ans.result = Core.AjaxResults.NoRights;
                 return ans.JsonContentResult();
@@ -443,7 +443,7 @@ namespace psychoTest.Controllers
             Core.AjaxAnswer ans = new Core.AjaxAnswer();
 
             string curUserId = User.Identity.GetUserId();
-            if (userId != curUserId && !Core.Membership.isAdmin(User))
+            if (userId != curUserId && !Core.Membership.isAdmin())
             {
                 ans.result = Core.AjaxResults.NoRights;
                 return ans.JsonContentResult();
@@ -476,7 +476,7 @@ namespace psychoTest.Controllers
             Core.AjaxAnswer ans = new Core.AjaxAnswer();
 
             string curUserId = User.Identity.GetUserId();
-            if (userId != curUserId && !Core.Membership.isAdmin(User))
+            if (userId != curUserId && !Core.Membership.isAdmin())
             {
                 ans.result = Core.AjaxResults.NoRights;
                 return ans.JsonContentResult();
@@ -510,7 +510,7 @@ namespace psychoTest.Controllers
             Core.AjaxAnswer ans = new Core.AjaxAnswer();
 
             string curUserId = User.Identity.GetUserId();
-            if (userId != curUserId && !Core.Membership.isAdmin(User))
+            if (userId != curUserId && !Core.Membership.isAdmin())
             {
                 ans.result = Core.AjaxResults.NoRights;
                 return ans.JsonContentResult();
@@ -563,7 +563,7 @@ namespace psychoTest.Controllers
             string query = "SELECT * FROM SearchIndexes WHERE searchString LIKE N'%" + searchString + "%'";
 
             string result = "<ul>";
-            if(Core.Membership.isAdmin(User))
+            if(Core.Membership.isAdmin())
             {
                 foreach (SearchIndex si in db.Database.SqlQuery<SearchIndex>(query))
                 {
@@ -587,7 +587,7 @@ namespace psychoTest.Controllers
         {
             Core.AjaxAnswer ans = new Core.AjaxAnswer();
 
-            if (!Core.Membership.isAdmin(User) && !Models.Organisations.Organisation.isManager(User, orgId))
+            if (!Core.Membership.isAdmin() && !Core.Membership.isManager(orgId))
             {
                 ans.result = Core.AjaxResults.NoRights;
                 return ans.JsonContentResult();
@@ -629,7 +629,11 @@ namespace psychoTest.Controllers
         {
             Core.AjaxAnswer ans = new Core.AjaxAnswer();
 
-            if (!Core.Membership.isAdmin(User) && !Models.Organisations.Organisation.isManager(User, orgId))
+            //определяем не пытается ли установить системные роли кто-то кроме администратора
+            bool azaza = (!Core.Membership.isAdmin() 
+                            && (roleName == Core.Membership.admin || roleName == Core.Membership.coach));
+
+            if (azaza || !Core.Membership.isManager(orgId))
             {
                 ans.result = Core.AjaxResults.NoRights;
                 return ans.JsonContentResult();
@@ -647,7 +651,7 @@ namespace psychoTest.Controllers
                     }
                     else if (val == "0")
                     {
-                        if (User.Identity.GetUserId() == userId && Models.Organisations.Organisation.isManager(User, orgId))
+                        if (User.Identity.GetUserId() == userId && Core.Membership.isManager(orgId))
                         {
                             ans.result = Core.AjaxResults.NoManagerSuicide;
                             return ans.JsonContentResult();

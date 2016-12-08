@@ -12,19 +12,25 @@ using psychoTest.Models.Organisations;
 using System.Web.Script.Serialization;
 using System.Text;
 using System.Text.RegularExpressions;
+using psychoTest.Core;
 
 namespace psychoTest.Controllers
 {
     [Authorize]
     public class OrganisationController : Controller
     {
+        public bool isAdminOrManager(string id)
+        {
+            return (Membership.isManager(id) || Membership.isAdmin());
+        }
+
         #region Контроллеры страниц
-        public ActionResult Index(string id)
+        public ActionResult Index(string orgId)
         {
             Organisation org = new Organisation();
 
-            org = Organisation.GetById(id);
-            if(org == null || !Core.Membership.isInAnyRole("admin,manager", id))
+            org = Organisation.GetById(orgId);
+            if(org == null || !isAdminOrManager(orgId))
                 return Redirect("/cabinet"); 
 
             var model = new Models.Organisations.Views.Index(org);
@@ -39,7 +45,7 @@ namespace psychoTest.Controllers
             //блок быстрого создания организации пользователем без ролей
             //для начала посмотрим, что он действительно без ролей. 
             //если это не так, отправляем его в индекс личного кабинета
-            if (Core.Membership.isInAnyRole() || form["action"] != "forceCreate")
+            if (Membership.isInAnyRole() || form["action"] != "forceCreate")
                 return Redirect("/cabinet");
 
             //в противном случае пробуем создать организацию и назначить пользователю роль "Менеджер"
@@ -61,8 +67,7 @@ namespace psychoTest.Controllers
         
         public ActionResult Users(string orgId)
         {
-            if (!Core.Membership.isInAnyRole("admin,manager", orgId))
-                return Redirect("/cabinet");
+            if (!isAdminOrManager(orgId)) return Redirect("/cabinet");
 
             Models.Organisations.Views.Users model = new Models.Organisations.Views.Users();
             model.orgId = orgId;
@@ -93,10 +98,7 @@ ORDER BY surname, name, patronim, email";
 
         public ActionResult UserCU(string orgId, string userId = null)
         {
-            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, orgId))
-            {
-                return Redirect("/cabinet");
-            }
+            if (!isAdminOrManager(orgId)) return Redirect("/cabinet");
 
             Models.Organisations.Views.UserCU model = new Models.Organisations.Views.UserCU();
 
@@ -129,10 +131,7 @@ ORDER BY surname, name, patronim, email";
         [HttpPost]
         public ActionResult UserCU(Models.Organisations.Views.UserCU model)
         {
-            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, model.orgId))
-            {
-                return Redirect("/cabinet");
-            }
+            if (!isAdminOrManager(model.orgId)) return Redirect("/cabinet");
 
             using (DBMain db = new DBMain())
             {
@@ -226,10 +225,7 @@ ORDER BY surname, name, patronim, email";
         
         public ActionResult UsersImport(string orgId)
         {
-            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, orgId))
-            {
-                return Redirect("/cabinet");
-            }
+            if (!isAdminOrManager(orgId)) return Redirect("/cabinet");
 
             var model = new Models.Organisations.Views.UsersImport();
             model.orgId = orgId;
@@ -241,10 +237,7 @@ ORDER BY surname, name, patronim, email";
         [HttpPost]
         public ActionResult UsersImport(Models.Organisations.Views.UsersImport model)
         {
-            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, model.orgId))
-            {
-                return Redirect("/cabinet");
-            }
+            if (!isAdminOrManager(model.orgId)) return Redirect("/cabinet");
 
             model.uploadHistory = Organisation.GetUploadHistory(model.orgId);
 
@@ -682,7 +675,7 @@ ORDER BY surname, name, patronim, email";
             DBMain db = new DBMain();
             OrganisationsUsersFile ouf = db.OrganisationsUsersFiles.Single(x => x.id == id);
 
-            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, ouf.orgId))
+            if (!isAdminOrManager(ouf.orgId))
             {
                 return new EmptyResult();
             }
@@ -702,7 +695,7 @@ ORDER BY surname, name, patronim, email";
             Core.AjaxAnswer answer = new Core.AjaxAnswer();
             string orgId = id;
 
-            if (Core.Membership.isAdmin(User) || Organisation.isManager(User, orgId))
+            if (isAdminOrManager(orgId))
             {
                 using (DBMain db = new DBMain())
                 {
@@ -734,7 +727,7 @@ ORDER BY surname, name, patronim, email";
             Core.AjaxAnswer answer = new Core.AjaxAnswer();
             string orgId = id;
 
-            if (Core.Membership.isAdmin(User))
+            if (Core.Membership.isAdmin())
             {
                 using (DBMain db = new DBMain())
                 {
@@ -830,7 +823,7 @@ ORDER BY surname, name, patronim, email";
         {
             Core.AjaxAnswer answer = new Core.AjaxAnswer();
 
-            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, orgId))
+            if (!isAdminOrManager(orgId))
             {
                 answer.result = Core.AjaxResults.NoRights;
                 return answer.JsonContentResult();
@@ -866,7 +859,7 @@ ORDER BY surname, name, patronim, email";
         {
             Core.AjaxAnswer answer = new Core.AjaxAnswer();
 
-            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, orgId))
+            if (!isAdminOrManager(orgId))
             {
                 answer.result = Core.AjaxResults.NoRights;
                 return answer.JsonContentResult();
@@ -895,7 +888,7 @@ ORDER BY surname, name, patronim, email";
         {
             Core.AjaxAnswer answer = new Core.AjaxAnswer();
 
-            if (!Core.Membership.isAdmin(User) && !Organisation.isManager(User, orgId))
+            if (!isAdminOrManager(orgId))
             {
                 answer.result = Core.AjaxResults.NoRights;
                 return answer.JsonContentResult();

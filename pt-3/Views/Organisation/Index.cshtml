@@ -12,7 +12,7 @@
         Дата создания: @Model.dateCreate
     </li>
     <li>
-        @if (!Model.moderated && psychoTest.Core.Membership.isAdmin(User))
+        @if (!Model.moderated && psychoTest.Core.Membership.isAdmin())
         {
             @:Статус: <a href="/organisation/moderate?id=@Model.id">подтвердить</a>
         }

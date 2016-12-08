@@ -2,17 +2,22 @@
 @{
     Layout = "/Views/Shared/_Layout.cshtml";
     ViewBag.Title = "Личный кабинет";
-    var org = psychoTest.Models.Organisations.Organisation.GetByManager(User);
+    var org = psychoTest.Models.Organisations.Organisation
+                .GetByIdOrDefaultManaged(Request.QueryString["orgId"]);
 }
 
 <div style="background-color: #e2e2e2;">
     <p>Меню личного кабинета</p>
     <!-- #1 код генерации пунктов меню в зависимости от ролей пользователя -->
+        @if (psychoTest.Core.Membership.HaveSpecifiedOrStrongerUsersTypeRole(psychoTest.Core.Membership.inspector))
+        {
+            <a href="/research">Исследования</a>
+        }
         @if (org != null)
         {
-            <a href="/organisation?id=@org.id">Организация</a>
+            <a href="/organisation?orgId=@org.id">Организация</a>
         }
-        @if (psychoTest.Core.Membership.isAdmin(User))
+        @if (psychoTest.Core.Membership.isAdmin())
         {
             <a href="/manage/search">Поиск</a>
         }
