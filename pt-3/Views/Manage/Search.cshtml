@@ -7,7 +7,7 @@
 @using (Html.BeginForm("Search", "Manage", FormMethod.Post))
 {
     @Html.AntiForgeryToken()
-    <input type="text" name="searchString" /><input type="button" value="Найти" />
+    <input type="text" name="searchString" /><input type="submit" value="Найти" />
 
     if (ViewData.ContainsKey("result"))
     {

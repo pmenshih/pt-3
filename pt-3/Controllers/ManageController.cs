@@ -573,7 +573,7 @@ namespace psychoTest.Controllers
                     }
                     else if (si.instanceType == "Organisations")
                     {
-                        result += "<li><a href='/organisation?id=" + si.instanceId + "'>" + si.searchString + "</a></li>";
+                        result += "<li><a href='/organisation?orgId=" + si.instanceId + "'>" + si.searchString + "</a></li>";
                     }
                 }
             }

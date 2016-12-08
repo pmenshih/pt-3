@@ -116,7 +116,7 @@ namespace psychoTest.Core
                 Models.SearchIndex si = new Models.SearchIndex();
                 try
                 {
-                    si = db.SearchIndexes.Where(x => x.instanceId == user.Id).Single();
+                    si = db.SearchIndexes.Where(x => x.instanceId == organisation.id).Single();
                 }
                 catch (Exception)
                 {
@@ -149,9 +149,11 @@ namespace psychoTest.Core
         public const string inspector = "inspector";
         public const string actor = "actor";
 
+        //список ролей, отсортированный в порядке иерархии
         public static List<string> rolesList = new List<string>((IEnumerable<string>)
             new string[] { actor, inspector, viewer, manager, coach, admin });
 
+        //проверка на наличие указанной или более мощной пользовательской роли
         public static bool HaveSpecifiedOrStrongerUsersTypeRole(string roleName, string orgId = null)
         {
             System.Security.Claims.ClaimsPrincipal user
@@ -188,11 +190,8 @@ namespace psychoTest.Core
             System.Security.Claims.ClaimsPrincipal user
                 = HttpContext.Current.GetOwinContext().Authentication.User;
             string userEmail = user.Identity.GetEmail();
-            
-            int rolesCnt = DBMain.db.OrganisationsUsersRoles.Count(x => x.userEmail == userEmail
-                                                                    && x.roleName == Membership.manager);
 
-            return rolesCnt > 0;
+            return HaveSpecifiedOrStrongerUsersTypeRole(manager, orgId);
         }
 
         public static bool isInAnyRole()
@@ -201,11 +200,9 @@ namespace psychoTest.Core
                 = HttpContext.Current.GetOwinContext().Authentication.User;
             string userEmail = user.Identity.GetEmail();
             
-            if (user.IsInRole(Membership.admin)) return true;
+            if (user.IsInRole(Membership.admin) || user.IsInRole(Membership.coach)) return true;
 
-            int rolesCnt = DBMain.db.OrganisationsUsersRoles.Count(x => x.userEmail == userEmail);
-
-            return rolesCnt > 0;
+            return DBMain.db.OrganisationsUsersRoles.Count(x => x.userEmail == userEmail) > 0;
         }
     }
 

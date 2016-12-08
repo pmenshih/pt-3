@@ -65,7 +65,7 @@ else if (psychoTest.Core.Membership.isAdmin())
             <ul>
             @foreach (psychoTest.Models.Organisations.Organisation org in (List<psychoTest.Models.Organisations.Organisation>)ViewData["unmoderated"])
             {
-                <a href="/organisation?id=@org.id">@org.name</a>
+                <a href="/organisation?orgId=@org.id">@org.name</a>
             }
             </ul>
         }
