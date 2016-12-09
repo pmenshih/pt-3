@@ -1,8 +1,21 @@
-﻿
+﻿@model psychoTest.Models.Researches.Views.Show
 @{
-    ViewBag.Title = "Show";
+    ViewBag.Title = Model.name;
     Layout = "~/Views/Shared/_Cabinet.cshtml";
 }
 
-<h2>Show</h2>
-
+<h2>@ViewBag.Title</h2>
+<div class="devDiv">
+    Статистика
+</div>
+@if (psychoTest.Core.Membership.isAdmin() || psychoTest.Core.Membership.isManager(Model.orgId))
+{
+    var scenarioLink = $@"/research/scenariocu?{psychoTest.Core.RequestVals.orgId}={Model.orgId}&{psychoTest.Core.RequestVals.researchId}={Model.researchId}";
+    <div class="devDiv">
+        Сценарий
+        | <a href="@scenarioLink">изменить</a>
+    </div>
+}
+<div class="devDiv">
+    Результаты
+</div>

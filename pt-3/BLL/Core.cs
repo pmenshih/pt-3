@@ -10,6 +10,7 @@ using System.Web.Script.Serialization;
 using System.Net.Mail;
 using System.Configuration;
 using System.Collections.Generic;
+using System.Text;
 
 namespace psychoTest.Core
 {
@@ -135,6 +136,13 @@ namespace psychoTest.Core
                 return;
             }
         }
+
+        public static string ReadUploadedFileToString(HttpPostedFileBase file)
+        {
+            byte[] fileBytes = new byte[file.ContentLength];
+            file.InputStream.Read(fileBytes, 0, Convert.ToInt32(file.ContentLength));
+            return Encoding.UTF8.GetString(fileBytes);
+        }
     }
 
     public class Membership
@@ -226,6 +234,7 @@ namespace psychoTest.Core
     public class AjaxAnswer
     {
         public AjaxResults result;
+        public string data;
 
         public ContentResult JsonContentResult()
         {

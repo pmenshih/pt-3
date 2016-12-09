@@ -52,10 +52,9 @@
                 Статус
             </th>
         </tr>
-        @foreach (psychoTest.Models.Researches.ResearchListView r in Model.researches)
+        @foreach (psychoTest.Models.Researches.CustomSelects.ResearchListView r in Model.researches)
         {
-            string riUrl = $@"/research/show?{psychoTest.Core.RequestVals.orgId}={Model.orgId}
-                                &{psychoTest.Core.RequestVals.researchId}={r.id}";
+            string riUrl = $@"/research/show?{psychoTest.Core.RequestVals.orgId}={Model.orgId}&{psychoTest.Core.RequestVals.researchId}={r.id}";
             <tr>
                 <td>
                     <a href="@riUrl">@r.name</a>

@@ -1,0 +1,29 @@
+﻿@model psychoTest.Models.Researches.Views.ScenarioCU
+@{
+    ViewBag.Title = "Загрузка сценария";
+    Layout = "~/Views/Shared/_Cabinet.cshtml";
+}
+
+<input type="hidden" id="orgId" value="@Model.orgId" />
+@{ var backUrl = $"/research/show?{psychoTest.Core.RequestVals.orgId}={Model.orgId}&{psychoTest.Core.RequestVals.researchId}={Model.researchId}"; }
+<a href="@backUrl">Вернуться к исследованию</a>
+<h2>Загрузить сценарий из:</h2>
+<a href="#" id="lnkFile">файла</a>
+| <a href="#" id="lnkLib">билиотеки</a>
+| <a href="#" id="lnkRes">исследований</a>
+
+<div class="devDiv" style="display: none;" id="blockFile">
+    Из файла<br/>
+    <input type="file" id="filename" />
+    <input type="button" id="uploadFileButton" value="загрузить" />
+    <div id="uploadLog">
+    </div>
+</div>
+<div class="devDiv" style="display: none;" id="blockLib">
+    Из библиотеки
+</div>
+<div class="devDiv" style="display: none;" id="blockRes">
+    Из исследований
+</div>
+
+@Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")

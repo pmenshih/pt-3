@@ -1,6 +1,5 @@
 ﻿@{
     Layout = "/Views/Shared/_Layout.cshtml";
-    ViewBag.Title = "Личный кабинет";
     var org = psychoTest.Models.Organisations.Organisation
                 .GetByIdOrDefault(Request.QueryString["orgId"]);
 }

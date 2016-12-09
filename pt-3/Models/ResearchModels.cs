@@ -4,6 +4,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Collections.Generic;
 using System.Linq;
 using System.Data.SqlClient;
+using System.Xml;
+using System.Xml.Serialization;
+using System.IO;
 
 namespace psychoTest.Models.Researches
 {
@@ -27,8 +30,13 @@ namespace psychoTest.Models.Researches
             return true;
         }
 
+        public static Research GetById(string researchId)
+        {
+            return DBMain.db.Researches.SingleOrDefault(x => x.id == researchId);
+        }
+
         //получение списка всех исследований для таблицы индексной страницы исследований организации
-        public static List<ResearchListView> GetAll(string orgId)
+        public static List<CustomSelects.ResearchListView> GetAllForLinkResearch(string orgId)
         {
             string query = $@"
 SELECT r.id
@@ -51,7 +59,8 @@ WHERE r.orgId = @orgId
 ORDER BY r.dateCreate DESC
 ";
             SqlParameter[] pars = { new SqlParameter("orgId", orgId)};
-            List<ResearchListView> list = DBMain.db.Database.SqlQuery<ResearchListView>(query, pars).ToList();
+            List<CustomSelects.ResearchListView> list 
+                = DBMain.db.Database.SqlQuery<CustomSelects.ResearchListView>(query, pars).ToList();
             
             return list;
         }
@@ -123,30 +132,35 @@ WHERE rg.id = rgi.groupId
     }
     #endregion
 
-    //данные для списка исследований организации
-    public class ResearchListView
+    namespace CustomSelects
     {
-        public string id { get; set; }
-        public string name { get; set; }
-        public string descr { get; set; }
-        public DateTime dateCreate { get; set; }
-        public string typeDescr { get; set; }
-        public string groupNames { get; set; }
-        public int statusId { get; set; }
-        public string info { get; set; }
+        //данные для списка исследований организации
+        public class ResearchListView
+        {
+            public string id { get; set; }
+            public string name { get; set; }
+            public string descr { get; set; }
+            public DateTime dateCreate { get; set; }
+            public string typeDescr { get; set; }
+            public string groupNames { get; set; }
+            public int statusId { get; set; }
+            public string info { get; set; }
+        }
     }
 
     namespace Views
     {
         public class Index
         {
+            [Required]
             public string orgId { get; set; }
-            public List<ResearchListView> researches { get; set; } = new List<ResearchListView>();
+            public List<CustomSelects.ResearchListView> researches { get; set; } = new List<CustomSelects.ResearchListView>();
             public List<ResearchGroup> orgResearchsGroups { get; set; } = new List<ResearchGroup>();
         }
 
         public class Create
         {
+            [Required]
             public string orgId { get; set; }
             public List<ResearchGroup> groups { get; set; } = new List<ResearchGroup>();
             public List<ResearchType> types { get; set; } = ResearchType.GetTypes();
@@ -163,6 +177,83 @@ WHERE rg.id = rgi.groupId
             public string groupName { get; set; }
             [Required]
             public string typeId { get; set; }
+        }
+
+        public class Show
+        {
+            [Required]
+            public string orgId { get; set; }
+            [Required]
+            public string researchId { get; set; }
+            public string name { get; set; }
+        }
+
+        public class ScenarioCU
+        {
+            [Required]
+            public string orgId { get; set; }
+            [Required]
+            public string researchId { get; set; }
+        }
+    }
+
+    namespace Questionnaire
+    {
+        public class Questionnaire
+        {
+            [XmlArray("Questions")]
+            [XmlArrayItem("Question", typeof(Question))]
+            public Question[] questions { get; set; }
+
+            public static Questionnaire DeserializeFromXmlString(string xml)
+            {
+                XmlSerializer s = new XmlSerializer(typeof(Questionnaire));
+
+                //преобразуем строку xml в поток
+                MemoryStream stream = new MemoryStream();
+                StreamWriter writer = new StreamWriter(stream);
+                writer.Write(xml);
+                writer.Flush();
+                stream.Position = 0;
+
+                //десериализуем поток в класс
+                Questionnaire q = (Questionnaire)s.Deserialize(stream);
+                return q;
+            }
+        }
+
+        public class Question
+        {
+            [XmlAttribute]
+            public string type { get; set; }
+
+            [XmlAttribute]
+            public int position { get; set; }
+
+            [XmlAttribute]
+            public string isSecret { get; set; }
+
+            [XmlAttribute]
+            public string text { get; set; }
+
+            [XmlArray("Answers")]
+            [XmlArrayItem("Answer", typeof(Answer))]
+            public Answer[] answers { get; set; }
+        }
+
+        public class Answer
+        {
+            [XmlAttribute]
+            public int position { get; set; }
+
+            [XmlAttribute]
+            public string keyto { get; set; }
+
+            [XmlText]
+            public string value { get; set; }
+
+            [XmlAttribute]
+            public string isSecret { get; set; }
         }
     }
 }

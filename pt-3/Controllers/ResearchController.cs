@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 using psychoTest.Models.Researches;
 using psychoTest.Core;
@@ -31,7 +28,7 @@ namespace psychoTest.Controllers
         {
             var model = new Models.Researches.Views.Index();
             model.orgId = Request.QueryString[RequestVals.orgId];
-            model.researches = Research.GetAll(model.orgId);
+            model.researches = Research.GetAllForLinkResearch(model.orgId);
             model.orgResearchsGroups = ResearchGroupsItems.GetByOrgId(model.orgId);
 
             //проверка права доступа
@@ -44,6 +41,7 @@ namespace psychoTest.Controllers
         {
             var model = new Models.Researches.Views.Create();
             model.orgId = Request.QueryString[RequestVals.orgId];
+            model.groups = ResearchGroupsItems.GetByOrgId(model.orgId);
 
             //проверка права доступа
             if (!RolesIsICMCA(model.orgId)) return Redirect(RequestVals.nrURL);
@@ -102,9 +100,67 @@ namespace psychoTest.Controllers
 
         public ActionResult Show()
         {
-            //права
+            //сбор параметров запроса
+            var org = Models.Organisations.Organisation.GetById(Request.QueryString[RequestVals.orgId]);
+            var research = Research.GetById(Request.QueryString[RequestVals.researchId]);
 
-            return View();
+            //проверка на принадлежность исследования организации и права доступа
+            if (org.id != research.orgId || !RolesIsICMCA(org.id)) return Redirect(RequestVals.nrURL);
+
+            var model = new Models.Researches.Views.Show();
+            model.name = research.name;
+            model.orgId = org.id;
+            model.researchId = research.id;
+
+            return View(model);
+        }
+
+        public ActionResult ScenarioCU()
+        {
+            var model = new Models.Researches.Views.ScenarioCU();
+            model.orgId = Request.QueryString[RequestVals.orgId];
+            model.researchId = Request.QueryString[RequestVals.researchId];
+
+            //права
+            if (!Membership.isAdmin() && !Membership.isManager(model.orgId)) return Redirect(RequestVals.nrURL);
+
+            return View(model);
+        }
+
+        public ActionResult UploadScenario()
+        {
+            Models.Organisations.Organisation org 
+                = Models.Organisations.Organisation.GetById(Request[RequestVals.orgId]);
+
+            AjaxAnswer answer = new AjaxAnswer();
+
+            //права
+            if (!Membership.isAdmin() && !Membership.isManager(org.id))
+            {
+                answer.result = AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            //прочитаем файл в строку
+            string rawString = BLL.ReadUploadedFileToString(Request.Files["filename"]);
+
+            Models.Researches.Questionnaire.Questionnaire q
+                = new Models.Researches.Questionnaire.Questionnaire();
+
+            //десереализуем
+            try
+            {
+                q = Models.Researches.Questionnaire.Questionnaire.DeserializeFromXmlString(rawString);
+            }
+            catch (Exception exc)
+            {
+
+            }
+
+            answer.data = "hello";
+            answer.result = AjaxResults.Success;
+
+            return answer.JsonContentResult();
         }
     }
 }

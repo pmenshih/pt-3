@@ -24,6 +24,13 @@
         {
             <br/><i>группы отсутствуют</i>
         }
+        else
+        {
+            foreach (psychoTest.Models.Researches.ResearchGroup g in Model.groups)
+            {
+                <a href="#" onclick="">@g.name</a>
+            }
+        }
         <input type="hidden" name="groupId" />
     </div>
     <div class="devDiv">

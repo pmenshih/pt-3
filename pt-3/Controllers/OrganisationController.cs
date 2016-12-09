@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Web;
 using System.Web.Mvc;
 using System.Data.SqlClient;
@@ -10,7 +11,6 @@ using Microsoft.AspNet.Identity.Owin;
 using psychoTest.Models;
 using psychoTest.Models.Organisations;
 using System.Web.Script.Serialization;
-using System.Text;
 using System.Text.RegularExpressions;
 using psychoTest.Core;
 
@@ -263,10 +263,7 @@ ORDER BY surname, name, patronim, email";
             model.usersNotAdded = 0;
 
             //прочитаем файл в строку
-            HttpPostedFileBase file = Request.Files["filename"];
-            byte[] fileBytes = new byte[file.ContentLength];
-            var data = file.InputStream.Read(fileBytes, 0, Convert.ToInt32(file.ContentLength));
-            string usersFile = Encoding.UTF8.GetString(fileBytes);
+            string usersFile = BLL.ReadUploadedFileToString(Request.Files["filename"]);
 
             //рассплитуем файл построчно
             string [] ufStrings = Regex.Split(usersFile, "\r\n");
