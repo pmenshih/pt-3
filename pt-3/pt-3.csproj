@@ -278,8 +278,6 @@
     <Content Include="Views\Research\Show.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="App_Code\" />
-    <Folder Include="App_Data\" />
     <Folder Include="imgs\" />
   </ItemGroup>
   <ItemGroup>
