@@ -17,18 +17,18 @@ namespace psychoTest.Core
     {
         public static void SendEmail(string to, string subject, string message)
         {
-            SmtpClient smtpClient = new SmtpClient(ConfigurationManager.AppSettings["EmailSystemHost"], 
+            SmtpClient smtpClient = new SmtpClient(ConfigurationManager.AppSettings["EmailSystemHost"],
                                             Int32.Parse(ConfigurationManager.AppSettings["EmailSystemPort"]));
             smtpClient.EnableSsl = true;
             smtpClient.UseDefaultCredentials = false;
             smtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
             smtpClient.Credentials = new System.Net.NetworkCredential(
-                                            ConfigurationManager.AppSettings["EmailSystemAddress"], 
+                                            ConfigurationManager.AppSettings["EmailSystemAddress"],
                                             ConfigurationManager.AppSettings["EmailSystemPwd"]);
 
             MailMessage mail = new MailMessage();
             mail.IsBodyHtml = true;
-            mail.From = new MailAddress(ConfigurationManager.AppSettings["EmailSystemAddress"], 
+            mail.From = new MailAddress(ConfigurationManager.AppSettings["EmailSystemAddress"],
                                         ConfigurationManager.AppSettings["EmailSystemName"]);
             mail.To.Add(new MailAddress(to));
 
@@ -45,7 +45,7 @@ namespace psychoTest.Core
                 phone = phone.TrimStart('+');
                 //string message = "Пароль — " + code + ". С уважением, команда keyhabits.ru.";
                 var responseString = await client.GetStringAsync("http://gate.smsaero.ru/send/?user=p.menshih@gmail.com&password=KXJ89D5fTLDE4jPC6V8P1RRMtfb&to=" + phone + "&text=" + message + "&from=Key habits&type=3");
-                return responseString; 
+                return responseString;
             }
         }
 
@@ -163,7 +163,7 @@ namespace psychoTest.Core
                 return false;
 
             if (orgId == null)
-                orgId = Models.Organisations.Organisation.GetByIdOrDefaultManaged()?.id;
+                orgId = Models.Organisations.Organisation.GetByIdOrDefault()?.id;
             if (orgId == null)
                 return false;
 
@@ -185,6 +185,14 @@ namespace psychoTest.Core
             return user.IsInRole(admin);
         }
 
+        public static bool isCoach()
+        {
+            System.Security.Claims.ClaimsPrincipal user
+                = HttpContext.Current.GetOwinContext().Authentication.User;
+
+            return user.IsInRole(coach);
+        }
+
         public static bool isManager(string orgId)
         {
             System.Security.Claims.ClaimsPrincipal user
@@ -196,14 +204,22 @@ namespace psychoTest.Core
 
         public static bool isInAnyRole()
         {
-            System.Security.Claims.ClaimsPrincipal user 
+            System.Security.Claims.ClaimsPrincipal user
                 = HttpContext.Current.GetOwinContext().Authentication.User;
             string userEmail = user.Identity.GetEmail();
-            
+
             if (user.IsInRole(Membership.admin) || user.IsInRole(Membership.coach)) return true;
 
             return DBMain.db.OrganisationsUsersRoles.Count(x => x.userEmail == userEmail) > 0;
         }
+    }
+
+    //набор переменных HTTP-запроса
+    public class RequestVals
+    {
+        public const string orgId = "orgId";
+        //адрес, куда попадает пользователь, не прошедший проверку прав доступа
+        public const string nrURL = "/cabinet";
     }
 
     public class AjaxAnswer

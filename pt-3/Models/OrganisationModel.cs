@@ -26,9 +26,9 @@ namespace psychoTest.Models.Organisations
         }
 
         //кривоватый метод получения организации без указания Id
-        //если его нет, то выбирается первая (сортировка по Id) организация
-        //для которой авторизованный пользователь является менеджером
-        public static Organisation GetByIdOrDefaultManaged(string orgId = null)
+        //если его нет, то выбирается первая (сортировка по Id) организация,
+        //в которой состоит пользователь
+        public static Organisation GetByIdOrDefault(string orgId = null)
         {
             System.Security.Claims.ClaimsPrincipal user
                 = HttpContext.Current.GetOwinContext().Authentication.User;
@@ -37,15 +37,13 @@ namespace psychoTest.Models.Organisations
             else
             {
                 SqlParameter[] pars = {
-                    new SqlParameter("userEmail", user.Identity.GetEmail())
-                    ,new SqlParameter("roleName", Core.Membership.manager)};
+                    new SqlParameter("userEmail", user.Identity.GetEmail())};
                 var query = $@"
 SELECT * 
 FROM Organisations o
 WHERE o.id = (SELECT TOP 1 our.orgId 
 				FROM OrganisationsUsersRoles our
 				WHERE our.userEmail=@userEmail
-                    AND roleName=@roleName
                 ORDER BY our.orgId ASC)";
                 return DBMain.db.Database.SqlQuery<Organisation>(query, pars).SingleOrDefault();
             }
@@ -226,11 +224,10 @@ ORDER BY dateCreate DESC";
     //таблица привязки ролей к пользователям организации
     public class OrganisationsUsersRole
     {
-        [Key, Column(Order = 0)]
         public string roleName { get; set; }
-        [Key, Column(Order = 1)]
+        [Key, Column(Order = 0)]
         public string userEmail { get; set; }
-        [Key, Column(Order = 2)]
+        [Key, Column(Order = 1)]
         public string orgId { get; set; }
     }
 

@@ -34,6 +34,11 @@ namespace psychoTest.Models
         public DbSet<Organisations.OrganisationsUsersRole> OrganisationsUsersRoles { get; set; }
         public DbSet<Organisations.OrganisationsUsers> OrganisationUsers { get; set; }
         public DbSet<Organisations.OrganisationsUsersFile> OrganisationsUsersFiles { get; set; }
+        public DbSet<EntityStatus> EntityStatuses { get; set; }
+        public DbSet<Researches.ResearchType> ResearchTypes { get; set; }
+        public DbSet<Researches.Research> Researches { get; set; }
+        public DbSet<Researches.ResearchGroup> ResearchGroups { get; set; }
+        public DbSet<Researches.ResearchGroupsItems> ResearchGroupsItems { get; set; }
     }
 
     public class AspNetUser
@@ -71,5 +76,14 @@ namespace psychoTest.Models
     {
         public string name { get; set; }
         public string val { get; set; }
-    }    
+    }
+
+    //таблица статусов сущностей
+    public class EntityStatus
+    {
+        [Key]
+        public int id { get; set; }
+        public string name { get; set; }
+        public string nameText { get; set; }
+    }
 }

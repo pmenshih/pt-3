@@ -19,7 +19,7 @@ namespace psychoTest.Controllers
     [Authorize]
     public class OrganisationController : Controller
     {
-        public bool isAdminOrManager(string id)
+        private bool IsAdminOrManager(string id)
         {
             return (Membership.isManager(id) || Membership.isAdmin());
         }
@@ -30,7 +30,7 @@ namespace psychoTest.Controllers
             Organisation org = new Organisation();
 
             org = Organisation.GetById(orgId);
-            if(org == null || !isAdminOrManager(orgId))
+            if(org == null || !IsAdminOrManager(orgId))
                 return Redirect("/cabinet"); 
 
             var model = new Models.Organisations.Views.Index(org);
@@ -67,7 +67,7 @@ namespace psychoTest.Controllers
         
         public ActionResult Users(string orgId)
         {
-            if (!isAdminOrManager(orgId)) return Redirect("/cabinet");
+            if (!IsAdminOrManager(orgId)) return Redirect("/cabinet");
 
             Models.Organisations.Views.Users model = new Models.Organisations.Views.Users();
             model.orgId = orgId;
@@ -98,7 +98,7 @@ ORDER BY surname, name, patronim, email";
 
         public ActionResult UserCU(string orgId, string userId = null)
         {
-            if (!isAdminOrManager(orgId)) return Redirect("/cabinet");
+            if (!IsAdminOrManager(orgId)) return Redirect("/cabinet");
 
             Models.Organisations.Views.UserCU model = new Models.Organisations.Views.UserCU();
 
@@ -131,7 +131,7 @@ ORDER BY surname, name, patronim, email";
         [HttpPost]
         public ActionResult UserCU(Models.Organisations.Views.UserCU model)
         {
-            if (!isAdminOrManager(model.orgId)) return Redirect("/cabinet");
+            if (!IsAdminOrManager(model.orgId)) return Redirect("/cabinet");
 
             using (DBMain db = new DBMain())
             {
@@ -153,10 +153,10 @@ ORDER BY surname, name, patronim, email";
                         Organisation org = Organisation.GetById(model.orgId);
                         org.AddUser(newUser.Email);
 
-                        foreach (string role in model.roles.Split(','))
-                        {
-                            org.UserAddRole(newUser.Email, role);
-                        }
+                        //foreach (string role in model.roles.Split(','))
+                        //{
+                        org.UserAddRole(newUser.Email, model.roles);
+                        //}
 
                         //обновление индекса
                         Core.BLL.SearchIndexUpdate(newUser, Core.CRUDType.Create);
@@ -212,11 +212,11 @@ ORDER BY surname, name, patronim, email";
                     //сбросим роли пользователя
                     Organisation.UserRemoveRoles(oldEmail, model.orgId);
                     //обновим роли пользователя
-                    foreach (string role in model.roles.Split(','))
-                    {
+                    //foreach (string role in model.roles.Split(','))
+                    //{
                         Organisation org = Organisation.GetById(model.orgId);
-                        org.UserAddRole(model.email, role);
-                    }
+                        org.UserAddRole(model.email, model.roles);
+                    //}
                 }
             }
 
@@ -225,7 +225,7 @@ ORDER BY surname, name, patronim, email";
         
         public ActionResult UsersImport(string orgId)
         {
-            if (!isAdminOrManager(orgId)) return Redirect("/cabinet");
+            if (!IsAdminOrManager(orgId)) return Redirect("/cabinet");
 
             var model = new Models.Organisations.Views.UsersImport();
             model.orgId = orgId;
@@ -237,7 +237,7 @@ ORDER BY surname, name, patronim, email";
         [HttpPost]
         public ActionResult UsersImport(Models.Organisations.Views.UsersImport model)
         {
-            if (!isAdminOrManager(model.orgId)) return Redirect("/cabinet");
+            if (!IsAdminOrManager(model.orgId)) return Redirect("/cabinet");
 
             model.uploadHistory = Organisation.GetUploadHistory(model.orgId);
 
@@ -675,7 +675,7 @@ ORDER BY surname, name, patronim, email";
             DBMain db = new DBMain();
             OrganisationsUsersFile ouf = db.OrganisationsUsersFiles.Single(x => x.id == id);
 
-            if (!isAdminOrManager(ouf.orgId))
+            if (!IsAdminOrManager(ouf.orgId))
             {
                 return new EmptyResult();
             }
@@ -695,7 +695,7 @@ ORDER BY surname, name, patronim, email";
             Core.AjaxAnswer answer = new Core.AjaxAnswer();
             string orgId = id;
 
-            if (isAdminOrManager(orgId))
+            if (IsAdminOrManager(orgId))
             {
                 using (DBMain db = new DBMain())
                 {
@@ -823,7 +823,7 @@ ORDER BY surname, name, patronim, email";
         {
             Core.AjaxAnswer answer = new Core.AjaxAnswer();
 
-            if (!isAdminOrManager(orgId))
+            if (!IsAdminOrManager(orgId))
             {
                 answer.result = Core.AjaxResults.NoRights;
                 return answer.JsonContentResult();
@@ -859,7 +859,7 @@ ORDER BY surname, name, patronim, email";
         {
             Core.AjaxAnswer answer = new Core.AjaxAnswer();
 
-            if (!isAdminOrManager(orgId))
+            if (!IsAdminOrManager(orgId))
             {
                 answer.result = Core.AjaxResults.NoRights;
                 return answer.JsonContentResult();
@@ -888,7 +888,7 @@ ORDER BY surname, name, patronim, email";
         {
             Core.AjaxAnswer answer = new Core.AjaxAnswer();
 
-            if (!isAdminOrManager(orgId))
+            if (!IsAdminOrManager(orgId))
             {
                 answer.result = Core.AjaxResults.NoRights;
                 return answer.JsonContentResult();

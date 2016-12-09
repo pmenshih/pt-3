@@ -22,3 +22,13 @@ select,
 textarea {
     max-width: 280px;
 }
+
+.devDiv {
+    margin: 10px;
+    background-color: #e2e2e2;
+}
+
+.devDivInfo {
+    margin: 10px;
+    background-color: #df81f6;
+}

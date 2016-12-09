@@ -1,0 +1,34 @@
+﻿@model psychoTest.Models.Researches.Views.Create
+@{
+    ViewBag.Title = "Создание исследования";
+    Layout = "~/Views/Shared/_Cabinet.cshtml";
+}
+
+<h2>@ViewBag.Title</h2>
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <input type="text" name="name" placeholder="название исследования" />
+    <br />
+    <input type="text" name="descr" placeholder="описание" />
+    <br/>
+    <div class="devDiv">
+        Группа:
+        <div class="devDivInfo">
+            Группу можно назначить или удалить в любой момент. <a href="#">Узнайте больше о группах исследований</a>
+        </div>
+        <input type="text" name="groupName" placeholder="название группы" />
+        <br/>
+        Список групп
+        <input type="hidden" name="groupId" />
+    </div>
+    <div class="devDiv">
+        Тип:
+    </div>
+    <div class="devDiv">
+        Сценарий:
+    </div>
+    <input type="submit" value="Создать" />
+</form>
+
+

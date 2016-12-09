@@ -1,0 +1,9 @@
+﻿@model psychoTest.Models.Researches.Views.Index
+@{
+    ViewBag.Title = "Исследования";
+    Layout = "~/Views/Shared/_Cabinet.cshtml";
+}
+
+<h2>@ViewBag.Title</h2>
+
+<a href="/research/create?@psychoTest.Core.RequestVals.orgId=@Model.orgId">Создать</a>
