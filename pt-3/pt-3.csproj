@@ -275,6 +275,7 @@
     <Content Include="Views\Help\UsersImport.cshtml" />
     <Content Include="Views\Research\Index.cshtml" />
     <Content Include="Views\Research\Create.cshtml" />
+    <Content Include="Views\Research\Show.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Code\" />

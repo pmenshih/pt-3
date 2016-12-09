@@ -6,4 +6,80 @@
 
 <h2>@ViewBag.Title</h2>
 
-<a href="/research/create?@psychoTest.Core.RequestVals.orgId=@Model.orgId">Создать</a>
+@if (psychoTest.Core.Membership.isAdmin() || psychoTest.Core.Membership.isManager(Model.orgId))
+{
+    <div>
+        <a href="/research/create?@psychoTest.Core.RequestVals.orgId=@Model.orgId">Создать исследование</a>
+         | <a href="">управление группами</a>
+         | <a href="">создать группу по текущей таблице</a>
+    </div>
+}
+
+@if (Model.orgResearchsGroups.Count() > 0)
+{
+    <div class="devDiv">
+        отфильтровать по группе:
+        <a href="#">без группы</a>
+        @foreach (psychoTest.Models.Researches.ResearchGroup rg in Model.orgResearchsGroups)
+        {
+            <a href="#">@rg.name</a>
+        }
+    <div class="devDivInfo">
+        фильтров может быть выбрано несколько
+    </div>
+    </div>
+}
+
+<div class="devDiv">
+    <table>
+        <tr>
+            <th>
+                Название
+            </th>
+            <th>
+                Информация
+            </th>
+            <th>
+                Дата создания
+            </th>
+            <th>
+                Тип
+            </th>
+            <th>
+                Группы
+            </th>
+            <th>
+                Статус
+            </th>
+        </tr>
+        @foreach (psychoTest.Models.Researches.ResearchListView r in Model.researches)
+        {
+            string riUrl = $@"/research/show?{psychoTest.Core.RequestVals.orgId}={Model.orgId}
+                                &{psychoTest.Core.RequestVals.researchId}={r.id}";
+            <tr>
+                <td>
+                    <a href="@riUrl">@r.name</a>
+                    @if (!String.IsNullOrEmpty(r.descr))
+                    {
+                        <br /><i>@r.descr</i>
+                    }
+                </td>
+                <td>
+                    @r.info
+                </td>
+                <td>
+                    @r.dateCreate.ToString("dd.MM.yyyy")
+                </td>
+                <td>
+                    @r.typeDescr
+                </td>
+                <td>
+                    @r.groupNames
+                </td>
+                <td>
+                    @psychoTest.Core.EntityStatuses.GetById(r.statusId).it
+                </td>
+            </tr>
+        }
+    </table>
+</div>

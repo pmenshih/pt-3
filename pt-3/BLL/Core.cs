@@ -218,6 +218,7 @@ namespace psychoTest.Core
     public class RequestVals
     {
         public const string orgId = "orgId";
+        public const string researchId = "researchId";
         //адрес, куда попадает пользователь, не прошедший проверку прав доступа
         public const string nrURL = "/cabinet";
     }
@@ -289,5 +290,48 @@ namespace psychoTest.Core
         public const string UploadUsersFileLessTwoStrings = "В загруженном файле меньше двух строк.";
         public const string UploadUsersFileNoEmail = "В файле отсутствует поле \"email\".";
         public const string UploadFileNoSeparator = "Не указан разделитель столбцов.";
+        public const string ResearchCreateValidate = "Не указаны обязательные параметры.";
+    }
+
+    //класс описания статуса сущности
+    public class ESD
+    {
+        public string he { get; }
+        public string she { get; }
+        public string it { get; }
+        public string they { get; }
+        public int val { get; }
+
+        public ESD(int _val, string _he = null, string _she = null, string _it = null, string _they = null)
+        {
+            val = _val;
+            he = _he;
+            she = _she;
+            it = _it;
+            they = _they;
+        }
+    }
+
+    //набор статусов и их русских названий для сущностей
+    public class EntityStatuses
+    {
+        public static ESD disabled = new ESD(1, "неактивный", "неактивная", "неактивное");
+        public static ESD enabled = new ESD(2, "активный", "активная", "активное");
+        public static ESD deleted = new ESD(3);
+
+        public static ESD GetById(int id)
+        {
+            switch (id)
+            {
+                case 1:
+                    return disabled;
+                case 2:
+                    return enabled;
+                case 3:
+                    return deleted;
+                default:
+                    return null;
+            }
+        }
     }
 }

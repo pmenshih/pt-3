@@ -20,13 +20,21 @@
         <input type="text" name="groupName" placeholder="название группы" />
         <br/>
         Список групп
+        @if (Model.groups.Count() == 0)
+        {
+            <br/><i>группы отсутствуют</i>
+        }
         <input type="hidden" name="groupId" />
     </div>
     <div class="devDiv">
         Тип:
-    </div>
-    <div class="devDiv">
-        Сценарий:
+        <select name="typeId">
+            <option value="" disabled selected>выберите</option>
+            @foreach (psychoTest.Models.Researches.ResearchType t in Model.types)
+            {
+                <option value="@t.id">@t.nameText</option>
+            }
+        </select>
     </div>
     <input type="submit" value="Создать" />
 </form>
