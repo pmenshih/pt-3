@@ -8,17 +8,19 @@
 <div style="background-color: #e2e2e2;">
     <p>Меню личного кабинета</p>
     <!-- #1 код генерации пунктов меню в зависимости от ролей пользователя -->
-        @if (psychoTest.Core.Membership.isAdmin() 
-            || psychoTest.Core.Membership.isCoach() 
-            || psychoTest.Core.Membership.HaveSpecifiedOrStrongerUsersTypeRole(
-                psychoTest.Core.Membership.inspector))
+        @if (org != null)
         {
-            <a href="/research?orgId=@org.id">Исследования</a>
-        }
-        @if (org != null 
-            && (psychoTest.Core.Membership.isManager(org.id) || psychoTest.Core.Membership.isAdmin()))
-        {
-            <a href="/organisation?orgId=@org.id">Организация</a>
+            if (psychoTest.Core.Membership.isAdmin()
+                || psychoTest.Core.Membership.isCoach()
+                || psychoTest.Core.Membership.HaveSpecifiedOrStrongerUsersTypeRole(
+                    psychoTest.Core.Membership.inspector))
+            {
+                <a href="/research?orgId=@org.id">Исследования</a>
+            }
+            if (psychoTest.Core.Membership.isManager(org.id) || psychoTest.Core.Membership.isAdmin())
+            {
+                <a href="/organisation?orgId=@org.id">Организация</a>
+            }
         }
         @if (psychoTest.Core.Membership.isAdmin())
         {
