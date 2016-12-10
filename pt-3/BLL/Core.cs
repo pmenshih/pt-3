@@ -286,6 +286,7 @@ namespace psychoTest.Core
         ,UserAllreadyInOrg = 7                  //пользователь уже состоит в указанной организации
         ,NoMultipleJoinRequests = 8             //нельзя подавать несколько заявок на присоединение к организации
         ,EmailAllreadyExist = 9                 //почта уже занята
+        ,ScenarioXMLError = 10                  //ошибка в сценарии опросника из XML-файла
     }
 
     public static class ErrorMessages

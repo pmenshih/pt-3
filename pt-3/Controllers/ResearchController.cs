@@ -154,12 +154,14 @@ namespace psychoTest.Controllers
             }
             catch (Exception exc)
             {
-
+                string s = exc.Message;
+                answer.data = null;
+                answer.result = AjaxResults.ScenarioXMLError;
+                return answer.JsonContentResult();
             }
 
-            answer.data = "hello";
+            answer.data = null;
             answer.result = AjaxResults.Success;
-
             return answer.JsonContentResult();
         }
     }
