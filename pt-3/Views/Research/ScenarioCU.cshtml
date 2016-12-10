@@ -14,9 +14,13 @@
 
 <div class="devDiv" style="display: none;" id="blockFile">
     Из файла<br/>
+    <div class="devDivInfo"><a href="#">Формат файла сценария опросника</a></div>
     <input type="file" id="filename" />
     <input type="button" id="uploadFileButton" value="загрузить" />
-    <div id="uploadLog">
+    <div id="uploadError" style="display: none;">
+        В сценарии опросника обнаружена ошибка:
+        <div id="uploadLog">
+        </div>
     </div>
 </div>
 <div class="devDiv" style="display: none;" id="blockLib">

@@ -1,24 +1,21 @@
 ﻿@using Microsoft.AspNet.Identity
-@if (Request.IsAuthenticated)
-{
-    using (Html.BeginForm("LogOff", "Account", FormMethod.Post, new { id = "logoutForm", @class = "navbar-right" }))
+<div class="devDiv">
+    <i>Меню аутентифицированного пользователя</i>
+    @if (Request.IsAuthenticated)
     {
-    @Html.AntiForgeryToken()
-
-    <ul class="nav navbar-nav navbar-right">
-        <li>
+        using (Html.BeginForm("LogOff", "Account", FormMethod.Post, new { id = "logoutForm" }))
+        {
+            @Html.AntiForgeryToken()
             <a href="/cabinet">Личный кабинет</a>
-        </li>
-        <li>
-            @Html.ActionLink(User.Identity.GetUserName(), "index", "manage", routeValues: null, htmlAttributes: new { title = "Manage" })
-        </li>
-        <li><a href="javascript:document.getElementById('logoutForm').submit()">Выйти</a></li>
-    </ul>
+            @Html.Raw("|")
+            <a href="/manage">@User.Identity.GetUserName()</a>
+            @Html.Raw("|")
+            <a href="javascript:document.getElementById('logoutForm').submit()">Выйти</a>
+        }
     }
-}
-else
-{
-    <ul class="nav navbar-nav navbar-right">
-        <li><a href="/account/login">Войти</a></li>
-    </ul>
-}
+    else
+    {
+        <a href="/account/login">Войти</a>
+    }
+</div>
+

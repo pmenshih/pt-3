@@ -3,24 +3,20 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @if (String.IsNullOrEmpty(ViewBag.Title))
+    {
+        ViewBag.Title = "Полезные привычки";
+    }
     <title>@ViewBag.Title</title>
     @Styles.Render("~/content/site.css")
     @Scripts.Render("/scripts/jquery-3.1.1.min.js")
 </head>
 <body>
-    <div class="navbar navbar-inverse navbar-fixed-top">
-        <div class="container">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                @Html.ActionLink("Центр оценки", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
-                <a href="/about" class="navbar-brand">О сервисе</a>
-                @Html.Partial("_LoginPartial")
-            </div>
-        </div>
+    <div class="devDiv">        
+        <i>Главное меню</i><br/>
+        <a jref="/">Полезные привычки</a>
+        | <a href="/about" class="navbar-brand">О сервисе</a>
+        @Html.Partial("_LoginPartial")
     </div>
     <div class="container body-content">
         @if (ViewData["serverError"] != null)

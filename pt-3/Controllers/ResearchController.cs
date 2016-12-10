@@ -2,6 +2,7 @@
 using System.Web.Mvc;
 using psychoTest.Models.Researches;
 using psychoTest.Core;
+using System.Web.Script.Serialization;
 
 namespace psychoTest.Controllers
 {
@@ -154,15 +155,18 @@ namespace psychoTest.Controllers
             }
             catch (Exception exc)
             {
-                string s = exc.Message;
-                answer.data = null;
+                var errs = new UploadScenarioErrorsDesc() { excMes1 = exc.Message
+                                                            ,excMes2 = exc.InnerException?.Message };
+
+                answer.data = new JavaScriptSerializer().Serialize(errs);
                 answer.result = AjaxResults.ScenarioXMLError;
                 return answer.JsonContentResult();
             }
 
-            answer.data = null;
             answer.result = AjaxResults.Success;
             return answer.JsonContentResult();
         }
+
+        public class UploadScenarioErrorsDesc { public string excMes1; public string excMes2; }
     }
 }
