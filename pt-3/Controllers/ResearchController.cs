@@ -11,7 +11,7 @@ namespace psychoTest.Controllers
     {
         //пользователь является контролёром, или зрителем, или менеджером указанной организации
         //или пользователь коуч, или администратор
-        private bool RolesIsICMCA(string orgId)
+        private bool RolesIsIVMCA(string orgId)
         {
             //администраторы
             if (Membership.isAdmin()) return true;
@@ -33,7 +33,7 @@ namespace psychoTest.Controllers
             model.orgResearchsGroups = ResearchGroupsItems.GetByOrgId(model.orgId);
 
             //проверка права доступа
-            if (!RolesIsICMCA(model.orgId)) return Redirect(RequestVals.nrURL);
+            if (!RolesIsIVMCA(model.orgId)) return Redirect(RequestVals.nrURL);
             
             return View(model);
         }
@@ -45,7 +45,7 @@ namespace psychoTest.Controllers
             model.groups = ResearchGroupsItems.GetByOrgId(model.orgId);
 
             //проверка права доступа
-            if (!RolesIsICMCA(model.orgId)) return Redirect(RequestVals.nrURL);
+            if (!Membership.isAdmin() && !Membership.isManager(model.orgId)) return Redirect(RequestVals.nrURL);
 
             return View(model);
         }
@@ -106,12 +106,13 @@ namespace psychoTest.Controllers
             var research = Research.GetById(Request.QueryString[RequestVals.researchId]);
 
             //проверка на принадлежность исследования организации и права доступа
-            if (org.id != research.orgId || !RolesIsICMCA(org.id)) return Redirect(RequestVals.nrURL);
+            if (org.id != research.orgId || !RolesIsIVMCA(org.id)) return Redirect(RequestVals.nrURL);
 
             var model = new Models.Researches.Views.Show();
             model.name = research.name;
             model.orgId = org.id;
             model.researchId = research.id;
+            model.password = research.password;
 
             return View(model);
         }
@@ -119,24 +120,28 @@ namespace psychoTest.Controllers
         public ActionResult ScenarioCU()
         {
             var model = new Models.Researches.Views.ScenarioCU();
-            model.orgId = Request.QueryString[RequestVals.orgId];
-            model.researchId = Request.QueryString[RequestVals.researchId];
+            var org = Models.Organisations.Organisation.GetById(Request.QueryString[RequestVals.orgId]);
+            var research = Research.GetById(Request.QueryString[RequestVals.researchId]);
+
+            model.orgId = org.id;
+            model.researchId = research.id;
 
             //права
-            if (!Membership.isAdmin() && !Membership.isManager(model.orgId)) return Redirect(RequestVals.nrURL);
+            if (org.id != research.orgId || (!Membership.isAdmin() && !Membership.isManager(org.id)))
+                return Redirect(RequestVals.nrURL);
 
             return View(model);
         }
 
         public ActionResult UploadScenario()
         {
-            Models.Organisations.Organisation org 
-                = Models.Organisations.Organisation.GetById(Request[RequestVals.orgId]);
+            var org = Models.Organisations.Organisation.GetById(Request[RequestVals.orgId]);
+            var research = Research.GetById(Request[RequestVals.researchId]);
 
             AjaxAnswer answer = new AjaxAnswer();
 
             //права
-            if (!Membership.isAdmin() && !Membership.isManager(org.id))
+            if (org.id != research.orgId || (!Membership.isAdmin() && !Membership.isManager(org.id)))
             {
                 answer.result = AjaxResults.NoRights;
                 return answer.JsonContentResult();
@@ -145,13 +150,14 @@ namespace psychoTest.Controllers
             //прочитаем файл в строку
             string rawString = BLL.ReadUploadedFileToString(Request.Files["filename"]);
 
-            Models.Researches.Questionnaire.Questionnaire q
-                = new Models.Researches.Questionnaire.Questionnaire();
+            Models.Researches.Scenarios.Questionnaires.Questionnaire q
+                = new Models.Researches.Scenarios.Questionnaires.Questionnaire();
 
-            //десереализуем
+            //пробуем десереализовать
             try
             {
-                q = Models.Researches.Questionnaire.Questionnaire.DeserializeFromXmlString(rawString);
+                q = Models.Researches.Scenarios.Questionnaires
+                        .Questionnaire.DeserializeFromXmlString(rawString);
             }
             catch (Exception exc)
             {
@@ -163,10 +169,49 @@ namespace psychoTest.Controllers
                 return answer.JsonContentResult();
             }
 
+            //тут надо сделать что-то что нужно сделать перед сменой сценария исследования
+
+            //сохраняем новый сценарий в БД
+            Models.Researches.Scenarios.ResearchScenario scenario
+                    = new Models.Researches.Scenarios.ResearchScenario();
+            scenario.id = Guid.NewGuid().ToString();
+            scenario.dateCreate = DateTime.Now;
+            scenario.descr = q.descr;
+            scenario.name = q.name;
+            scenario.raw = rawString;
+            scenario.researchId = Request[RequestVals.researchId];
+            scenario.statusId = EntityStatuses.enabled.val;
+            scenario.Add();
+
             answer.result = AjaxResults.Success;
             return answer.JsonContentResult();
         }
 
         public class UploadScenarioErrorsDesc { public string excMes1; public string excMes2; }
+
+        //смена/установка кодового слова
+        public ActionResult SetPassword()
+        {
+            var org = Models.Organisations.Organisation.GetById(Request[RequestVals.orgId]);
+            var research = Research.GetById(Request[RequestVals.researchId]);
+            var valPassword = Request[RequestVals.val];
+
+            AjaxAnswer answer = new AjaxAnswer();
+
+            //права
+            if (org.id != research.orgId || (!Membership.isAdmin() && !Membership.isManager(org.id)))
+            {
+                answer.result = AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            research.password = valPassword;
+
+            if (research.SetPassword())
+                answer.result = AjaxResults.Success;
+            else answer.result = AjaxResults.ResearchPasswordExist;
+
+            return answer.JsonContentResult();
+        }
     }
 }

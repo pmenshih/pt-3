@@ -19,8 +19,9 @@ namespace psychoTest.Models.Researches
         public DateTime dateCreate { get; set; } = DateTime.Now;
         public string name { get; set; }
         public string descr { get; set; }
+        public string password { get; set; }
         public int typeId { get; set; }
-        public int statusId { get; set; }
+        public int statusId { get; set; } = Core.EntityStatuses.enabled.val;
 
         //создание
         public bool Create()
@@ -63,6 +64,18 @@ ORDER BY r.dateCreate DESC
                 = DBMain.db.Database.SqlQuery<CustomSelects.ResearchListView>(query, pars).ToList();
             
             return list;
+        }
+
+        public bool SetPassword()
+        {
+            Research r = DBMain.db.Researches.SingleOrDefault(x => x.password == this.password);
+
+            if (r == null || r.id == this.id)
+            {
+                DBMain.db.SaveChanges();
+                return true;
+            }
+            else return false;
         }
     }
 
@@ -186,6 +199,7 @@ WHERE rg.id = rgi.groupId
             [Required]
             public string researchId { get; set; }
             public string name { get; set; }
+            public string password { get; set; }
         }
 
         public class ScenarioCU
@@ -197,63 +211,91 @@ WHERE rg.id = rgi.groupId
         }
     }
 
-    namespace Questionnaire
+    namespace Scenarios
     {
-        public class Questionnaire
+        public class ResearchScenario
         {
-            [XmlArray("Questions")]
-            [XmlArrayItem("Question", typeof(Question))]
-            public Question[] questions { get; set; }
+            public string id { get; set; }
+            public string name { get; set; }
+            public string descr { get; set; }
+            public string researchId { get; set; }
+            public DateTime dateCreate { get; set; } = DateTime.Now;
+            public string raw { get; set; }
+            public int statusId { get; set; } = Core.EntityStatuses.enabled.val;
 
-            public static Questionnaire DeserializeFromXmlString(string xml)
+            //добавление сценария
+            public bool Add()
             {
-                XmlSerializer s = new XmlSerializer(typeof(Questionnaire));
-
-                //преобразуем строку xml в поток
-                MemoryStream stream = new MemoryStream();
-                StreamWriter writer = new StreamWriter(stream);
-                writer.Write(xml);
-                writer.Flush();
-                stream.Position = 0;
-
-                //десериализуем поток в класс
-                Questionnaire q = (Questionnaire)s.Deserialize(stream);
-                return q;
+                DBMain.db.ResearchScenario.Add(this);
+                DBMain.db.SaveChanges();
+                return true;
             }
         }
 
-        public class Question
+        namespace Questionnaires
         {
-            [XmlAttribute]
-            public string type { get; set; }
+            public class Questionnaire
+            {
+                [XmlArray("Questions")]
+                [XmlArrayItem("Question", typeof(Question))]
+                public Question[] questions { get; set; }
 
-            [XmlAttribute]
-            public int position { get; set; }
+                [XmlAttribute]
+                public string name { get; set; }
 
-            [XmlAttribute]
-            public string isSecret { get; set; }
+                [XmlAttribute]
+                public string descr { get; set; }
 
-            [XmlAttribute]
-            public string text { get; set; }
+                public static Questionnaire DeserializeFromXmlString(string xml)
+                {
+                    XmlSerializer s = new XmlSerializer(typeof(Questionnaire));
 
-            [XmlArray("Answers")]
-            [XmlArrayItem("Answer", typeof(Answer))]
-            public Answer[] answers { get; set; }
-        }
+                    //преобразуем строку xml в поток
+                    MemoryStream stream = new MemoryStream();
+                    StreamWriter writer = new StreamWriter(stream);
+                    writer.Write(xml);
+                    writer.Flush();
+                    stream.Position = 0;
 
-        public class Answer
-        {
-            [XmlAttribute]
-            public int position { get; set; }
+                    //десериализуем поток в класс
+                    Questionnaire q = (Questionnaire)s.Deserialize(stream);
+                    return q;
+                }
+            }
 
-            [XmlAttribute]
-            public string keyto { get; set; }
+            public class Question
+            {
+                [XmlAttribute]
+                public string type { get; set; }
 
-            [XmlText]
-            public string value { get; set; }
+                [XmlAttribute]
+                public int position { get; set; }
 
-            [XmlAttribute]
-            public string isSecret { get; set; }
+                [XmlAttribute]
+                public string isSecret { get; set; }
+
+                [XmlAttribute]
+                public string text { get; set; }
+
+                [XmlArray("Answers")]
+                [XmlArrayItem("Answer", typeof(Answer))]
+                public Answer[] answers { get; set; }
+            }
+
+            public class Answer
+            {
+                [XmlAttribute]
+                public int position { get; set; }
+
+                [XmlAttribute]
+                public string keyto { get; set; }
+
+                [XmlText]
+                public string value { get; set; }
+
+                [XmlAttribute]
+                public string isSecret { get; set; }
+            }
         }
     }
 }

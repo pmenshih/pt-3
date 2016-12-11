@@ -4,13 +4,12 @@
     Layout = "~/Views/Shared/_Cabinet.cshtml";
 }
 
-<input type="hidden" id="orgId" value="@Model.orgId" />
 @{ var backUrl = $"/research/show?{psychoTest.Core.RequestVals.orgId}={Model.orgId}&{psychoTest.Core.RequestVals.researchId}={Model.researchId}"; }
 <a href="@backUrl">Вернуться к исследованию</a>
 <h2>Загрузить сценарий из:</h2>
-<a href="#" id="lnkFile">файла</a>
-| <a href="#" id="lnkLib">билиотеки</a>
-| <a href="#" id="lnkRes">исследований</a>
+<span id="lnkFile" class="devSpanLnk">файла</span>
+| <a  class="devSpanLnk" id="lnkLib">билиотеки</a>
+| <a  class="devSpanLnk" id="lnkRes">исследований</a>
 
 <div class="devDiv" style="display: none;" id="blockFile">
     Из файла<br/>
@@ -30,4 +29,4 @@
     Из исследований
 </div>
 
-
+@Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")

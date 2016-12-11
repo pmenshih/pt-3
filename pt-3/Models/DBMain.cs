@@ -39,6 +39,7 @@ namespace psychoTest.Models
         public DbSet<Researches.Research> Researches { get; set; }
         public DbSet<Researches.ResearchGroup> ResearchGroups { get; set; }
         public DbSet<Researches.ResearchGroupsItems> ResearchGroupsItems { get; set; }
+        public DbSet<Researches.Scenarios.ResearchScenario> ResearchScenario { get; set; }
     }
 
     public class AspNetUser

@@ -31,7 +31,8 @@ function UploadScenario() {
     var fileData = $('#filename').prop('files')[0];
     var formData = new FormData();
     formData.append('filename', fileData);
-    formData.append('orgId', $("#orgId").val());
+    formData.append('orgId', $.getUrlVar('orgId'));
+    formData.append('researchId', $.getUrlVar('researchId'));
     $.ajax({
         url: '/research/uploadscenario',
         dataType: 'text',

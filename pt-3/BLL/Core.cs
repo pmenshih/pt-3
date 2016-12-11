@@ -227,6 +227,7 @@ namespace psychoTest.Core
     {
         public const string orgId = "orgId";
         public const string researchId = "researchId";
+        public const string val = "val";
         //адрес, куда попадает пользователь, не прошедший проверку прав доступа
         public const string nrURL = "/cabinet";
     }
@@ -287,6 +288,7 @@ namespace psychoTest.Core
         ,NoMultipleJoinRequests = 8             //нельзя подавать несколько заявок на присоединение к организации
         ,EmailAllreadyExist = 9                 //почта уже занята
         ,ScenarioXMLError = 10                  //ошибка в сценарии опросника из XML-файла
+        ,ResearchPasswordExist = 11             //указанное кодовое слово не является уникальным
     }
 
     public static class ErrorMessages

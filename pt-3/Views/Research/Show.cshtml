@@ -6,16 +6,24 @@
 
 <h2>@ViewBag.Title</h2>
 <div class="devDiv">
-    Статистика
-</div>
-@if (psychoTest.Core.Membership.isAdmin() || psychoTest.Core.Membership.isManager(Model.orgId))
-{
-    var scenarioLink = $@"/research/scenariocu?{psychoTest.Core.RequestVals.orgId}={Model.orgId}&{psychoTest.Core.RequestVals.researchId}={Model.researchId}";
-    <div class="devDiv">
-        Сценарий
-        | <a href="@scenarioLink">изменить</a>
+    Сводка
+    <div>
+        Кодовое слово: <div id="pref_research_setpassword"></div>
+        <input type="hidden" id="val_research_setpassword" value="@Model.password"/>
     </div>
-}
+</div>
+<div class="devDiv">
+    Сценарий
+    <div>
+        @if (psychoTest.Core.Membership.isAdmin() || psychoTest.Core.Membership.isManager(Model.orgId))
+        {
+            var scenarioLink = $@"/research/scenariocu?{psychoTest.Core.RequestVals.orgId}={Model.orgId}&{psychoTest.Core.RequestVals.researchId}={Model.researchId}";
+            @Html.Raw("|") <a href="@scenarioLink">изменить</a>
+        }
+    </div>
+</div>
 <div class="devDiv">
     Результаты
 </div>
+
+@Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")

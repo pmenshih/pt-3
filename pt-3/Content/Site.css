@@ -47,3 +47,8 @@ textarea {
     margin: 10px;
     background-color: green;
 }
+
+.devSpanLnk {
+    text-decoration: underline;
+    color: blue;
+}
