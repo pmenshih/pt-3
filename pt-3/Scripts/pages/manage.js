@@ -10,6 +10,6 @@
     AjaxCall(url
             , formData
             , UI.EditableInput.ProcessServerAnswer);
-};
+}; 
 
 UI.EditableInput.Create('_manage_surnamechange');
