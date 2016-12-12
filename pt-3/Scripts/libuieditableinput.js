@@ -32,7 +32,7 @@ UI.EditableInput.OkClick = function (divId) {
 UI.EditableInput.ProcessServerAnswer = function (response, formData) {
     var answer = jQuery.parseJSON(response);
     if (answer.result == '0') {
-        var curVal = formData.get('newval');
+        var curVal = formData.get('val');
         $('#val' + formData.get('divId')).val(curVal);
         UI.EditableInput.Init(formData.get('divId'));
     }
