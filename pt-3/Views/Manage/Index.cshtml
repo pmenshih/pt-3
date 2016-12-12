@@ -11,7 +11,7 @@
 }
 
 <h2>@ViewBag.Title.</h2>
-
+<input type="hidden" id="userId" value="@userId" />
 <p class="text-success">@ViewBag.StatusMessage</p>
 <div>
     <hr />
@@ -21,6 +21,9 @@
         <dd>
             @Model.surname
             &nbsp;<a href="/manage/surnamechange?newval=123&userId=@userId" target="_blank">изменить</a>
+
+            <div id="_manage_surnamechange"></div>
+            <input type="hidden" id="val_manage_surnamechange" value="@Model.surname" />
         </dd>
         <dt>Имя:</dt>
         <dd>
@@ -96,3 +99,7 @@
         }
     </dl>
 </div>
+
+@Scripts.Render("/scripts/libcore.js")
+@Scripts.Render("/scripts/libuieditableinput.js")
+@Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")

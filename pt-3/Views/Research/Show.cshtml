@@ -8,7 +8,7 @@
 <div class="devDiv">
     Сводка
     <div>
-        Кодовое слово: <div id="pref_research_setpassword"></div>
+        Кодовое слово: <div id="ajaxchangetextvalue_research_setpassword"></div>
         <input type="hidden" id="val_research_setpassword" value="@Model.password"/>
     </div>
 </div>
@@ -26,4 +26,5 @@
     Результаты
 </div>
 
+@Scripts.Render("/scripts/libcore.js")
 @Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")
