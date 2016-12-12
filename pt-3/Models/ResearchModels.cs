@@ -198,7 +198,7 @@ WHERE rg.id = rgi.groupId
             public string orgId { get; set; }
             [Required]
             public string researchId { get; set; }
-            public string name { get; set; }
+            public string name { get; set; } 
             public string password { get; set; }
         }
 
