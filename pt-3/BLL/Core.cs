@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
@@ -58,6 +59,20 @@ namespace psychoTest.Core
             for (int i = 0; i < len; i++)
             {
                 int next = rnd.Next(0, 10);
+                code += chars.Substring(next, 1);
+            }
+
+            return code;
+        }
+
+        public static string GenerateRandomDigStrCode(int len)
+        {
+            string chars = "1234567890qwertyuiopasdfghjklzxcvbnm";
+            string code = "";
+            Random rnd = new Random();
+            for (int i = 0; i < len; i++)
+            {
+                int next = rnd.Next(0, chars.Length);
                 code += chars.Substring(next, 1);
             }
 
@@ -143,6 +158,11 @@ namespace psychoTest.Core
             file.InputStream.Read(fileBytes, 0, Convert.ToInt32(file.ContentLength));
             return Encoding.UTF8.GetString(fileBytes);
         }
+    }
+
+    public sealed class Utf8StringWriter : StringWriter
+    {
+        public override Encoding Encoding { get { return Encoding.UTF8; } }
     }
 
     public class Membership
@@ -303,6 +323,10 @@ namespace psychoTest.Core
         public const string UploadUsersFileNoEmail = "В файле отсутствует поле \"email\".";
         public const string UploadFileNoSeparator = "Не указан разделитель столбцов.";
         public const string ResearchCreateValidate = "Не указаны обязательные параметры.";
+        public const string ResearchIncorrectPassword = "Анкеты с указанным кодовым словом не найдено.";
+        public const string ResearchNotActive = "Заполнение анкеты в настоящий момент невозможно. Попробуйте позже, или свяжитесь с администратором анкеты.";
+        public const string ResearchNoActiveScenario = "У исследования нет активной анкеты.";
+        public const string ResearchSessionNotExist = "Сессия с указанным идентификатором не найдена.";
     }
 
     //класс описания статуса сущности

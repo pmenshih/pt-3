@@ -36,6 +36,19 @@ namespace psychoTest.Models.Researches
             return DBMain.db.Researches.SingleOrDefault(x => x.id == researchId);
         }
 
+        public static Research GetByPassword(string password)
+        {
+            return DBMain.db.Researches.SingleOrDefault(x => x.password == password);
+        }
+
+        public Scenarios.ResearchScenario GetActualActiveScenario()
+        {
+            return DBMain.db.ResearchScenario.Where(x => x.researchId == this.id
+                                                        && x.statusId == Core.EntityStatuses.enabled.val)
+                .OrderByDescending(x => x.dateCreate)
+                .FirstOrDefault();
+        }
+
         //получение списка всех исследований для таблицы индексной страницы исследований организации
         public static List<CustomSelects.ResearchListView> GetAllForLinkResearch(string orgId)
         {
@@ -246,7 +259,7 @@ WHERE rg.id = rgi.groupId
                 [XmlAttribute]
                 public string descr { get; set; }
 
-                public static Questionnaire DeserializeFromXmlString(string xml)
+                public static Questionnaire DeSerializeFromXmlString(string xml)
                 {
                     XmlSerializer s = new XmlSerializer(typeof(Questionnaire));
 
@@ -260,6 +273,15 @@ WHERE rg.id = rgi.groupId
                     //десериализуем поток в класс
                     Questionnaire q = (Questionnaire)s.Deserialize(stream);
                     return q;
+                }
+
+                public string SerializeToXmlString()
+                {
+                    XmlSerializer s = new XmlSerializer(typeof(Questionnaire));
+                    Core.Utf8StringWriter sw = new Core.Utf8StringWriter();
+                    s.Serialize(sw, this);
+                    sw.Close();
+                    return sw.ToString();
                 }
             }
 
@@ -295,6 +317,36 @@ WHERE rg.id = rgi.groupId
 
                 [XmlAttribute]
                 public string isSecret { get; set; }
+            }
+        }
+    }
+
+    namespace Sessions
+    {
+        public class ResearchSession
+        {
+            [Key]
+            public string id { get; set; } = Guid.NewGuid().ToString();
+            public string idShort { get; set; }
+            public string researchId { get; set; }
+            public string scenarioId { get; set; }
+            public DateTime dateStart { get; set; } = DateTime.Now;
+            public DateTime dateFinish { get; set; }
+            public bool finished { get; set; } = false;
+            public int statusId { get; set; }
+            public string raw { get; set; }
+
+            public bool Create()
+            {
+                DBMain.db.ResearchSessions.Add(this);
+                DBMain.db.SaveChanges();
+                return true;
+            }
+
+            public static ResearchSession GetActiveByIdShort(string idShort)
+            {
+                return DBMain.db.ResearchSessions.SingleOrDefault(x => x.idShort == idShort
+                                                                    && x.statusId == Core.EntityStatuses.enabled.val);
             }
         }
     }

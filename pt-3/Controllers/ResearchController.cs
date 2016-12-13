@@ -157,7 +157,7 @@ namespace psychoTest.Controllers
             try
             {
                 q = Models.Researches.Scenarios.Questionnaires
-                        .Questionnaire.DeserializeFromXmlString(rawString);
+                        .Questionnaire.DeSerializeFromXmlString(rawString);
             }
             catch (Exception exc)
             {
@@ -212,6 +212,81 @@ namespace psychoTest.Controllers
             else answer.result = AjaxResults.ResearchPasswordExist;
 
             return answer.JsonContentResult();
+        }
+
+        [AllowAnonymous]
+        public ActionResult Go(string code, string sid)
+        {
+            if (sid != null)
+            {
+                Models.Researches.Sessions.ResearchSession rs
+                    = Models.Researches.Sessions.ResearchSession.GetActiveByIdShort(sid);
+                if (rs != null)
+                    return Redirect($"/research/filling/{sid}");
+                else
+                {
+                    ViewData["serverError"] = ErrorMessages.ResearchSessionNotExist;
+                    return View();
+                }
+            }
+            else if (code != null)
+            {
+                //выясним, есть ли анкета с таким кодом
+                Research r = Research.GetByPassword(code);
+                if (r == null)
+                {
+                    ViewData["serverError"] = ErrorMessages.ResearchIncorrectPassword;
+                    return View();
+                }
+
+                //проверим статус анкеты
+                if (r.statusId != EntityStatuses.enabled.val)
+                {
+                    ViewData["serverError"] = ErrorMessages.ResearchNotActive;
+                    return View();
+                }
+
+                //создадим сессию
+                Models.Researches.Sessions.ResearchSession rSession
+                    = new Models.Researches.Sessions.ResearchSession();
+                //получим актуальный сценарий исследования
+                Models.Researches.Scenarios.ResearchScenario rScenario = r.GetActualActiveScenario();
+                //если сценария нет, то ничего не выйдет
+                if (rScenario == null)
+                {
+                    ViewData["serverError"] = ErrorMessages.ResearchNoActiveScenario;
+                    return View();
+                }
+                //заполним сессию
+                rSession.dateFinish = new DateTime(2222, 1, 1);
+                rSession.dateStart = DateTime.Now;
+                rSession.finished = false;
+                rSession.idShort = BLL.GenerateRandomDigStrCode(5);
+                rSession.raw = rScenario.raw;
+                rSession.researchId = r.id;
+                rSession.scenarioId = rScenario.id;
+                rSession.statusId = EntityStatuses.enabled.val;
+                if (rSession.Create()) return Redirect($"/research/filling/{rSession.idShort}");
+                throw new Exception();
+            }
+
+            return View();
+        }
+        
+        [AllowAnonymous]
+        public ActionResult Filling(string sid)
+        {
+            Models.Researches.Sessions.ResearchSession rs 
+                = Models.Researches.Sessions.ResearchSession.GetActiveByIdShort(sid);
+
+            //выходим, если сессии нет
+            if (rs == null) throw new Exception();
+
+            //десериализуем опросник
+            Models.Researches.Scenarios.Questionnaires.Questionnaire quest
+                = Models.Researches.Scenarios.Questionnaires.Questionnaire.DeSerializeFromXmlString(rs.raw);
+
+            return View();
         }
     }
 }
