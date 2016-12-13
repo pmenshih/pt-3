@@ -222,6 +222,22 @@ WHERE rg.id = rgi.groupId
             [Required]
             public string researchId { get; set; }
         }
+
+        public class Filling
+        {
+            public string sid { get; set; }
+            public int curQuestionIdx { get; set; }
+            public int questionsCount { get; set; }
+            public Scenarios.Questionnaires.Question question { get; set; }
+            public string action { get; set; }
+
+            public void Fill(Scenarios.Questionnaires.QuestionnaireWI quest)
+            {
+                curQuestionIdx = quest.curQuestionIdx;
+                questionsCount = quest.questions.Count();
+                question = quest.questions[curQuestionIdx];
+            }
+        }
     }
 
     namespace Scenarios
@@ -259,9 +275,9 @@ WHERE rg.id = rgi.groupId
                 [XmlAttribute]
                 public string descr { get; set; }
 
-                public static Questionnaire DeSerializeFromXmlString(string xml)
+                public static object DeSerializeFromXmlString(string xml, Type type)
                 {
-                    XmlSerializer s = new XmlSerializer(typeof(Questionnaire));
+                    XmlSerializer s = new XmlSerializer(type);
 
                     //преобразуем строку xml в поток
                     MemoryStream stream = new MemoryStream();
@@ -270,19 +286,25 @@ WHERE rg.id = rgi.groupId
                     writer.Flush();
                     stream.Position = 0;
 
-                    //десериализуем поток в класс
-                    Questionnaire q = (Questionnaire)s.Deserialize(stream);
-                    return q;
+                    //десериализуем поток в класс и возвращаем его
+                    return s.Deserialize(stream);
                 }
 
-                public string SerializeToXmlString()
+                public string SerializeToXmlString(Type type)
                 {
-                    XmlSerializer s = new XmlSerializer(typeof(Questionnaire));
+                    XmlSerializer s = new XmlSerializer(type);
                     Core.Utf8StringWriter sw = new Core.Utf8StringWriter();
                     s.Serialize(sw, this);
                     sw.Close();
                     return sw.ToString();
                 }
+            }
+
+            [XmlRoot(ElementName = "Questionnaire")]
+            public class QuestionnaireWI : Questionnaire
+            {
+                [XmlAttribute]
+                public int curQuestionIdx { get; set; } = 0;
             }
 
             public class Question
@@ -339,6 +361,12 @@ WHERE rg.id = rgi.groupId
             public bool Create()
             {
                 DBMain.db.ResearchSessions.Add(this);
+                DBMain.db.SaveChanges();
+                return true;
+            }
+
+            public bool Save()
+            {
                 DBMain.db.SaveChanges();
                 return true;
             }

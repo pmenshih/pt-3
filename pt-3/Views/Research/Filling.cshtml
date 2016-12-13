@@ -1,7 +1,29 @@
-﻿
+﻿@model psychoTest.Models.Researches.Views.Filling
 @{
     ViewBag.Title = "Filling";
 }
 
 <h2>Filling</h2>
 
+<form action="/research/filling" method="post">
+    <input type="hidden" value="@Model.sid" name="sid" />
+    @if (Model.question.position > 0)
+    {
+        <div>
+            Вопрос @Model.question.position из @Model.questionsCount
+        </div>
+    }
+
+    <div>
+        @Model.question.text
+    </div>
+    <div>
+
+    </div>
+
+    @if (Model.curQuestionIdx > 0)
+    {
+        <button name="action" value="prev" type="submit">Назад</button>
+    }
+    <button name="action" value="next" type="submit">Вперед</button>
+</form>
