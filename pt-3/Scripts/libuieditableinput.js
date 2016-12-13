@@ -2,8 +2,6 @@
 UI.EditableInput = UI.EditableInput || {};
 
 UI.EditableInput.Create = function (divId) {
-    var eHtml;
-
     $.ajax({
         url: '/content/elements/editableinput.html',
         type: 'get',
@@ -11,8 +9,8 @@ UI.EditableInput.Create = function (divId) {
     });
 };
 
-UI.EditableInput.Bind = function (divId, eHtml) {
-    eHtml = eHtml.replace("divPref", divId);
+UI.EditableInput.Bind = function (divId, sHtml) {
+    var eHtml = sHtml.replace(/divPref/g, divId);
 
     $('#' + divId).html(eHtml);
     $('#' + divId).on("click", "[id$='btnno']", function () { UI.EditableInput.Init(divId); });
