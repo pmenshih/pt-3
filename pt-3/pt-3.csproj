@@ -210,6 +210,7 @@
     <Content Include="Scripts\libuieditableinput.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
     <Content Include="Scripts\pages\manage.js" />
+    <Content Include="Scripts\pages\research_filling.js" />
     <Content Include="Scripts\pages\research_scenariocu.js" />
     <Content Include="Scripts\pages\research_show.js" />
     <Content Include="Scripts\respond.js" />
@@ -266,6 +267,9 @@
     <Content Include="Views\Research\ScenarioCU.cshtml" />
     <Content Include="Scripts\jquery-3.1.1.slim.min.map" />
     <Content Include="Scripts\jquery-3.1.1.min.map" />
+    <Content Include="Views\Research\Go.cshtml" />
+    <Content Include="Views\Research\Filling.cshtml" />
+    <Content Include="Views\Research\Finish.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="imgs\" />

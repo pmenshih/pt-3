@@ -52,3 +52,7 @@ textarea {
     text-decoration: underline;
     color: blue;
 }
+
+.devValidateError {
+    background-color: #ff8a8a;
+}

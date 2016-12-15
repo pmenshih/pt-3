@@ -1,0 +1,58 @@
+﻿@model psychoTest.Models.Researches.Views.Filling
+@using psychoTest.Models.Researches.Scenarios.Questionnaires;
+@{
+    ViewBag.Title = "Filling";
+}
+
+<h2>Filling</h2>
+
+<form action="/research/filling" method="post" id="formFilling">
+    <input type="hidden" value="@Model.sid" name="sid" />
+    @if (Model.question.position > 0)
+    {
+        <div>
+            Вопрос @Model.question.position из @Model.questionsCount
+        </div>
+    }
+
+    <div>
+        @Html.Raw(Model.question.text)
+    </div>
+    @if (Model.question.type == QuestionTypes.hard)
+    {
+        foreach (Answer a in Model.question.answers)
+        {
+            if (!a.isSecret)
+            {
+                <input type="radio" name="answer" value="@a.position">@a.value<br>
+            }
+        }
+    }
+    else if (Model.question.type == QuestionTypes.soft)
+    {
+        <input type="hidden" id="answer" name="answer" />
+        <input type="hidden" id="softQ" value="1" />
+        foreach (Answer a in Model.question.answers)
+        {
+            if (!a.isSecret)
+            {
+                <input type="checkbox" id="@($"softAnswer{a.position}")" value="@a.position">@a.value<br>
+            }
+        }
+    }
+    else if (Model.question.type == QuestionTypes.text)
+    {
+        <textarea name="answer"></textarea>
+    }
+    <div>
+
+    </div>
+
+    @if (Model.curQuestionIdx > 0)
+    {
+        <button name="action" value="prev" id="btnBack" type="submit">Назад</button>
+    }
+    <button name="action" value="next" id="btnNext" type="submit">Вперед</button>
+</form>
+
+@Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")

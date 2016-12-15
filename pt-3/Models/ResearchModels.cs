@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Collections.Generic;
 using System.Linq;
 using System.Data.SqlClient;
+using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Serialization;
 using System.IO;
@@ -34,6 +35,19 @@ namespace psychoTest.Models.Researches
         public static Research GetById(string researchId)
         {
             return DBMain.db.Researches.SingleOrDefault(x => x.id == researchId);
+        }
+
+        public static Research GetByPassword(string password)
+        {
+            return DBMain.db.Researches.SingleOrDefault(x => x.password == password);
+        }
+
+        public Scenarios.ResearchScenario GetActualActiveScenario()
+        {
+            return DBMain.db.ResearchScenario.Where(x => x.researchId == this.id
+                                                        && x.statusId == Core.EntityStatuses.enabled.val)
+                .OrderByDescending(x => x.dateCreate)
+                .FirstOrDefault();
         }
 
         //получение списка всех исследований для таблицы индексной страницы исследований организации
@@ -198,7 +212,7 @@ WHERE rg.id = rgi.groupId
             public string orgId { get; set; }
             [Required]
             public string researchId { get; set; }
-            public string name { get; set; }
+            public string name { get; set; } 
             public string password { get; set; }
         }
 
@@ -208,6 +222,64 @@ WHERE rg.id = rgi.groupId
             public string orgId { get; set; }
             [Required]
             public string researchId { get; set; }
+        }
+
+        public class Filling
+        {
+            public string sid { get; set; }
+            public int curQuestionIdx { get; set; }
+            public int questionsCount { get; set; }
+            public Scenarios.Questionnaires.Question question { get; set; }
+            public string action { get; set; }
+            public string answer { get; set; }
+
+            public void Fill(Scenarios.Questionnaires.QuestionnaireWI quest)
+            {
+                curQuestionIdx = quest.curQuestionIdx;
+                questionsCount = quest.questions[quest.questions.Count()-1].position;
+                question = quest.questions[curQuestionIdx];
+
+                //костыль!
+                //заменим \n на <br/> в тексте вопроса
+                question.text = question.text.Replace("\\n", "<br/>");
+
+                //спрячем секретные ответы, если к ним нет ключей
+                if (question.answers == null) return;
+                foreach (Scenarios.Questionnaires.Answer a in question.answers)
+                {
+                    if (a.isSecret)
+                    {
+                        bool haveKey = false;
+                        foreach (Scenarios.Questionnaires.Question q in quest.questions)
+                        {
+                            //если ответа нет, или он пустой, то пропускаем вопрос
+                            if (String.IsNullOrEmpty(q.answer)) continue;
+
+                            foreach (Scenarios.Questionnaires.Answer qA in q.answers)
+                            {
+                                if (Array.IndexOf(Regex.Split(q.answer
+                                                    , Scenarios.Questionnaires.Vars.answersSeparator)
+                                        , qA.position.ToString()) != -1
+                                    && qA.keyto != null)
+                                {
+                                    foreach (string s 
+                                        in Regex.Split(qA.keyto, Scenarios.Questionnaires.Vars.keysSeparator))
+                                    {
+                                        if (s == $"{question.position}{Scenarios.Questionnaires.Vars.subkeysSeparator}{a.position}")
+                                        {
+                                            haveKey = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                    
+                            }
+                            if (haveKey) break;
+                        }
+                        if (haveKey) a.isSecret = false;
+                    }
+                }
+            }
         }
     }
 
@@ -246,9 +318,9 @@ WHERE rg.id = rgi.groupId
                 [XmlAttribute]
                 public string descr { get; set; }
 
-                public static Questionnaire DeserializeFromXmlString(string xml)
+                public static object DeSerializeFromXmlString(string xml, Type type)
                 {
-                    XmlSerializer s = new XmlSerializer(typeof(Questionnaire));
+                    XmlSerializer s = new XmlSerializer(type);
 
                     //преобразуем строку xml в поток
                     MemoryStream stream = new MemoryStream();
@@ -257,10 +329,72 @@ WHERE rg.id = rgi.groupId
                     writer.Flush();
                     stream.Position = 0;
 
-                    //десериализуем поток в класс
-                    Questionnaire q = (Questionnaire)s.Deserialize(stream);
-                    return q;
+                    //десериализуем поток в класс и возвращаем его
+                    return s.Deserialize(stream);
                 }
+
+                public string SerializeToXmlString(Type type)
+                {
+                    XmlSerializer s = new XmlSerializer(type);
+                    Core.Utf8StringWriter sw = new Core.Utf8StringWriter();
+                    s.Serialize(sw, this);
+                    sw.Close();
+                    return sw.ToString();
+                }
+
+                public int FindNearestAvailableQ(int curQI, string direction)
+                {
+                    if (curQI < 0 || curQI > questions.Length) return -1;
+
+                    int newCurQI = curQI;
+
+                    if (direction == "next")
+                        newCurQI++;
+                    else if (direction == "prev")
+                        newCurQI--;
+
+                    Question curQ = null;
+                    try
+                    {
+                        curQ = questions[newCurQI];
+                    }
+                    catch (Exception) { return newCurQI; }
+
+                    //проверка на секретный вопрос и наличие ключей к нему
+                    if (curQ != null && curQ.isSecret)
+                    {
+                        foreach (Question q in questions)
+                        {
+                            //если ответа нет, или он пустой, то пропускаем вопрос
+                            if (String.IsNullOrEmpty(q.answer) || q.answers == null) continue;
+                            
+                            foreach (Answer a in q.answers)
+                            {
+                                if (Array.IndexOf(Regex.Split(q.answer, Vars.answersSeparator)
+                                        , a.position.ToString()) != -1
+                                    && a.keyto != null)
+                                {
+                                    foreach (string s in Regex.Split(a.keyto, Vars.keysSeparator))
+                                    {
+                                        if(Regex.Split(s, Vars.subkeysSeparator)[0]
+                                            == curQ.position.ToString())
+                                            return newCurQI;
+                                    }
+                                }
+                            }
+                        }
+                        return FindNearestAvailableQ(newCurQI, direction);
+                    }
+
+                    return newCurQI;
+                }                
+            }
+
+            [XmlRoot(ElementName = "Questionnaire")]
+            public class QuestionnaireWI : Questionnaire
+            {
+                [XmlAttribute]
+                public int curQuestionIdx { get; set; } = 0;
             }
 
             public class Question
@@ -272,7 +406,10 @@ WHERE rg.id = rgi.groupId
                 public int position { get; set; }
 
                 [XmlAttribute]
-                public string isSecret { get; set; }
+                public bool isSecret { get; set; }
+                
+                [XmlAttribute]
+                public bool allowEmpty { get; set; }
 
                 [XmlAttribute]
                 public string text { get; set; }
@@ -280,6 +417,9 @@ WHERE rg.id = rgi.groupId
                 [XmlArray("Answers")]
                 [XmlArrayItem("Answer", typeof(Answer))]
                 public Answer[] answers { get; set; }
+
+                [XmlAttribute]
+                public string answer { get; set; }
             }
 
             public class Answer
@@ -294,7 +434,57 @@ WHERE rg.id = rgi.groupId
                 public string value { get; set; }
 
                 [XmlAttribute]
-                public string isSecret { get; set; }
+                public bool isSecret { get; set; }
+            }
+
+            public class QuestionTypes
+            {
+                public const string hard = "hard";
+                public const string text = "text";
+                public const string soft = "soft";
+            }
+
+            public class Vars
+            {
+                public const string answersSeparator = "#";
+                public const string keysSeparator = ";";
+                public const string subkeysSeparator = ":";
+            }
+        }
+    }
+
+    namespace Sessions
+    {
+        public class ResearchSession
+        {
+            [Key]
+            public string id { get; set; } = Guid.NewGuid().ToString();
+            public string idShort { get; set; }
+            public string researchId { get; set; }
+            public string scenarioId { get; set; }
+            public DateTime dateStart { get; set; } = DateTime.Now;
+            public DateTime dateFinish { get; set; }
+            public bool finished { get; set; } = false;
+            public int statusId { get; set; }
+            public string raw { get; set; }
+
+            public bool Create()
+            {
+                DBMain.db.ResearchSessions.Add(this);
+                DBMain.db.SaveChanges();
+                return true;
+            }
+
+            public bool Save()
+            {
+                DBMain.db.SaveChanges();
+                return true;
+            }
+
+            public static ResearchSession GetActiveByIdShort(string idShort)
+            {
+                return DBMain.db.ResearchSessions.SingleOrDefault(x => x.idShort == idShort
+                                                                    && x.statusId == Core.EntityStatuses.enabled.val);
             }
         }
     }

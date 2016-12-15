@@ -1,0 +1,15 @@
+﻿
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<form action="/research/go" method="get">
+    <h3>Введите кодовое слово:</h3>
+    <input type="text" name="code" />
+    <input type="submit" value="Начать" />
+</form>
+<form action="/research/go" method="get">
+    <h3>Если вы хотите продолжить заполнение анкеты, введите идентификатор сессии:</h3>
+    <input type="text" name="sid" />
+    <input type="submit" value="Продолжить" />
+</form>

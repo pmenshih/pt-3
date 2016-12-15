@@ -15,24 +15,22 @@
 <p class="text-success">@ViewBag.StatusMessage</p>
 <div>
     <hr />
+    <input type="hidden" value="@userId" id="userId" /> 
     <dl class="dl-horizontal">
         <dt>Фамилия:</dt>
         <dd>
-            @Model.surname
-            &nbsp;<a href="/manage/surnamechange?newval=123&userId=@userId" target="_blank">изменить</a>
-
             <div id="_manage_surnamechange"></div>
             <input type="hidden" id="val_manage_surnamechange" value="@Model.surname" />
         </dd>
         <dt>Имя:</dt>
         <dd>
-            @Model.name
-            &nbsp;<a href="/manage/namechange?newval=456&userId=@userId" target="_blank">изменить</a>
+            <div id="_manage_namechange"></div>
+            <input type="hidden" id="val_manage_namechange" value="@Model.name" />
         </dd>
         <dt>Отчество:</dt>
         <dd>
-            @Model.patronim
-            &nbsp;<a href="/manage/patronimchange?newval=789&userId=@userId" target="_blank">изменить</a>
+            <div id="_manage_patronimchange"></div>
+            <input type="hidden" id="val_manage_patronimchange" value="@Model.patronim" />
         </dd>
         <dt>Пол:</dt>
         <dd>
@@ -41,8 +39,10 @@
         </dd>
         <dt>Электронная почта:</dt>
         <dd>
-            @Model.email
-            &nbsp;<a href="/manage/emailchange?newval=test@test.com&userId=@userId" target="_blank">изменить</a>
+        <dd>
+            <div id="_manage_emailchange"></div>
+            <input type="hidden" id="val_manage_emailchange" value="@Model.email" />
+        </dd>            
             @if (Model.EmailConfirmed)
             {
                 @Html.Raw("подтверждена")
@@ -53,9 +53,9 @@
             }
         </dd>
         <dt>Номер телефона:</dt>
-        <dd>
-            @Model.PhoneNumber
-            &nbsp;<a href="/manage/phonechange?newval=88007000000&userId=@userId" target="_blank">изменить</a>
+        <dd>         
+            <div id="_manage_phonechange"></div>
+            <input type="hidden" id="val_manage_emailchange" value="@Model.PhoneNumber" />           
             @if (Model.PhoneNumberConfirmed)
             {
                 @Html.Raw("подтвержден")

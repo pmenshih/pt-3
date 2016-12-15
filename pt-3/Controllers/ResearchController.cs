@@ -156,8 +156,10 @@ namespace psychoTest.Controllers
             //пробуем десереализовать
             try
             {
-                q = Models.Researches.Scenarios.Questionnaires
-                        .Questionnaire.DeserializeFromXmlString(rawString);
+                q = (Models.Researches.Scenarios.Questionnaires.Questionnaire)Models.Researches
+                    .Scenarios.Questionnaires.Questionnaire.DeSerializeFromXmlString(
+                        rawString
+                        ,typeof(Models.Researches.Scenarios.Questionnaires.Questionnaire));
             }
             catch (Exception exc)
             {
@@ -212,6 +214,209 @@ namespace psychoTest.Controllers
             else answer.result = AjaxResults.ResearchPasswordExist;
 
             return answer.JsonContentResult();
+        }
+
+        [AllowAnonymous]
+        public ActionResult Go(string code, string sid)
+        {
+            if (sid != null)
+            {
+                Models.Researches.Sessions.ResearchSession rs
+                    = Models.Researches.Sessions.ResearchSession.GetActiveByIdShort(sid);
+                if (rs != null)
+                    return Redirect($"/research/filling/{sid}");
+                else
+                {
+                    ViewData["serverError"] = ErrorMessages.ResearchSessionNotExist;
+                    return View();
+                }
+            }
+            else if (code != null)
+            {
+                //выясним, есть ли анкета с таким кодом
+                Research r = Research.GetByPassword(code);
+                if (r == null)
+                {
+                    ViewData["serverError"] = ErrorMessages.ResearchIncorrectPassword;
+                    return View();
+                }
+
+                //проверим статус анкеты
+                if (r.statusId != EntityStatuses.enabled.val)
+                {
+                    ViewData["serverError"] = ErrorMessages.ResearchNotActive;
+                    return View();
+                }
+
+                //создадим сессию
+                Models.Researches.Sessions.ResearchSession rSession
+                    = new Models.Researches.Sessions.ResearchSession();
+                //получим актуальный сценарий исследования
+                Models.Researches.Scenarios.ResearchScenario rScenario = r.GetActualActiveScenario();
+                //если сценария нет, то ничего не выйдет
+                if (rScenario == null)
+                {
+                    ViewData["serverError"] = ErrorMessages.ResearchNoActiveScenario;
+                    return View();
+                }
+                //заполним сессию
+                rSession.dateFinish = new DateTime(2222, 1, 1);
+                rSession.dateStart = DateTime.Now;
+                rSession.finished = false;
+                rSession.idShort = BLL.GenerateRandomDigStrCode(5);
+                rSession.raw = rScenario.raw;
+                rSession.researchId = r.id;
+                rSession.scenarioId = rScenario.id;
+                rSession.statusId = EntityStatuses.enabled.val;
+                if (rSession.Create()) return Redirect($"/research/filling/{rSession.idShort}");
+                throw new Exception();
+            }
+
+            return View();
+        }
+        
+        [AllowAnonymous]
+        public ActionResult Filling(string sid)
+        {
+            Models.Researches.Sessions.ResearchSession rs 
+                = Models.Researches.Sessions.ResearchSession.GetActiveByIdShort(sid);
+
+            //выходим, если сессии нет
+            if (rs == null) throw new Exception();
+
+            //десериализуем опросник
+            Models.Researches.Scenarios.Questionnaires.QuestionnaireWI quest
+                = (Models.Researches.Scenarios.Questionnaires.QuestionnaireWI)Models.Researches
+                .Scenarios.Questionnaires.QuestionnaireWI.DeSerializeFromXmlString(rs.raw
+                    ,typeof(Models.Researches.Scenarios.Questionnaires.QuestionnaireWI));
+
+            //проматываем все вопросы, если
+            //сессия завершена
+            //или дата окончания меньше текущей
+            //или статус не равен активному
+            if (rs.finished
+                || rs.dateFinish < DateTime.Now
+                || rs.statusId != EntityStatuses.enabled.val)
+            {
+                quest.curQuestionIdx = quest.questions.Length;
+            }
+
+            //если индекс текущего вопроса больше их количества, покажем финиш
+            if(quest.curQuestionIdx >= quest.questions.Length)
+                return Redirect($"/research/finish");
+
+            //создадим заполним модель страницы
+            Models.Researches.Views.Filling model = new Models.Researches.Views.Filling();
+            model.sid = sid;
+            ///!!!
+            ///Fill меняет ответы вопроса, а значит должен идти ВСЕГДА ПОСЛЕ сохранения текущей версии
+            ///опросника в базу данных!!!
+            ///!!!
+            model.Fill(quest);
+
+            return View(model);
+        }
+
+        [AllowAnonymous]
+        [HttpPost]
+        public ActionResult Filling(Models.Researches.Views.Filling model)
+        {
+            Models.Researches.Sessions.ResearchSession rs
+                = Models.Researches.Sessions.ResearchSession.GetActiveByIdShort(model.sid);
+
+            //выходим, если 
+            //сессии нет
+            //или она уже завершена
+            //или дата окончания меньше текущей
+            //или статус не равен активному
+            if (rs == null
+                || rs.finished
+                || rs.dateFinish < DateTime.Now
+                || rs.statusId != EntityStatuses.enabled.val) throw new Exception();
+
+            //десериализуем опросник
+            Models.Researches.Scenarios.Questionnaires.QuestionnaireWI quest
+                = (Models.Researches.Scenarios.Questionnaires.QuestionnaireWI)Models.Researches
+                .Scenarios.Questionnaires.QuestionnaireWI.DeSerializeFromXmlString(rs.raw
+                    , typeof(Models.Researches.Scenarios.Questionnaires.QuestionnaireWI));
+
+            if (model.action == "prev")
+            {
+                //если нажата кнопка назад и индекс текщуего вопроса равен нулю, то ничего не делаем
+                if (quest.curQuestionIdx == 0) return Redirect($"/research/filling/{model.sid}");
+                //если индекс текущего вопроса равен количеству вопросов, то
+                //это какая-то херня, падаем
+                else if (quest.curQuestionIdx == quest.questions.Length)
+                    throw new Exception();
+            }
+            else if (model.action == "next")
+            {
+                //если нажата кнопка вперед и индекс текущего вопроса больше количества вопросов,
+                //то ничего не делаем
+                if (quest.curQuestionIdx > quest.questions.Length) return Redirect($"/research/finish");
+                else 
+                {
+                    Models.Researches.Scenarios.Questionnaires.Question q 
+                        = quest.questions[quest.curQuestionIdx];
+                    //жесткая альтернатива
+                    if (q.type == Models.Researches.Scenarios.Questionnaires.QuestionTypes.hard
+                        //нужно, чтобы работал пролог
+                        && q.answers?.Length > 0)
+                    {
+                        //ответ не выбран, возвращаем исходную страницу
+                        if(!q.allowEmpty && String.IsNullOrEmpty(model.answer))
+                            return Redirect($"/research/filling/{model.sid}");
+
+                        quest.questions[quest.curQuestionIdx].answer = model.answer;
+                    }
+                    //мягкая альтернатива
+                    else if (q.type == Models.Researches.Scenarios.Questionnaires.QuestionTypes.soft
+                        && q.answers?.Length > 0)
+                    {
+                        //ответ не выбран, возвращаем исходную страницу
+                        if (!q.allowEmpty && String.IsNullOrEmpty(model.answer))
+                            return Redirect($"/research/filling/{model.sid}");
+
+                        quest.questions[quest.curQuestionIdx].answer = model.answer;
+                    }
+                    //открытый вопрос
+                    else if (q.type == Models.Researches.Scenarios.Questionnaires.QuestionTypes.text)
+                    {
+                        //ответ не выбран, возвращаем исходную страницу
+                        if (!q.allowEmpty && String.IsNullOrEmpty(model.answer))
+                            return Redirect($"/research/filling/{model.sid}");
+
+                        quest.questions[quest.curQuestionIdx].answer = model.answer;
+                    }
+                }   
+            }
+            
+            //разберемся с позицией следующего вопроса
+            quest.curQuestionIdx = quest.FindNearestAvailableQ(quest.curQuestionIdx, model.action);
+
+            //если индекс текущего вопроса больше или равен количеству вопросов, то
+            //финализируем сессию
+            if (quest.curQuestionIdx >= quest.questions.Length)
+            {
+                rs.dateFinish = DateTime.Now;
+                rs.finished = true;
+            }
+
+            //сериализуем опросник в строку
+            string raw = quest.SerializeToXmlString(
+                            typeof(Models.Researches.Scenarios.Questionnaires.QuestionnaireWI));
+            //сохраним сессию в БД
+            rs.raw = raw;
+            rs.Save();
+
+            //сделаем редирект на страницу инициализации
+            return Redirect($"/research/filling/{model.sid}");
+        }
+
+        [AllowAnonymous]
+        public ActionResult Finish()
+        {
+            return View();
         }
     }
 }
