@@ -36,6 +36,19 @@ namespace psychoTest.Models.Researches
             return DBMain.db.Researches.SingleOrDefault(x => x.id == researchId);
         }
 
+        public static Research GetByPassword(string password)
+        {
+            return DBMain.db.Researches.SingleOrDefault(x => x.password == password);
+        }
+
+        public Scenarios.ResearchScenario GetActualActiveScenario()
+        {
+            return DBMain.db.ResearchScenario.Where(x => x.researchId == this.id
+                                                        && x.statusId == Core.EntityStatuses.enabled.val)
+                .OrderByDescending(x => x.dateCreate)
+                .FirstOrDefault();
+        }
+
         //получение списка всех исследований для таблицы индексной страницы исследований организации
         public static List<CustomSelects.ResearchListView> GetAllForLinkResearch(string orgId)
         {
@@ -209,6 +222,22 @@ WHERE rg.id = rgi.groupId
             [Required]
             public string researchId { get; set; }
         }
+
+        public class Filling
+        {
+            public string sid { get; set; }
+            public int curQuestionIdx { get; set; }
+            public int questionsCount { get; set; }
+            public Scenarios.Questionnaires.Question question { get; set; }
+            public string action { get; set; }
+
+            public void Fill(Scenarios.Questionnaires.QuestionnaireWI quest)
+            {
+                curQuestionIdx = quest.curQuestionIdx;
+                questionsCount = quest.questions.Count();
+                question = quest.questions[curQuestionIdx];
+            }
+        }
     }
 
     namespace Scenarios
@@ -246,9 +275,9 @@ WHERE rg.id = rgi.groupId
                 [XmlAttribute]
                 public string descr { get; set; }
 
-                public static Questionnaire DeserializeFromXmlString(string xml)
+                public static object DeSerializeFromXmlString(string xml, Type type)
                 {
-                    XmlSerializer s = new XmlSerializer(typeof(Questionnaire));
+                    XmlSerializer s = new XmlSerializer(type);
 
                     //преобразуем строку xml в поток
                     MemoryStream stream = new MemoryStream();
@@ -257,10 +286,25 @@ WHERE rg.id = rgi.groupId
                     writer.Flush();
                     stream.Position = 0;
 
-                    //десериализуем поток в класс
-                    Questionnaire q = (Questionnaire)s.Deserialize(stream);
-                    return q;
+                    //десериализуем поток в класс и возвращаем его
+                    return s.Deserialize(stream);
                 }
+
+                public string SerializeToXmlString(Type type)
+                {
+                    XmlSerializer s = new XmlSerializer(type);
+                    Core.Utf8StringWriter sw = new Core.Utf8StringWriter();
+                    s.Serialize(sw, this);
+                    sw.Close();
+                    return sw.ToString();
+                }
+            }
+
+            [XmlRoot(ElementName = "Questionnaire")]
+            public class QuestionnaireWI : Questionnaire
+            {
+                [XmlAttribute]
+                public int curQuestionIdx { get; set; } = 0;
             }
 
             public class Question
@@ -295,6 +339,42 @@ WHERE rg.id = rgi.groupId
 
                 [XmlAttribute]
                 public string isSecret { get; set; }
+            }
+        }
+    }
+
+    namespace Sessions
+    {
+        public class ResearchSession
+        {
+            [Key]
+            public string id { get; set; } = Guid.NewGuid().ToString();
+            public string idShort { get; set; }
+            public string researchId { get; set; }
+            public string scenarioId { get; set; }
+            public DateTime dateStart { get; set; } = DateTime.Now;
+            public DateTime dateFinish { get; set; }
+            public bool finished { get; set; } = false;
+            public int statusId { get; set; }
+            public string raw { get; set; }
+
+            public bool Create()
+            {
+                DBMain.db.ResearchSessions.Add(this);
+                DBMain.db.SaveChanges();
+                return true;
+            }
+
+            public bool Save()
+            {
+                DBMain.db.SaveChanges();
+                return true;
+            }
+
+            public static ResearchSession GetActiveByIdShort(string idShort)
+            {
+                return DBMain.db.ResearchSessions.SingleOrDefault(x => x.idShort == idShort
+                                                                    && x.statusId == Core.EntityStatuses.enabled.val);
             }
         }
     }
