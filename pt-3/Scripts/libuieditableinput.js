@@ -1,7 +1,7 @@
 ﻿var UI = UI || {};
 UI.EditableInput = UI.EditableInput || {};
 
-UI.EditableInput.Create = function (divId) {
+UI.EditableInput.Create = function (divId, type) {
     $.ajax({
         url: '/content/elements/editableinput.html',
         type: 'get',
@@ -15,7 +15,8 @@ UI.EditableInput.Bind = function (divId, sHtml) {
     $('#' + divId).html(eHtml);
     $('#' + divId).on("click", "[id$='btnno']", function () { UI.EditableInput.Init(divId); });
     $('#' + divId).on("click", "[id$='btnyes']", function () { UI.EditableInput.OkClick(divId); });
-
+    $('#' + divId).on("propertychange change click keyup input paste", "[id$='inputval']", function (e) { UI.EditableInput.OnChange(e, divId); });
+    
     UI.EditableInput.Init(divId);
 };
 
@@ -25,6 +26,7 @@ UI.EditableInput.Init = function (divId) {
 };
 
 UI.EditableInput.OkClick = function (divId) {
+    alert('ya!');
 };
 
 UI.EditableInput.ProcessServerAnswer = function (response, formData) {
@@ -37,4 +39,25 @@ UI.EditableInput.ProcessServerAnswer = function (response, formData) {
     else {
         alert(response);
     }
+}
+
+UI.EditableInput.ValidateError = function (divId, errMsg)
+{
+    $('#' + divId + 'inputval').removeClass('not_error').addClass('error');
+    $('#' + divId + 'Error').html(errMsg);
+}
+
+UI.EditableInput.OnChange = function (e, divId)
+{
+    var errMsg = Validate($('#' + divId + 'inputval').val(), $('#' + divId + 'inputval').attr('type'));
+    if (errMsg.length == 0) {
+        $('#' + divId + 'inputval').addClass('not_error').removeClass('error');
+        $('#' + divId + 'Error').html(errMsg);
+
+        if (e.which == 13) {
+            UI.EditableInput.OkClick(divId);
+        }
+    } else UI.EditableInput.ValidateError(divId, errMsg);
+
+    
 }

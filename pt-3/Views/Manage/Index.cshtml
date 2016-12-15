@@ -39,8 +39,10 @@
         </dd>
         <dt>Электронная почта:</dt>
         <dd>
-            @Model.email
-            &nbsp;<a href="/manage/emailchange?newval=test@test.com&userId=@userId" target="_blank">изменить</a>
+        <dd>
+            <div id="_manage_emailchange"></div>
+            <input type="hidden" id="val_manage_emailchange" value="@Model.email" />
+        </dd>            
             @if (Model.EmailConfirmed)
             {
                 @Html.Raw("подтверждена")
@@ -51,9 +53,9 @@
             }
         </dd>
         <dt>Номер телефона:</dt>
-        <dd>
-            @Model.PhoneNumber
-            &nbsp;<a href="/manage/phonechange?newval=88007000000&userId=@userId" target="_blank">изменить</a>
+        <dd>         
+            <div id="_manage_phonechange"></div>
+            <input type="hidden" id="val_manage_emailchange" value="@Model.PhoneNumber" />           
             @if (Model.PhoneNumberConfirmed)
             {
                 @Html.Raw("подтвержден")
