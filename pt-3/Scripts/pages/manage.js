@@ -1,11 +1,8 @@
 ﻿var divId = $('dd div').attr('id');
 
 UI.EditableInput.OkClick = function (divId) {
-    //проверка валидатором (если нужна):
-    //проверяем нужна ли этому полю проверка
-    //накладываем валидатор. если ответ функции валидации пустая строка, то всё нормально. 
-    //если не пустая, то вставляем её в элемент соощения об ошибке и показываем его
-    
+    if ($('#' + divId + 'Error').html().length != 0) return;
+
     var formData = new FormData();
     var url = divId.replace(/_/g, '/');
 
@@ -18,7 +15,7 @@ UI.EditableInput.OkClick = function (divId) {
             , formData
             , UI.EditableInput.ProcessServerAnswer);
 }; 
-
+  
 UI.EditableInput.Create('_manage_surnamechange');
 
 UI.EditableInput.Create('_manage_namechange');

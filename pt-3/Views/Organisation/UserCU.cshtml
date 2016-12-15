@@ -12,8 +12,7 @@
 
 <h2>@ViewBag.Title</h2>
 <a href="/organisation/users?orgId=@Model.orgId">Вернуться к списку</a>
-@using (Html.BeginForm())
-{
+<form action="/organisation/usercu" method="post">
     @Html.AntiForgeryToken()
     <div class="form-horizontal">
         <hr />
@@ -58,7 +57,7 @@
             {
                 <div class="col-md-2">
                     <label class="control-label">Новый пароль</label>
-                    <br/>Оставьте поле пустым, если вы не хотите менять пароль
+                    <br />Оставьте поле пустым, если вы не хотите менять пароль
                 </div>
             }
             else
@@ -87,8 +86,12 @@
 
         <div class="form-group">
             <div class="col-md-offset-2 col-md-10">
-                <button class="btn btn-default" type="submit">Сохранить</button>
+                <button class="btn btn-default" id="btnSubmit" type="submit" disabled>Сохранить</button>
             </div>
         </div>
     </div>
-}
+</form>
+
+
+@Scripts.Render("/scripts/libcore.js")
+@Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")
