@@ -308,6 +308,10 @@ namespace psychoTest.Controllers
             //создадим заполним модель страницы
             Models.Researches.Views.Filling model = new Models.Researches.Views.Filling();
             model.sid = sid;
+            ///!!!
+            ///Fill меняет ответы вопроса, а значит должен идти ВСЕГДА ПОСЛЕ сохранения текущей версии
+            ///опросника в базу данных!!!
+            ///!!!
             model.Fill(quest);
 
             return View(model);
@@ -344,22 +348,13 @@ namespace psychoTest.Controllers
                 //это какая-то херня, падаем
                 else if (quest.curQuestionIdx == quest.questions.Length)
                     throw new Exception();
-
-                quest.curQuestionIdx--;
             }
             else if (model.action == "next")
             {
                 //если нажата кнопка вперед и индекс текущего вопроса больше количества вопросов,
                 //то ничего не делаем
                 if (quest.curQuestionIdx > quest.questions.Length) return Redirect($"/research/finish");
-                //если индекс текущего вопроса равен количеству вопросов, то
-                //финализируем сессию
-                else if (quest.curQuestionIdx == quest.questions.Length - 1)
-                {
-                    rs.dateFinish = DateTime.Now;
-                    rs.finished = true;
-                }
-                else
+                else 
                 {
                     Models.Researches.Scenarios.Questionnaires.Question q 
                         = quest.questions[quest.curQuestionIdx];
@@ -369,12 +364,42 @@ namespace psychoTest.Controllers
                         && q.answers?.Length > 0)
                     {
                         //ответ не выбран, возвращаем исходную страницу
-                        if(String.IsNullOrEmpty(model.answer))
+                        if(!q.allowEmpty && String.IsNullOrEmpty(model.answer))
                             return Redirect($"/research/filling/{model.sid}");
-                    }
-                }
 
-                quest.curQuestionIdx++;
+                        quest.questions[quest.curQuestionIdx].answer = model.answer;
+                    }
+                    //мягкая альтернатива
+                    else if (q.type == Models.Researches.Scenarios.Questionnaires.QuestionTypes.soft
+                        && q.answers?.Length > 0)
+                    {
+                        //ответ не выбран, возвращаем исходную страницу
+                        if (!q.allowEmpty && String.IsNullOrEmpty(model.answer))
+                            return Redirect($"/research/filling/{model.sid}");
+
+                        quest.questions[quest.curQuestionIdx].answer = model.answer;
+                    }
+                    //открытый вопрос
+                    else if (q.type == Models.Researches.Scenarios.Questionnaires.QuestionTypes.text)
+                    {
+                        //ответ не выбран, возвращаем исходную страницу
+                        if (!q.allowEmpty && String.IsNullOrEmpty(model.answer))
+                            return Redirect($"/research/filling/{model.sid}");
+
+                        quest.questions[quest.curQuestionIdx].answer = model.answer;
+                    }
+                }   
+            }
+            
+            //разберемся с позицией следующего вопроса
+            quest.curQuestionIdx = quest.FindNearestAvailableQ(quest.curQuestionIdx, model.action);
+
+            //если индекс текущего вопроса больше или равен количеству вопросов, то
+            //финализируем сессию
+            if (quest.curQuestionIdx >= quest.questions.Length)
+            {
+                rs.dateFinish = DateTime.Now;
+                rs.finished = true;
             }
 
             //сериализуем опросник в строку
@@ -386,15 +411,6 @@ namespace psychoTest.Controllers
 
             //сделаем редирект на страницу инициализации
             return Redirect($"/research/filling/{model.sid}");
-
-            /*
-            //создадим и заполним модель страницы
-            string sid = model.sid;
-            model = new Models.Researches.Views.Filling();
-            model.sid = sid;
-            model.Fill(quest);
-
-            return View(model);*/
         }
 
         [AllowAnonymous]

@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Collections.Generic;
 using System.Linq;
 using System.Data.SqlClient;
+using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Serialization;
 using System.IO;
@@ -237,6 +238,47 @@ WHERE rg.id = rgi.groupId
                 curQuestionIdx = quest.curQuestionIdx;
                 questionsCount = quest.questions[quest.questions.Count()-1].position;
                 question = quest.questions[curQuestionIdx];
+
+                //костыль!
+                //заменим \n на <br/> в тексте вопроса
+                question.text = question.text.Replace("\\n", "<br/>");
+
+                //спрячем секретные ответы, если к ним нет ключей
+                if (question.answers == null) return;
+                foreach (Scenarios.Questionnaires.Answer a in question.answers)
+                {
+                    if (a.isSecret)
+                    {
+                        bool haveKey = false;
+                        foreach (Scenarios.Questionnaires.Question q in quest.questions)
+                        {
+                            //если ответа нет, или он пустой, то пропускаем вопрос
+                            if (String.IsNullOrEmpty(q.answer)) continue;
+
+                            foreach (Scenarios.Questionnaires.Answer qA in q.answers)
+                            {
+                                if (Array.IndexOf(Regex.Split(q.answer
+                                                    , Scenarios.Questionnaires.Vars.answersSeparator)
+                                        , qA.position.ToString()) != -1
+                                    && qA.keyto != null)
+                                {
+                                    foreach (string s 
+                                        in Regex.Split(qA.keyto, Scenarios.Questionnaires.Vars.keysSeparator))
+                                    {
+                                        if (s == $"{question.position}{Scenarios.Questionnaires.Vars.subkeysSeparator}{a.position}")
+                                        {
+                                            haveKey = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                    
+                            }
+                            if (haveKey) break;
+                        }
+                        if (haveKey) a.isSecret = false;
+                    }
+                }
             }
         }
     }
@@ -299,6 +341,53 @@ WHERE rg.id = rgi.groupId
                     sw.Close();
                     return sw.ToString();
                 }
+
+                public int FindNearestAvailableQ(int curQI, string direction)
+                {
+                    if (curQI < 0 || curQI > questions.Length) return -1;
+
+                    int newCurQI = curQI;
+
+                    if (direction == "next")
+                        newCurQI++;
+                    else if (direction == "prev")
+                        newCurQI--;
+
+                    Question curQ = null;
+                    try
+                    {
+                        curQ = questions[newCurQI];
+                    }
+                    catch (Exception) { return newCurQI; }
+
+                    //проверка на секретный вопрос и наличие ключей к нему
+                    if (curQ != null && curQ.isSecret)
+                    {
+                        foreach (Question q in questions)
+                        {
+                            //если ответа нет, или он пустой, то пропускаем вопрос
+                            if (String.IsNullOrEmpty(q.answer) || q.answers == null) continue;
+                            
+                            foreach (Answer a in q.answers)
+                            {
+                                if (Array.IndexOf(Regex.Split(q.answer, Vars.answersSeparator)
+                                        , a.position.ToString()) != -1
+                                    && a.keyto != null)
+                                {
+                                    foreach (string s in Regex.Split(a.keyto, Vars.keysSeparator))
+                                    {
+                                        if(Regex.Split(s, Vars.subkeysSeparator)[0]
+                                            == curQ.position.ToString())
+                                            return newCurQI;
+                                    }
+                                }
+                            }
+                        }
+                        return FindNearestAvailableQ(newCurQI, direction);
+                    }
+
+                    return newCurQI;
+                }                
             }
 
             [XmlRoot(ElementName = "Questionnaire")]
@@ -317,7 +406,10 @@ WHERE rg.id = rgi.groupId
                 public int position { get; set; }
 
                 [XmlAttribute]
-                public string isSecret { get; set; }
+                public bool isSecret { get; set; }
+                
+                [XmlAttribute]
+                public bool allowEmpty { get; set; }
 
                 [XmlAttribute]
                 public string text { get; set; }
@@ -325,6 +417,9 @@ WHERE rg.id = rgi.groupId
                 [XmlArray("Answers")]
                 [XmlArrayItem("Answer", typeof(Answer))]
                 public Answer[] answers { get; set; }
+
+                [XmlAttribute]
+                public string answer { get; set; }
             }
 
             public class Answer
@@ -339,7 +434,7 @@ WHERE rg.id = rgi.groupId
                 public string value { get; set; }
 
                 [XmlAttribute]
-                public string isSecret { get; set; }
+                public bool isSecret { get; set; }
             }
 
             public class QuestionTypes
@@ -347,6 +442,13 @@ WHERE rg.id = rgi.groupId
                 public const string hard = "hard";
                 public const string text = "text";
                 public const string soft = "soft";
+            }
+
+            public class Vars
+            {
+                public const string answersSeparator = "#";
+                public const string keysSeparator = ";";
+                public const string subkeysSeparator = ":";
             }
         }
     }

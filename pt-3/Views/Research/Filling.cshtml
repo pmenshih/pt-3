@@ -16,14 +16,33 @@
     }
 
     <div>
-        @Model.question.text
+        @Html.Raw(Model.question.text)
     </div>
     @if (Model.question.type == QuestionTypes.hard)
     {
         foreach (Answer a in Model.question.answers)
         {
-            <input type="radio" name="answer" value="@a.position">@a.value<br>
+            if (!a.isSecret)
+            {
+                <input type="radio" name="answer" value="@a.position">@a.value<br>
+            }
         }
+    }
+    else if (Model.question.type == QuestionTypes.soft)
+    {
+        <input type="hidden" id="answer" name="answer" />
+        <input type="hidden" id="softQ" value="1" />
+        foreach (Answer a in Model.question.answers)
+        {
+            if (!a.isSecret)
+            {
+                <input type="checkbox" id="@($"softAnswer{a.position}")" value="@a.position">@a.value<br>
+            }
+        }
+    }
+    else if (Model.question.type == QuestionTypes.text)
+    {
+        <textarea name="answer"></textarea>
     }
     <div>
 
