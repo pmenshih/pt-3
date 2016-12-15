@@ -234,7 +234,7 @@ WHERE rg.id = rgi.groupId
             public void Fill(Scenarios.Questionnaires.QuestionnaireWI quest)
             {
                 curQuestionIdx = quest.curQuestionIdx;
-                questionsCount = quest.questions.Count();
+                questionsCount = quest.questions[quest.questions.Count()-1].position;
                 question = quest.questions[curQuestionIdx];
             }
         }
