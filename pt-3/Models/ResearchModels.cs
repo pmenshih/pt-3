@@ -230,6 +230,7 @@ WHERE rg.id = rgi.groupId
             public int questionsCount { get; set; }
             public Scenarios.Questionnaires.Question question { get; set; }
             public string action { get; set; }
+            public string answer { get; set; }
 
             public void Fill(Scenarios.Questionnaires.QuestionnaireWI quest)
             {
@@ -339,6 +340,13 @@ WHERE rg.id = rgi.groupId
 
                 [XmlAttribute]
                 public string isSecret { get; set; }
+            }
+
+            public class QuestionTypes
+            {
+                public const string hard = "hard";
+                public const string text = "text";
+                public const string soft = "soft";
             }
         }
     }

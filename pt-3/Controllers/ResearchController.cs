@@ -298,7 +298,7 @@ namespace psychoTest.Controllers
                 || rs.dateFinish < DateTime.Now
                 || rs.statusId != EntityStatuses.enabled.val)
             {
-                quest.curQuestionIdx = quest.questions.Length-1;
+                quest.curQuestionIdx = quest.questions.Length;
             }
 
             //если индекс текущего вопроса больше их количества, покажем финиш
@@ -340,6 +340,10 @@ namespace psychoTest.Controllers
             {
                 //если нажата кнопка назад и индекс текщуего вопроса равен нулю, то ничего не делаем
                 if (quest.curQuestionIdx == 0) return Redirect($"/research/filling/{model.sid}");
+                //если индекс текущего вопроса равен количеству вопросов, то
+                //это какая-то херня, падаем
+                else if (quest.curQuestionIdx == quest.questions.Length)
+                    throw new Exception();
 
                 quest.curQuestionIdx--;
             }
@@ -347,7 +351,28 @@ namespace psychoTest.Controllers
             {
                 //если нажата кнопка вперед и индекс текущего вопроса больше количества вопросов,
                 //то ничего не делаем
-                if (quest.curQuestionIdx >= quest.questions.Length) return Redirect($"/research/finish");
+                if (quest.curQuestionIdx > quest.questions.Length) return Redirect($"/research/finish");
+                //если индекс текущего вопроса равен количеству вопросов, то
+                //финализируем сессию
+                else if (quest.curQuestionIdx == quest.questions.Length - 1)
+                {
+                    rs.dateFinish = DateTime.Now;
+                    rs.finished = true;
+                }
+                else
+                {
+                    Models.Researches.Scenarios.Questionnaires.Question q 
+                        = quest.questions[quest.curQuestionIdx];
+                    //жесткая альтернатива
+                    if (q.type == Models.Researches.Scenarios.Questionnaires.QuestionTypes.hard
+                        //нужно, чтобы работал пролог
+                        && q.answers?.Length > 0)
+                    {
+                        //ответ не выбран, возвращаем исходную страницу
+                        if(String.IsNullOrEmpty(model.answer))
+                            return Redirect($"/research/filling/{model.sid}");
+                    }
+                }
 
                 quest.curQuestionIdx++;
             }

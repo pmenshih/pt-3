@@ -1,11 +1,12 @@
 ﻿@model psychoTest.Models.Researches.Views.Filling
+@using psychoTest.Models.Researches.Scenarios.Questionnaires;
 @{
     ViewBag.Title = "Filling";
 }
 
 <h2>Filling</h2>
 
-<form action="/research/filling" method="post">
+<form action="/research/filling" method="post" id="formFilling">
     <input type="hidden" value="@Model.sid" name="sid" />
     @if (Model.question.position > 0)
     {
@@ -17,13 +18,22 @@
     <div>
         @Model.question.text
     </div>
+    @if (Model.question.type == QuestionTypes.hard)
+    {
+        foreach (Answer a in Model.question.answers)
+        {
+            <input type="radio" name="answer" value="@a.position">@a.value<br>
+        }
+    }
     <div>
 
     </div>
 
     @if (Model.curQuestionIdx > 0)
     {
-        <button name="action" value="prev" type="submit">Назад</button>
+        <button name="action" value="prev" id="btnBack" type="submit">Назад</button>
     }
-    <button name="action" value="next" type="submit">Вперед</button>
+    <button name="action" value="next" id="btnNext" type="submit">Вперед</button>
 </form>
+
+@Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")
