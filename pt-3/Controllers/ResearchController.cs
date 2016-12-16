@@ -305,7 +305,7 @@ namespace psychoTest.Controllers
             if(quest.curQuestionIdx >= quest.questions.Length)
                 return Redirect($"/research/finish");
 
-            //создадим заполним модель страницы
+            //создадим и заполним модель страницы
             Models.Researches.Views.Filling model = new Models.Researches.Views.Filling();
             model.sid = sid;
             ///!!!
