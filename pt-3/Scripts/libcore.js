@@ -50,75 +50,19 @@ function Validate(val, type)
             if (!regexp.test(val)) return errMsg;
             else return '';
             break;
+        case 'phone':
+            var regexp = /^\d{11,15}$/i;
+            errMsg = 'Неккоректный формат телефона';
+            if (!regexp.test(val)) return errMsg;
+            else return '';
+            break;
+        case 'password':
+            var regexp = /^(.{0,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{4,})|(.{1,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{3,})|(.{2,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{2,})|(.{3,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{1,})|(.{4,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{0,})$/i;
+            errMsg = 'Неккоректный пароль';
+            if (!regexp.test(val)) return errMsg;
+            else return '';
+            break;
         default:
             return '';
     }
 }
-
-/*$(document).ready(function(){
-    $('input, textarea').unbind().blur( function(){       
-        var idValid = $(this).attr('id');
-        var typeValid = $(this).attr('type');
-        var valValid = $(this).val();
-        switch(typeValid) {
-            case 'text':
-                var rv_text = /^.{0,30}$/i;
-                if (valValid.length > 2 && valValid != '' )
-                {
-                    $(this).addClass('not_error').removeClass('error');
-                    $(this).prev('.error-box').text('');
-                }
-                else
-                {
-                    $(this).removeClass('not_error').addClass('error');
-                    $(this).prev('.error-box').html('Ошибка заполнения поля');
-
-                }
-                break;
-
-            case 'email':
-                var rv_email = /^[\w!#$%&'*+\-/=?\^_`{|}~]+(\.[\w!#$%&'*+\-/=?\^_`{|}~]+)*@((([\-\w]+\.)+[a-zA-Z]{2,4})|(([0-9]{1,3}\.){3}[0-9]{1,3}))$/i;
-                if (valValid != '' && rv_email.test(valValid))
-                {
-                    $(this).addClass('not_error').removeClass('error');
-                    $(this).prev('.error-box').text('');
-                }
-                else
-                {
-                    $(this).removeClass('not_error').addClass('error');
-                    $(this).prev('.error-box').html('Ошибка заполнения поля');
-                }
-                break;
-
-            case 'password':
-                var rv_password = /^(.{0,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{4,})|(.{1,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{3,})|(.{2,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{2,})|(.{3,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{1,})|(.{4,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{0,})$/i;
-                if (valValid != '' && rv_password.test(valValid))
-                {
-                    $(this).addClass('not_error').removeClass('error');
-                    $(this).prev('.error-box').text('');
-                }
-                else
-                {
-                    $(this).removeClass('not_error').addClass('error');
-                    $(this).prev('.error-box').html('Ошибка заполнения поля');
-                }
-                break;
-        }
-        switch (idValid) {
-
-            case 'phone':
-                var rv_phone = /^\d{11,15}$/i;
-                if (valValid != '' && rv_phone.test(valValid)) {
-                    $(this).addClass('not_error').removeClass('error');
-                    $(this).prev('.error-box').text('');
-                }
-                else {
-                    $(this).removeClass('not_error').addClass('error');
-                    $(this).prev('.error-box').html('Ошибка заполнения поля');
-                }
-                break;
-
-        }
-
-    }); 
-});*/
