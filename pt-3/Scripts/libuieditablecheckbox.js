@@ -1,14 +1,14 @@
 ﻿var UI = UI || {};
 UI.EditableCheckbox = UI.EditableCheckbox || {};
 
-
-
 UI.EditableCheckbox.Create = function (divId) {
     $.ajax({
         url: '/content/elements/editablecheckbox.html',
         type: 'get',
         success: function (response) { UI.EditableCheckbox.Bind(divId, response); }
     });
+
+    //построение группы чекбоксов
 };
 
 UI.EditableCheckbox.Bind = function (divId, sHtml) {
@@ -50,22 +50,4 @@ UI.EditableCheckbox.ProcessServerAnswer = function (response, formData) {
     else {
         alert(response);
     }
-}
-
-UI.EditableCheckbox.ValidateError = function (divId, errMsg) {
-    $('#' + divId + 'inputval').removeClass('not_error').addClass('error');
-    $('#' + divId + 'Error').html(errMsg);
-}
-
-UI.EditableCheckbox.OnChange = function (e, divId) {
-    
-    var errMsg = Validate($('#' + divId + 'inputval').val(), $('#' + divId + 'inputval').attr('class').split(" ")[0]);
-    if (errMsg.length == 0) {
-        $('#' + divId + 'inputval').addClass('not_error').removeClass('error');
-        $('#' + divId + 'Error').html(errMsg);
-
-        
-    } else UI.EditableCheckbox.ValidateError(divId, errMsg);
-
-
 }

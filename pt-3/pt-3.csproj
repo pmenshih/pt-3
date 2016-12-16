@@ -212,6 +212,7 @@
     <Content Include="Scripts\libuieditableinput.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
     <Content Include="Scripts\pages\manage.js" />
+    <Content Include="Scripts\pages\manage_changepassword.js" />
     <Content Include="Scripts\pages\organisation_usercu.js" />
     <Content Include="Scripts\pages\research_scenariocu.js" />
     <Content Include="Scripts\pages\research_show.js" />

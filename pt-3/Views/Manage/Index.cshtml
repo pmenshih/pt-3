@@ -36,14 +36,14 @@
         <dd>           
             <div id="_manage_sexchange"></div>
             <input type="hidden" id="val_manage_sexchange" value="@Model.sex" />
-            &nbsp;<a href="/manage/sexchange?newval=0&userId=@userId" target="_blank">изменить</a>
         </dd>
         <dt>Электронная почта:</dt>
         <dd>
         <dd>
             <div id="_manage_emailchange"></div>
             <input type="hidden" id="val_manage_emailchange" value="@Model.email" />
-        </dd>            
+        </dd>  
+        <dd>          
             @if (Model.EmailConfirmed)
             {
                 @Html.Raw("подтверждена")
