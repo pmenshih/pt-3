@@ -197,6 +197,9 @@
     <Content Include="500.html" />
     <Content Include="Content\elements\editablecheckbox.html" />
     <Content Include="Content\elements\editableinput.html" />
+    <Content Include="Content\elements\passwordchanger.html" />
+    <Content Include="Content\elements\radiolist.html" />
+    <Content Include="Content\elements\usersgrid.html" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
@@ -210,8 +213,16 @@
     <Content Include="Scripts\jquery-3.1.1.slim.min.js" />
     <Content Include="Scripts\libcore.js" />
     <Content Include="Scripts\libuieditableinput.js" />
+    <Content Include="Scripts\libuipasswordchanger.js" />
+    <Content Include="Scripts\libuiradiolist.js" />
+    <Content Include="Scripts\libuiusersgrid.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
+    <Content Include="Scripts\pages\account_forgotpassword.js" />
+    <Content Include="Scripts\pages\account_login.js" />
+    <Content Include="Scripts\pages\account_resetpassword.js" />
     <Content Include="Scripts\pages\manage.js" />
+    <Content Include="Scripts\pages\organisation_users.js" />
+    <Content Include="Scripts\pages\research.js" />
     <Content Include="Scripts\pages\research_filling.js" />
     <Content Include="Scripts\pages\manage_changepassword.js" />
     <Content Include="Scripts\pages\organisation_usercu.js" />
