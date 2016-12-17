@@ -230,6 +230,15 @@ namespace psychoTest.Core
             return HaveSpecifiedOrStrongerUsersTypeRole(manager, orgId);
         }
 
+        public static bool isViewer(string orgId)
+        {
+            System.Security.Claims.ClaimsPrincipal user
+                = HttpContext.Current.GetOwinContext().Authentication.User;
+            string userEmail = user.Identity.GetEmail();
+
+            return HaveSpecifiedOrStrongerUsersTypeRole(viewer, orgId);
+        }
+
         public static bool isInAnyRole()
         {
             System.Security.Claims.ClaimsPrincipal user

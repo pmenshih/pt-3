@@ -62,7 +62,16 @@ function Validate(val, type)
             if (!regexp.test(val)) return errMsg;
             else return '';
             break;
+        case 'codeword':
+            var regexp = /^[a-zA-Z\d_]{5,15}$/i;
+            errMsg = 'Может содержать только латинские буквы, цифры и символ \'_\'. Не может быть короче 5 и длиннее 15 символов.';
+            if (!regexp.test(val)) return errMsg;
+            else return '';
         default:
             return '';
     }
+}
+
+function Preloader(divId, show) {
+    if (show) $('#' + divId).html("загрузка...");
 }

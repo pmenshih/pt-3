@@ -8,8 +8,7 @@
 <a href="@backUrl">Вернуться к исследованию</a>
 <h2>Загрузить сценарий из:</h2>
 <span id="lnkFile" class="devSpanLnk">файла</span>
-| <a  class="devSpanLnk" id="lnkLib">билиотеки</a>
-| <a  class="devSpanLnk" id="lnkRes">исследований</a>
+<span id="lnkLib" class="devSpanLnk">билиотеки</span>
 
 <div class="devDiv" style="display: none;" id="blockFile">
     Из файла<br/>
@@ -24,9 +23,6 @@
 </div>
 <div class="devDiv" style="display: none;" id="blockLib">
     Из библиотеки
-</div>
-<div class="devDiv" style="display: none;" id="blockRes">
-    Из исследований
 </div>
 
 @Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")

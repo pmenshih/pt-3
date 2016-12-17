@@ -10,29 +10,8 @@
     @Html.AntiForgeryToken()
     <input type="text" name="name" placeholder="название исследования" />
     <br />
-    <input type="text" name="descr" placeholder="описание" />
+    <input type="text" name="descr" placeholder="описание (необязательно)" />
     <br/>
-    <div class="devDiv">
-        Группа:
-        <div class="devDivInfo">
-            Группу можно назначить или удалить в любой момент. <a href="#">Узнайте больше о группах исследований</a>
-        </div>
-        <input type="text" name="groupName" placeholder="название группы" />
-        <br/>
-        Список групп
-        @if (Model.groups.Count() == 0)
-        {
-            <br/><i>группы отсутствуют</i>
-        }
-        else
-        {
-            foreach (psychoTest.Models.Researches.ResearchGroup g in Model.groups)
-            {
-                <a href="#" onclick="">@g.name</a>
-            }
-        }
-        <input type="hidden" name="groupId" />
-    </div>
     <div class="devDiv">
         Тип:
         <select name="typeId">

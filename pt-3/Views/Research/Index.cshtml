@@ -10,75 +10,31 @@
 {
     <div>
         <a href="/research/create?@psychoTest.Core.RequestVals.orgId=@Model.orgId">Создать исследование</a>
-         | <a href="">управление группами</a>
-         | <a href="">создать группу по текущей таблице</a>
     </div>
 }
 
-@if (Model.orgResearchsGroups.Count() > 0)
+@if (psychoTest.Core.Membership.isAdmin() || psychoTest.Core.Membership.isManager(Model.orgId))
 {
-    <div class="devDiv">
-        отфильтровать по группе:
-        <a href="#">без группы</a>
-        @foreach (psychoTest.Models.Researches.ResearchGroup rg in Model.orgResearchsGroups)
-        {
-            <a href="#">@rg.name</a>
-        }
-    <div class="devDivInfo">
-        фильтров может быть выбрано несколько
-    </div>
-    </div>
+    <input type="hidden" id="rTAllowCRUD" value="true" />
 }
 
-<div class="devDiv">
-    <table>
-        <tr>
-            <th>
-                Название
-            </th>
-            <th>
-                Информация
-            </th>
-            <th>
-                Дата создания
-            </th>
-            <th>
-                Тип
-            </th>
-            <th>
-                Группы
-            </th>
-            <th>
-                Статус
-            </th>
-        </tr>
-        @foreach (psychoTest.Models.Researches.CustomSelects.ResearchListView r in Model.researches)
-        {
-            string riUrl = $@"/research/show?{psychoTest.Core.RequestVals.orgId}={Model.orgId}&{psychoTest.Core.RequestVals.researchId}={r.id}";
-            <tr>
-                <td>
-                    <a href="@riUrl">@r.name</a>
-                    @if (!String.IsNullOrEmpty(r.descr))
-                    {
-                        <br /><i>@r.descr</i>
-                    }
-                </td>
-                <td>
-                    @r.info
-                </td>
-                <td>
-                    @r.dateCreate.ToString("dd.MM.yyyy")
-                </td>
-                <td>
-                    @r.typeDescr
-                </td>
-                <td>
-                    @r.groupNames
-                </td>
-                <td>
-                    @psychoTest.Core.EntityStatuses.GetById(r.statusId).it
-                </td>
-            </tr>
-        }
-    </table>
+<div id="modalDeleteScreen" class="devModalWindow">
+    <div id="modalDeleteWindow">
+        <div id="modalDeleteMessage">
+        </div>
+        <label><input type="checkbox" id="modalDeleteConfirmCheckBox" />Я подтверждаю удаление исследования</label>
+        <div class="devValidateError" id="modalDeleteError" style="display: none;">
+            <p>Произошла ошибка, которая уже устраняется.</p>
+            <p>Попробуйте повторить операцию позже, или напишите в службу поддержки.</p>
+        </div>
+        <br /><input type="button" id="modalDeleteOk" value="Удалить" disabled />
+        <input type="button" id="modalDeleteCancel" value="Отмена" />
+    </div>
 </div>
+
+<div class="devDiv" id="resTable">
+</div>
+
+@Scripts.Render("/scripts/libcore.js")
+@Scripts.Render("/scripts/libuigrid.js")
+@Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")

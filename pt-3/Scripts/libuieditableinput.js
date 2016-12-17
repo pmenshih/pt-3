@@ -1,8 +1,6 @@
 ﻿var UI = UI || {};
 UI.EditableInput = UI.EditableInput || {};
 
-
-
 UI.EditableInput.Create = function (divId, divClass) { 
     $.ajax({
         url: '/content/elements/editableinput.html',

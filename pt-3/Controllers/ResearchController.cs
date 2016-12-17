@@ -3,6 +3,8 @@ using System.Web.Mvc;
 using psychoTest.Models.Researches;
 using psychoTest.Core;
 using System.Web.Script.Serialization;
+using System.Collections.Generic;
+using System.Text;
 
 namespace psychoTest.Controllers
 {
@@ -29,13 +31,58 @@ namespace psychoTest.Controllers
         {
             var model = new Models.Researches.Views.Index();
             model.orgId = Request.QueryString[RequestVals.orgId];
-            model.researches = Research.GetAllForLinkResearch(model.orgId);
+            model.researches = Research.GetAllForAjax(model.orgId);
             model.orgResearchsGroups = ResearchGroupsItems.GetByOrgId(model.orgId);
 
             //проверка права доступа
             if (!RolesIsIVMCA(model.orgId)) return Redirect(RequestVals.nrURL);
             
             return View(model);
+        }
+
+        public ActionResult GetAll(string orgId)
+        {
+            AjaxAnswer answer = new AjaxAnswer();
+            answer.result = AjaxResults.CodeError;
+
+            //проверка права доступа
+            if (!RolesIsIVMCA(orgId))
+            {
+                answer.result = AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            List<Models.Researches.CustomSelects.ResearchListView> res 
+                = Research.GetAllForAjax(orgId);
+
+            answer.data = new JavaScriptSerializer().Serialize(res);
+            answer.result = AjaxResults.Success;
+
+            return answer.JsonContentResult();
+        }
+
+        public ActionResult GetDataSections(string orgId, string researchId)
+        {
+            AjaxAnswer answer = new AjaxAnswer();
+            answer.result = AjaxResults.CodeError;
+
+            var research = Research.GetById(researchId);
+            var org = Models.Organisations.Organisation.GetById(orgId);
+
+            //проверка права доступа
+            if (org.id != research.orgId || !RolesIsIVMCA(orgId))
+            {
+                answer.result = AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            List<Models.Researches.CustomSelects.DataSectionListView> ds
+                = research.GetDataSections();
+
+            answer.data = new JavaScriptSerializer().Serialize(ds);
+            answer.result = AjaxResults.Success;
+
+            return answer.JsonContentResult();
         }
 
         public ActionResult Create()
@@ -48,6 +95,47 @@ namespace psychoTest.Controllers
             if (!Membership.isAdmin() && !Membership.isManager(model.orgId)) return Redirect(RequestVals.nrURL);
 
             return View(model);
+        }
+
+        [HttpPost]
+        public ActionResult Delete(string orgId, string researchId)
+        {
+            AjaxAnswer answer = new AjaxAnswer();
+
+            //проверка права доступа
+            if (!Membership.isAdmin() && !Membership.isManager(orgId))
+            {
+                answer.result = AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            answer.result = AjaxResults.CodeError;
+            if (Research.DeletePseudoById(researchId))
+                answer.result = AjaxResults.Success;
+
+            return answer.JsonContentResult();
+        }
+        
+        [HttpPost]
+        public ActionResult DataSectionDelete(string orgId, string researchId, string scenarioId)
+        {
+            AjaxAnswer answer = new AjaxAnswer();
+
+            var org = Models.Organisations.Organisation.GetById(orgId);
+            var research = Research.GetById(researchId);
+
+            //проверка права доступа
+            if (org.id != research.orgId || (!Membership.isAdmin() && !Membership.isManager(orgId)))
+            {
+                answer.result = AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            answer.result = AjaxResults.CodeError;
+            if (Models.Researches.Sessions.ResearchSession.DeletePseudoByScenarioId(scenarioId))
+                answer.result = AjaxResults.Success;
+
+            return answer.JsonContentResult();
         }
 
         [HttpPost]
@@ -110,9 +198,15 @@ namespace psychoTest.Controllers
 
             var model = new Models.Researches.Views.Show();
             model.name = research.name;
+            model.descr = research.descr;
+            model.typeDescr = ResearchType.GetById(research.typeId)?.nameText;
             model.orgId = org.id;
             model.researchId = research.id;
             model.password = research.password;
+            //заполнение срезов данных
+            model.dataSections = research.GetDataSections();
+            //получение Id активного сценария
+            model.activeScenario = research.GetActualActiveScenario();
 
             return View(model);
         }
@@ -131,6 +225,22 @@ namespace psychoTest.Controllers
                 return Redirect(RequestVals.nrURL);
 
             return View(model);
+        }
+
+        public ActionResult ScenarioDownload(string scenarioId, string orgId, string researchId)
+        {
+            Models.Researches.Scenarios.ResearchScenario rs
+                = Models.Researches.Scenarios.ResearchScenario.GetById(scenarioId);
+
+            //проверка прав
+            if (researchId != rs.researchId || (!Membership.isAdmin() && !Membership.isManager(orgId)))
+                throw new Exception();
+            
+            Encoding srcEnc = Encoding.UTF8;
+
+            string filename = String.Format("kh-scenario-{0}.xml"
+                                            ,DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
+            return File(srcEnc.GetBytes(rs.raw), "text/xml", filename);
         }
 
         public ActionResult UploadScenario()
