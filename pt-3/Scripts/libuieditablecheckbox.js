@@ -16,8 +16,7 @@ UI.EditableCheckbox.Bind = function (divId, sHtml) {
     var eHtml = sHtml.replace(/divPref/g, divId);
     $('#' + divId).html(eHtml);  
     $('#' + divId).on("click", "[id$='btnyes']", function () { UI.EditableCheckbox.OkClick(divId); });
-    //$('#val' + divId).nextAll(':radio').on("change", function () { UI.EditableCheckbox.OkClick(divId); });
-    
+    $('#' + divId).on("change", "[id^='sex']", function () { UI.EditableCheckbox.OkClick(divId); });
 
     UI.EditableCheckbox.Init(divId);
 };

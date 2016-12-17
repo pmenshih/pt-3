@@ -18,8 +18,7 @@ UI.EditableInput.OkClick = function (divId) {
 
 UI.EditableCheckbox.OkClick = function (divId) { 
     var formData = new FormData();
-    var url = divId.replace(/_/g, '/');
-
+    var url = divId.replace(/_/g, '/');  
     formData.append('val', $('#' + divId + 'inputval').val());
     formData.append('newval', formData.get('val'));
     formData.append('userId', $('#userId').val());
