@@ -16,7 +16,10 @@
 
         html += "<tr>";
         $.each(this.columns, function (idx, obj) {
-            html += "<th>";
+            if (obj.sortable) {
+                html += "<th id='" + divId + 'col' + obj.sortable + "' class='uiGridSortableTh'>";
+            }
+            else html += "<th>";
             html += obj.title;
             html += "</th>";
         });
@@ -47,5 +50,33 @@
 
         html += "</table>";
         $(this.divIdJQ).html(html);
+
+        $('#' + this.divId + ' th').click(function () {
+            alert($(this).attr('asc'));
+            var prop = $(this).attr('id').replace(new RegExp(divId + 'col', 'g'), '');
+            var asc = (!$(this).attr('asc'));
+            alert(asc)
+            $('#' + this.divId + ' th').each(function () {
+                $(this).removeAttr('asc');
+            });
+            if (asc) $(this).attr('asc', 'asc');
+
+            alert(asc)
+            alert($(this).attr('asc'));
+
+            data = data.sort(function (a, b) {
+                if (asc) {
+                    if (a[prop] > b[prop]) return 1;
+                    if (a[prop] < b[prop]) return -1;
+                    return 0;
+                } else {
+                    if (b[prop] > a[prop]) return 1;
+                    if (b[prop] < a[prop]) return -1;
+                    return 0;
+                }
+            });
+
+            GlobalGridInit();
+        });
     }
 };

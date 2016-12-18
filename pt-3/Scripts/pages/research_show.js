@@ -20,8 +20,8 @@ UI.EditableInput.OkClick = function (divId) {
 };
 
 UI.EditableInput.Create('_research_setpassword', 'codeword');
-UI.EditableInput.Create('_research_setname', '');
-UI.EditableInput.Create('_research_setdescr', '');
+UI.EditableInput.Create('_research_setname', '', 'название исследования');
+UI.EditableInput.Create('_research_setdescr', '', 'описание исследования');
 
 
 $('#activeScenarioLnk').on("click", function () {
@@ -202,6 +202,7 @@ function DSTGetDataCallback(response, pars) {
     columns[0] = {
         title: 'Дата создания'
         , tpl: "<span id='@scenarioId@dateBegin'>@dateBegin@</span>"
+        ,sortable: 'dateBegin'
     };
     columns[1] = {
         title: 'Кол-во ответов'
@@ -230,6 +231,79 @@ function DSTGetDataCallback(response, pars) {
     $("[id^='lnkDel']").click(function () { DSDeleteLnkClick(this.id); });
     $("[id^='lnkShow']").click(function () { DSShowScenario(this.id); });
     $("[id^='lnkRaw']").click(function () { DSRawClick(this.id); });
+}
+
+
+$('#uploadScenarioLnk').on("click", function () {
+    $('#modalScUploadNoFile').hide();
+    $('#modalScUploadScreen').show();
+});
+
+$("#modalScUploadCancel").click(function () {
+    $("#modalScUploadError").hide();
+    $("#modalScUploadLog").empty();
+    $('#modalScUploadScreen').hide();
+    $("#modalScUploadFilename").replaceWith($("#modalScUploadFilename").val('').clone(true));
+});
+
+$('#modalScUploadScreen').on("click", function () {
+    $("#modalScUploadCancel").click();
+});
+
+$('#modalScUploadWindow').on("click", function (e) {
+    e.stopPropagation();
+});
+
+$('#modalScUploadButton').on("click", function () {
+    UploadScenario();
+})
+
+function UploadScenario() {
+    $('#modalScUploadNoFile').hide();
+    if ($("#modalScUploadFilename").val() == '') {
+        $('#modalScUploadNoFile').show();
+        return;
+    }
+
+    $("#modalScUploadError").hide();
+    $("#modalScUploadLog").empty();
+
+    var fileData = $('#modalScUploadFilename').prop('files')[0];
+    var formData = new FormData();
+    formData.append('filename', fileData);
+    formData.append('orgId', $.getUrlVar('orgId'));
+    formData.append('researchId', $.getUrlVar('researchId'));
+    $.ajax({
+        url: '/research/uploadscenario',
+        dataType: 'text',
+        cache: false,
+        contentType: false,
+        processData: false,
+        data: formData,
+        type: 'post',
+        success: function (response) {
+            var answer = jQuery.parseJSON(response);
+            if (answer.result != '0') ShowUploadLog(answer.data);
+            else {
+                location.reload();
+            }
+        }
+    });
+}
+
+function ShowUploadLog(data) {
+    $("#modalScUploadError").show();
+    var msgs = jQuery.parseJSON(data);
+    var out = "<div class='devUEL'>" + msgs.excMes1;
+    if (msgs.excMes2.length > 0) {
+        out += "<div class='devUELI'>" + msgs.excMes2 + "</div>";
+    }
+    out += '</div>';
+    $("#modalScUploadLog").append(out);
+}
+
+function GlobalGridInit() {
+    grid.Init();
 }
 
 $(document).ready(function () {

@@ -280,22 +280,6 @@ namespace psychoTest.Controllers
             return View(model);
         }
 
-        public ActionResult ScenarioCU()
-        {
-            var model = new Models.Researches.Views.ScenarioCU();
-            var org = Models.Organisations.Organisation.GetById(Request.QueryString[RequestVals.orgId]);
-            var research = Research.GetById(Request.QueryString[RequestVals.researchId]);
-
-            model.orgId = org.id;
-            model.researchId = research.id;
-
-            //права
-            if (org.id != research.orgId || (!Membership.isAdmin() && !Membership.isManager(org.id)))
-                return Redirect(RequestVals.nrURL);
-
-            return View(model);
-        }
-
         public ActionResult ScenarioDownload(string scenarioId, string orgId, string researchId)
         {
             Models.Researches.Scenarios.ResearchScenario rs

@@ -1,16 +1,17 @@
 ﻿var UI = UI || {};
 UI.EditableInput = UI.EditableInput || {};
 
-UI.EditableInput.Create = function (divId, divClass) { 
+UI.EditableInput.Create = function (divId, fieldType, placeholder) { 
     $.ajax({
         url: '/content/elements/editableinput.html',
         type: 'get',
-        success: function (response) { UI.EditableInput.Bind(divId, divClass, response); }
+        success: function (response) { UI.EditableInput.Bind(divId, fieldType, response, placeholder); }
     });
 };
 
-UI.EditableInput.Bind = function (divId, divClass, sHtml) {
-    var eHtml = sHtml.replace(/divPref/g, divId);
+UI.EditableInput.Bind = function (divId, divClass, sHtml, placeholder) {
+    var eHtml = sHtml.replace(/divPref/g, divId)
+                    .replace(new RegExp('@placeholder', 'g'), placeholder);
     $('#' + divId).html(eHtml);
     $('#' + divId + 'inputval').addClass(divClass);
     $('#' + divId).on("click", "[id$='btnno']", function () { UI.EditableInput.Init(divId); });

@@ -75,14 +75,24 @@ SELECT r.id
 				FOR XML PATH('')), 2, 1000) AS groupNames
     ,rt.nameText AS typeDescr
     ,es.nameText AS statusDescr
-    ,(SELECT 'info') AS info
+    ,info = (CASE rt.name
+		WHEN 'anonsurvey'
+			THEN N'Результатов: ' + CAST((SELECT COUNT(*) 
+					FROM ResearchSessions
+					WHERE researchId = r.id
+						AND statusId = @statusId
+						AND finished = @finished) AS nvarchar(10))
+		ELSE 'info'
+	  END)
 FROM Researches r, ResearchTypes rt, EntityStatuses es
 WHERE r.orgId = @orgId
     AND rt.id=r.typeId
 	AND es.id = r.statusId
 ORDER BY r.dateCreate DESC
 ";
-            SqlParameter[] pars = { new SqlParameter("orgId", orgId) };
+            SqlParameter[] pars = { new SqlParameter("orgId", orgId)
+                                    ,new SqlParameter("statusId", Core.EntityStatuses.enabled.val)
+                                    ,new SqlParameter("finished", true)};
             List<CustomSelects.ResearchListView> list
                 = DBMain.db.Database.SqlQuery<CustomSelects.ResearchListView>(query, pars).ToList();
 
@@ -421,14 +431,6 @@ WHERE rg.id = rgi.groupId
             public List<CustomSelects.DataSectionListView> dataSections { get; set; } 
                 = new List<CustomSelects.DataSectionListView>();
             public Scenarios.ResearchScenario activeScenario { get; set; } = null;
-        }
-
-        public class ScenarioCU
-        {
-            [Required]
-            public string orgId { get; set; }
-            [Required]
-            public string researchId { get; set; }
         }
 
         public class Filling
