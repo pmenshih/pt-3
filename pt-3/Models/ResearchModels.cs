@@ -101,6 +101,12 @@ ORDER BY r.dateCreate DESC
             else return false;
         }
 
+        public bool Save()
+        {
+            DBMain.db.SaveChanges();
+            return true;
+        }
+
         //получение таблицы срезов данных
         public List<CustomSelects.DataSectionListView> GetDataSections()
         {
@@ -125,6 +131,33 @@ ORDER BY dateBegin DESC
                 = DBMain.db.Database.SqlQuery<CustomSelects.DataSectionListView>(query, pars).ToList();
 
             return list;
+        }
+
+        public CustomSelects.DataSectionListView GetDataSectionByScenarioId(string scenarioId)
+        {
+            string query = $@"
+SELECT 
+	rs.scenarioId
+	,(SELECT FORMAT(MIN(rs.dateStart), 'dd.MM.yyyy HH:mm:ss')) as dateBegin
+	,COUNT(*) as answersCount
+FROM ResearchSessions rs
+WHERE rs.researchId = @researchId 
+	AND rs.finished = @finished
+	AND rs.statusId = @statusActive
+    AND rs.scenarioId = @scenarioId
+GROUP BY rs.scenarioId
+ORDER BY dateBegin DESC
+";
+            SqlParameter[] pars = {
+                new SqlParameter("researchId", this.id)
+                ,new SqlParameter("finished", true)
+                ,new SqlParameter("scenarioId", scenarioId)
+                ,new SqlParameter("statusActive", Core.EntityStatuses.enabled.val)
+            };
+            CustomSelects.DataSectionListView ds
+                = DBMain.db.Database.SqlQuery<CustomSelects.DataSectionListView>(query, pars).FirstOrDefault();
+
+            return ds;
         }
     }
 
@@ -195,6 +228,126 @@ WHERE rg.id = rgi.groupId
                 new SqlParameter("orgId", orgId)};
 
             return DBMain.db.Database.SqlQuery<ResearchGroup>(query, pars).ToList();
+        }
+    }
+
+    //таблица файлов RAW результатов исследований
+    public class ResearchDataSectionsRawResult
+    {
+        [Key]
+        public string id { get; set; }
+        public string scenarioId { get; set; }
+        public string researchId { get; set; }
+        public int statusId { get; set; }
+        public DateTime dateCreate { get; set; }
+        public string raw { get; set; }
+        public string filename { get; set; }
+        public int answersCount { get; set; }
+
+        public static ResearchDataSectionsRawResult GetById(string resultId)
+        {
+            return DBMain.db.ResearchDataSectionsRawResults.SingleOrDefault(x => x.id == resultId);
+        }
+
+        public bool Create()
+        {
+            DBMain.db.ResearchDataSectionsRawResults.Add(this);
+            DBMain.db.SaveChanges();
+            return true;
+        }
+
+        public static bool DeleteById(string resultId)
+        {
+            string query = @"DELETE FROM ResearchDataSectionsRawResults WHERE id=@id";
+            DBMain.db.Database.ExecuteSqlCommand(query, new SqlParameter("id", resultId));
+            return true;
+        }
+
+        public static ResearchDataSectionsRawResult GetByScenarioId(string scenarioId)
+        {
+            return DBMain.db.ResearchDataSectionsRawResults.FirstOrDefault(x => x.scenarioId == scenarioId);
+        }
+
+        public static ResearchDataSectionsRawResult FormAnonCalculateAndCreate(string scenarioId)
+        {
+            var sc = Scenarios.ResearchScenario.GetById(scenarioId);
+            var sessions = Sessions.ResearchSession.GetFinishedByScenarioId(sc.id);
+            var research = Research.GetById(sc.researchId);
+            ResearchDataSectionsRawResult dsrr = new ResearchDataSectionsRawResult();
+
+            dsrr.answersCount = 0;
+            dsrr.dateCreate = sessions[0].dateStart;
+            dsrr.filename = String.Format("kh-raw-{0}-{1}.csv"
+                                            , research.name
+                                            , dsrr.dateCreate.ToString("dd.MM.yyyy HH:mm:ss")); ;
+            dsrr.id = Guid.NewGuid().ToString();
+            dsrr.raw = "";
+            dsrr.researchId = sc.researchId;
+            dsrr.scenarioId = sc.id;
+            dsrr.statusId = Core.EntityStatuses.enabled.val;
+
+            //десереализуем шаблон опросника
+            Scenarios.Questionnaires.Questionnaire questionnaire
+                = (Scenarios.Questionnaires.Questionnaire)Scenarios.Questionnaires.Questionnaire
+                    .DeSerializeFromXmlString(
+                        sc.raw
+                        , typeof(Scenarios.Questionnaires.Questionnaire));
+
+            //построим заголовок файла
+            int questionsCount = 0;
+            foreach (Scenarios.Questionnaires.Question q in questionnaire.questions)
+            {
+                questionsCount++;
+
+                //вставляем q0 если есть преамбула
+                if (questionsCount == 1 && q.answers.Count() == 0)
+                {
+                    questionsCount--;
+                }
+
+                dsrr.raw += ";q" + questionsCount.ToString();
+            }
+            dsrr.raw += ";\r\n";
+
+            foreach (Sessions.ResearchSession rs in sessions)
+            {
+                dsrr.answersCount++;
+                //десереализуем заполненный опросник
+                Scenarios.Questionnaires.QuestionnaireWI filledQuestionnaire
+                    = (Scenarios.Questionnaires.QuestionnaireWI)Scenarios.Questionnaires.QuestionnaireWI
+                        .DeSerializeFromXmlString(
+                            rs.raw
+                            , typeof(Scenarios.Questionnaires.QuestionnaireWI));
+
+                //порядковый номер ответа
+                dsrr.raw += $"{dsrr.answersCount};";
+
+                //перебираем вопросы
+                foreach (Scenarios.Questionnaires.Question q in filledQuestionnaire.questions)
+                {
+                    //меняем указанные символы на палочки. это нужно для корректного представления 
+                    //в программе просмотра
+                    string answer = q.answer?.Replace(";", ",").Replace("\r", "|").Replace("\n", "|");
+
+                    dsrr.raw += $"{answer};";
+                }
+
+                dsrr.raw += "\r\n";
+            }
+
+            //если в момент добавления расчета происходит ошибка, значит результаты по сценарию уже посчитаны
+            //в этом случае вернем данные, которые уже в БД
+            try
+            {
+                DBMain.db.ResearchDataSectionsRawResults.Add(dsrr);
+                DBMain.db.SaveChanges();
+            }
+            catch (Exception)
+            {
+                dsrr = GetByScenarioId(sc.id);
+            }
+
+            return dsrr;
         }
     }
     #endregion
@@ -546,7 +699,7 @@ WHERE rg.id = rgi.groupId
                 return DBMain.db.ResearchSessions.SingleOrDefault(x => x.idShort == idShort
                                                                     && x.statusId == Core.EntityStatuses.enabled.val);
             }
-
+            
             public static bool DeletePseudoByScenarioId(string scenarioId)
             {
                 string query = @"
@@ -560,6 +713,14 @@ WHERE scenarioId=@scenarioId
                 };
                 DBMain.db.Database.ExecuteSqlCommand(query, pars);
                 return true;
+            }
+
+            public static List<ResearchSession> GetFinishedByScenarioId(string scenarioId)
+            {
+                return DBMain.db.ResearchSessions
+                    .Where(x => x.scenarioId == scenarioId && x.finished)
+                    .OrderBy(x => x.dateFinish)
+                    .ToList();
             }
         }
     }

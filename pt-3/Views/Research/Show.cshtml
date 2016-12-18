@@ -4,15 +4,13 @@
     Layout = "~/Views/Shared/_Cabinet.cshtml";
 }
 
-<h2>@ViewBag.Title</h2>
-@Model.typeDescr
+<div id="_research_setname"></div>
+<input type="hidden" id="val_research_setname" value="@Model.name" />
+Тип: @Model.typeDescr
 @if (!String.IsNullOrEmpty(Model.descr))
 {
-    <div>
-        <i>
-            @Model.descr
-        </i>
-    </div>
+    <div id="_research_setdescr"></div>
+    <input type="hidden" id="val_research_setdescr" value="@Model.descr" />
 }
 <div class="devDiv">
     Сводка
@@ -29,7 +27,6 @@
         <div>
             @if (Model.activeScenario != null)
             {
-                <input type="hidden" id="activeScenarioRaw" value="@Model.activeScenario.raw" />
                 <input type="hidden" id="activeScenarioId" value="@Model.activeScenario.id" />
                 <a href="javascript:void(0)" id="activeScenarioLnk">показать</a>
                 @Html.Raw("|")
@@ -66,6 +63,8 @@
 {
     <div class="devDiv">
         Срезы
+        <div id="dataSectionTableLoader">
+        </div>
         <div id="dataSectionTable">
         </div> 
     </div>

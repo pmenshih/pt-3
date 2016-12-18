@@ -20,17 +20,33 @@ UI.EditableInput.OkClick = function (divId) {
 };
 
 UI.EditableInput.Create('_research_setpassword', 'codeword');
+UI.EditableInput.Create('_research_setname', '');
+UI.EditableInput.Create('_research_setdescr', '');
 
 
 $('#activeScenarioLnk').on("click", function () {
+    Preloader('modalScenarioRaw', true);
     $('#modalScenarioDownloadLink').attr(
         'href', '/research/scenariodownload?scenarioId=' + $('#activeScenarioId').val()
                 + '&orgId=' + $.getUrlVar('orgId')
                 + '&researchId=' + $.getUrlVar('researchId'));
-    $('#modalScenarioRaw').html($('#activeScenarioRaw').val());
+
+    let formData = new FormData();
+    formData.append('orgId', $.getUrlVar('orgId'));
+    formData.append('researchId', $.getUrlVar('researchId'));
+    formData.append('scenarioId', $('#activeScenarioId').val());
+    AjaxCall('/research/scenariogetraw'
+            , formData
+            , ScenarioRawLoaded);
+
     $('#modalScenarioHeader').html('Активный сценарий исследования');
     $('#modalScenarioScreen').show();
 });
+
+function ScenarioRawLoaded(response, pars)
+{
+    $('#modalScenarioRaw').html(response);
+}
 
 $("#modalScenarioCancel").click(function () {
     $('#modalScenarioScreen').hide();
@@ -46,15 +62,24 @@ $('#modalScenarioWindow').on("click", function (e) {
 
 
 function DSShowScenario(id) {
+    Preloader('modalScenarioRaw', true);
     let scenarioId = id.replace("lnkShow", "");
     $('#modalScenarioDownloadLink').attr(
         'href', '/research/scenariodownload?scenarioId=' + scenarioId
                 + '&orgId=' + $.getUrlVar('orgId')
                 + '&researchId=' + $.getUrlVar('researchId'));
+
+    let formData = new FormData();
+    formData.append('orgId', $.getUrlVar('orgId'));
+    formData.append('researchId', $.getUrlVar('researchId'));
+    formData.append('scenarioId', scenarioId);
+    AjaxCall('/research/scenariogetraw'
+            , formData
+            , ScenarioRawLoaded);
+
     $('#modalScenarioHeader').html('Сценарий среза от ' + $('#' + scenarioId + 'dateBegin')[0].innerText);
     $('#modalScenarioScreen').show();
 }
-
 
 function DSDeleteLnkClick(id) {
     $('#modalDeleteScreen').show();
@@ -66,6 +91,47 @@ function DSDeleteLnkClick(id) {
                     .replace("#val", scenarioId);
     $('#modalDeleteMessage').html(Msg);
 }
+
+function DSRawClick(id) {
+    let scenarioId = id.replace("lnkRaw", "");
+
+    let clearLoaderLnk = '<a href="javascript:void()" id="dataSectionTableLoaderCleaner">Очистить</a>';
+    let loaderHtml = $('#dataSectionTableLoader').html().replace(clearLoaderLnk, '');
+    loaderHtml += 'Построение результатов для среза от ' + $('#' + scenarioId + 'dateBegin')[0].innerText + '. Дождитесь начала загрузки файла.<br/>';
+    loaderHtml += clearLoaderLnk;
+    $('#dataSectionTableLoader').html(loaderHtml);
+    $('#dataSectionTableLoaderCleaner').on("click", function () {
+        $('#dataSectionTableLoader').empty();
+    });
+    
+    let formData = new FormData();
+    formData.append('orgId', $.getUrlVar('orgId'));
+    formData.append('researchId', $.getUrlVar('researchId'));
+    formData.append('scenarioId', scenarioId);
+
+    $('[id^=lnkRaw]').hide();
+    AjaxCall("/research/datasectionpreparedownloadraw?orgId=" + $.getUrlVar('orgId')
+                + "&researchId=" + $.getUrlVar('researchId')
+                + "&scenarioId=" + scenarioId
+        , formData
+        , DSRawDownload);
+}
+
+function DSRawDownload(response, pars) {
+    let answer = jQuery.parseJSON(response);
+    if (answer.result == 0) {
+        window.location = "/research/datasectiondownloadraw?orgId=" + $.getUrlVar('orgId')
+            + "&researchId=" + $.getUrlVar('researchId')
+            + "&scenarioId=" + pars.get('scenarioId')
+            + "&resultId=" + answer.data;
+    }
+    //!!!дописать
+    else {
+
+    }
+    $('[id^=lnkRaw]').show();
+}
+
 
 $("#modalDeleteCancel").click(function () {
     $('#modalDeleteScreen').hide();
@@ -123,8 +189,8 @@ function DSTGetDataCallback(response, pars) {
     if (answer.result != 0) {
         let msg = "\
 <div class='devValidateError'>\
-    <p>Ошибка построения таблицы срезов.</p>\
-    <p>Попробуйте перезагрузить страницу, или обратитесь в службу поддержки.</p>\
+<p>Ошибка построения таблицы срезов.</p>\
+<p>Попробуйте перезагрузить страницу, или обратитесь в службу поддержки.</p>\
 </div>";
         $('#' + gridDiv).html(msg);
         return;
@@ -144,7 +210,7 @@ function DSTGetDataCallback(response, pars) {
     if ($('#dsTViewerCoachAdmin').val()) {
         columns[2] = {
             title: ''
-        , tpl: "<a href=''>RAW</a> | <a href=''>Интерпретация</a>"
+        , tpl: "<a href='javascript:void(0)' id='lnkRaw@scenarioId@'>RAW</a> | <a href='javascript:void(0)'>Интерпретация</a>"
         };
     }
     if ($('#dsTManagerCoachAdmin').val()) {
@@ -163,6 +229,7 @@ function DSTGetDataCallback(response, pars) {
     grid.Init();
     $("[id^='lnkDel']").click(function () { DSDeleteLnkClick(this.id); });
     $("[id^='lnkShow']").click(function () { DSShowScenario(this.id); });
+    $("[id^='lnkRaw']").click(function () { DSRawClick(this.id); });
 }
 
 $(document).ready(function () {
