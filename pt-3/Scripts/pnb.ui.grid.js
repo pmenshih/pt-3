@@ -5,13 +5,15 @@
         var self = this;
         var props = function () {
             return {
-                "divIdToDraw": _properties["divIdToDraw"],
-                "dataSet": _properties["dataSet"],
-                "columns": _properties["columns"],
+                "divIdToDraw"                   : _properties["divIdToDraw"],
+                "dataSet"                       : _properties["dataSet"],
+                "columns"                       : _properties["columns"],
+                "drawCompleteCallback"          : _properties["drawCompleteCallback"],
             };
         }();
 
         this.DrawComplete = function () {
+            document.getElementById(props["divIdToDraw"]).innerHTML = "";
             self.DrawHeader();
             self.DrawBody();
         };
@@ -67,6 +69,11 @@
             props = _properties;
         };
 
+        this.DeleteRow = function (idx) {
+            props["dataSet"].splice(idx, 1);
+            self.DrawBody();
+        }
+
         function TableTagChecker(html) {
             if (html.slice(0, 7) === "<table>" && html.slice(-8) === "</table>") return html;
             return "<table>" + html + "</table>";
@@ -115,6 +122,8 @@
                         self.DrawBody();
                     });
                 });
+
+            typeof props["drawCompleteCallback"] === 'function' && props["drawCompleteCallback"]();
         }
     }
 

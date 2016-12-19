@@ -79,12 +79,8 @@ function ResearchDeleteAjax(response, pars)
         $("#modalDeleteCancel").click();
         //получаем индекс элемента для удаления из JSON-массива
         let idx = $('#' + pars.get('researchId') + 'Idx').val();
-        //удаляем
-        rTData.splice(idx, 1);
-        //перестраиваем грид
-        grid.Init();
-        //обновляем обработчики онклик для кнопок "удалить"
-        $("[id^='lnkDel']").click(function () { ResearchDeleteLnkClick(this.id); });
+        //удаляем и перестраиваем грид
+        grid.DeleteRow(idx);
     }
     //что-то пошло не так
     else {
@@ -106,6 +102,10 @@ function RTGetData()
     AjaxCall('/research/getall', formData, RTGetDataCallback);
 }
 
+function GridDrawCallback(){
+    $("[id^='lnkDel']").click(function () { ResearchDeleteLnkClick(this.id); });
+}
+
 //колбэк успешного запроса данных для таблицы
 function RTGetDataCallback(response, pars)
 {
@@ -122,9 +122,6 @@ function RTGetDataCallback(response, pars)
         return;
     }
     
-    //парсим ответ
-    rTData = jQuery.parseJSON(answer.data);
-
     //заполняем столбцы
     var columns = [];
     columns[0] = {
@@ -160,18 +157,14 @@ function RTGetDataCallback(response, pars)
         };
     }
     //инициализируем грид
-    //grid = new Grid(gridDiv, rTData, columns);
-    //grid.Init();
-
     grid = new PnB.UI.Grid({
         "divIdToDraw": gridDiv,
-        "dataSet": rTData,
+        "dataSet": jQuery.parseJSON(answer.data),
         "columns": columns,
+        "drawCompleteCallback": GridDrawCallback
     });
-    grid.DrawComplete();
 
-    //биндим событие клика по ссылке удаления исследования
-    $("[id^='lnkDel']").click(function () { ResearchDeleteLnkClick(this.id); });
+    grid.DrawComplete();
 }
 /**** КОНЕЦ ОБЛАСТИ КОМПОНЕНТА ТАБЛИЦЫ ИССЛЕДОВАНИЙ *****/
 
