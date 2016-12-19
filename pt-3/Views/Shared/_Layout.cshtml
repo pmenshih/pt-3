@@ -20,12 +20,14 @@
         @Html.Partial("_LoginPartial")
     </div>
     <div class="container body-content">
-        @if (ViewData["serverError"] != null)
-        {
-            <div>
-                @ViewData["serverError"]
-            </div>
-        }
+        <div id="globalInfoPanel">
+            @if (ViewData["serverError"] != null)
+            {
+                <div>
+                    @ViewData["serverError"]
+                </div>
+            }
+        </div>
         @RenderBody()
         <hr />
         <footer>

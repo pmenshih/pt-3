@@ -4,7 +4,11 @@
     Layout = "~/Views/Shared/_Cabinet.cshtml";
 }
 
-<h2>@ViewBag.Title</h2>
+<div id="_research_setname"></div>
+<input type="hidden" id="val_research_setname" value="@Model.name" />
+Тип: @Model.typeDescr
+<div id="_research_setdescr"></div>
+<input type="hidden" id="val_research_setdescr" value="@Model.descr" />
 <div class="devDiv">
     Сводка
     <div>
@@ -13,20 +17,101 @@
         <input type="hidden" id="val_research_setpassword" value="@Model.password" />
     </div>
 </div>
-<div class="devDiv">
-    Сценарий
-    <div>
-        @if (psychoTest.Core.Membership.isAdmin() || psychoTest.Core.Membership.isManager(Model.orgId))
-        {
-            var scenarioLink = $@"/research/scenariocu?{psychoTest.Core.RequestVals.orgId}={Model.orgId}&{psychoTest.Core.RequestVals.researchId}={Model.researchId}";
-            @Html.Raw("|") <a href="@scenarioLink">изменить</a>
-        }
+@if (psychoTest.Core.Membership.isAdmin() 
+    || psychoTest.Core.Membership.isCoach()
+    || psychoTest.Core.Membership.isManager(Model.orgId))
+{
+    <div class="devDiv">
+        Активный сценарий
+        <div>
+            @if (Model.activeScenario != null)
+            {
+                <input type="hidden" id="activeScenarioId" value="@Model.activeScenario.id" />
+                <a href="javascript:void(0)" id="activeScenarioLnk">показать</a>
+            }
+            @if (psychoTest.Core.Membership.isAdmin()
+                || psychoTest.Core.Membership.isManager(Model.orgId))
+            {
+                <a href="javascript:void(0)" id="uploadScenarioLnk">загрузить</a>
+            }
+        </div>
+        
+    </div>
+}
+
+@if (psychoTest.Core.Membership.isAdmin()
+    || psychoTest.Core.Membership.isCoach()
+    || psychoTest.Core.Membership.isViewer(Model.orgId))
+{
+    <input type="hidden" id="dsTViewerCoachAdmin" value="true" />
+}
+
+@if (psychoTest.Core.Membership.isAdmin()
+    || psychoTest.Core.Membership.isCoach()
+    || psychoTest.Core.Membership.isManager(Model.orgId))
+{
+    <input type="hidden" id="dsTManagerCoachAdmin" value="true" />
+}
+
+@if (psychoTest.Core.Membership.isAdmin()
+    || psychoTest.Core.Membership.isManager(Model.orgId))
+{
+    <input type="hidden" id="dsTManagerAdmin" value="true" />
+}
+
+@if (Model.dataSections.Count > 0)
+{
+    <div class="devDiv">
+        Срезы
+        <div id="dataSectionTableLoader">
+        </div>
+        <div id="dataSectionTable">
+        </div> 
+    </div>
+}
+
+<div id="modalScUploadScreen" class="devModalWindow">
+    <div id="modalScUploadWindow">
+        <a href="#">Формат файла сценария опросника</a>
+        <input type="file" id="modalScUploadFilename" />
+        <br/><input type="button" id="modalScUploadButton" value="загрузить" />
+        <div class="devUEL" id="modalScUploadNoFile">Не выбран файл для загрузки</div>
+        <div id="modalScUploadError" style="display: none;">
+            В сценарии опросника обнаружена ошибка:
+            <div id="modalScUploadLog">
+            </div>
+        </div>
+        <br />
+        <input type="button" id="modalScUploadCancel" value="Закрыть" />
     </div>
 </div>
-<div class="devDiv">
-    Результаты
+
+<div id="modalScenarioScreen" class="devModalWindow">
+    <div id="modalScenarioWindow">
+        <div id="modalScenarioHeader"></div>
+        <xmp id="modalScenarioRaw" style="overflow:auto;border:1px solid black;max-height:500px;">
+        </xmp>
+        <a id="modalScenarioDownloadLink" href="/research/scenariodownload?scenarioId=">Скачать XML-файл сценария</a>
+        <br/>
+        <input type="button" id="modalScenarioCancel" value="Закрыть" />
+    </div>
+</div>
+
+<div id="modalDeleteScreen" class="devModalWindow">
+    <div id="modalDeleteWindow">
+        <div id="modalDeleteMessage">
+        </div>
+        <label><input type="checkbox" id="modalDeleteConfirmCheckBox" />Я подтверждаю удаление среза данных</label>
+        <div class="devValidateError" id="modalDeleteError" style="display: none;">
+            <p>Произошла ошибка, которая уже устраняется.</p>
+            <p>Попробуйте повторить операцию позже, или напишите в службу поддержки.</p>
+        </div>
+        <br /><input type="button" id="modalDeleteOk" value="Удалить" disabled />
+        <input type="button" id="modalDeleteCancel" value="Отмена" />
+    </div>
 </div>
 
 @Scripts.Render("/scripts/libcore.js")
 @Scripts.Render("/scripts/libuieditableinput.js")
+@Scripts.Render("/scripts/libuigrid.js")
 @Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")

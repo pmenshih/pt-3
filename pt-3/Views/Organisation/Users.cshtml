@@ -10,63 +10,74 @@
 <div>
     Показать: <a href="#">Акторов</a> | <a href="#">Контролёров</a> | <a href="#">Зрителей</a> | <a href="#">Менеджеров</a>
 </div>
-<table class="table">
-    <tr>
-        <th>
-            Фамилия
-        </th>
-        <th>
-            Имя
-        </th>
-        <th>
-            Отчество
-        </th>
-        <th>
-            Почта
-        </th>
-        <th>
-            Телефон
-        </th>
-        <th>
-            Роли
-        </th>
-        <th>
-            Результаты
-        </th>
-        <th>
+<input type="text" class="filter" name="liveFilter" />
 
-        </th>
-    </tr>
-    @foreach (psychoTest.Models.Organisations.Views.UsersUserEntity user in Model.orgUsers)
-    {
+<table class="table sort sortable">
+    <thead>
         <tr>
-            <td>
-                @user.surname
-            </td>
-            <td>
-                @user.name
-            </td>
-            <td>
-                @user.patronim
-            </td>
-            <td>
-                @user.email
-            </td>
-            <td>
-                @user.phone
-            </td>
-            <td>
-                @if (user.roles != null)
-                {
-                    @user.roles.Replace("manager", "Менеджер").Replace("actor", "Актор").Replace("inspector", "Контролёр").Replace("viewer", "Зритель")
-                }
-            </td>
-            <td>
-                <a href="#">Ссылка</a>
-            </td>
-            <td>
-                <a href="/organisation/usercu?orgId=@Model.orgId&userId=@user.id">Редактировать</a> | <a href="/organisation/userdelete?orgId=@Model.orgId&userId=@user.id">Удалить</a>
-            </td>
+            <th>
+                Фамилия
+            </th>
+            <th>
+                Имя
+            </th>
+            <th>
+                Отчество
+            </th>
+            <th>
+                Почта
+            </th>
+            <th>
+                Телефон
+            </th>
+            <th>
+                Роли
+            </th>
+            <th class="nosort">
+                Результаты
+            </th>
+            <th class="nosort">
+
+            </th>
         </tr>
-    }
-</table>
+    </thead>
+    <tbody>
+        @foreach (psychoTest.Models.Organisations.Views.UsersUserEntity user in Model.orgUsers)
+        {
+            <tr>
+                <td>
+                    @user.surname
+                </td>
+                <td>
+                    @user.name
+                </td>
+                <td>
+                    @user.patronim
+                </td>
+                <td>
+                    @user.email
+                </td>
+                <td>
+                    @user.phone
+                </td>
+                <td>
+                    @if (user.roles != null)
+                {
+                        @user.roles.Replace("manager", "Менеджер").Replace("actor", "Актор").Replace("inspector", "Контролёр").Replace("viewer", "Зритель")
+                    }
+                </td>
+                <td>
+                    <a href="#">Ссылка</a>
+                </td>
+                <td>
+                    <a href="/organisation/usercu?orgId=@Model.orgId&userId=@user.id">Редактировать</a> | <a href="/organisation/userdelete?orgId=@Model.orgId&userId=@user.id">Удалить</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table> 
+
+
+@Scripts.Render("/scripts/libcore.js")
+
+@Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")

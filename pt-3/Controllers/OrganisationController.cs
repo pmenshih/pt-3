@@ -771,11 +771,11 @@ ORDER BY surname, name, patronim, email";
         /*[HttpPost]*/
         public ActionResult JoinRequest(string orgId, string userEmail)
         {
-            Core.AjaxAnswer answer = new Core.AjaxAnswer();
+            AjaxAnswer answer = new AjaxAnswer();
 
-            if (User.Identity.Name != userEmail)
+            if (User.Identity.Name != userEmail && !Membership.isAdmin())
             {
-                answer.result = Core.AjaxResults.NoRights;
+                answer.result = AjaxResults.NoRights;
                 return answer.JsonContentResult();
             }
 
@@ -786,13 +786,13 @@ ORDER BY surname, name, patronim, email";
                     //если пользователь уже состоит в какой-либо организации, то досвидания
                     if (db.OrganisationUsers.Where(x => x.userEmail == userEmail && x.active && x.dateStop > DateTime.Now).Count() > 0)
                     {
-                        answer.result = Core.AjaxResults.UserAllreadyInOrg;
+                        answer.result = AjaxResults.UserAllreadyInOrg;
                         return answer.JsonContentResult();
                     }
                     //теперь выясним, нет ли у пользователя других заявок
                     if (db.OrganisationUsers.Where(x => x.userEmail == userEmail && x.active == false && x.dateStop < DateTime.Now).Count() > 0)
                     {
-                        answer.result = Core.AjaxResults.NoMultipleJoinRequests;
+                        answer.result = AjaxResults.NoMultipleJoinRequests;
                         return answer.JsonContentResult();
                     }
 

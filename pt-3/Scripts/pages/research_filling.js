@@ -1,6 +1,8 @@
 ﻿$('#formFilling').submit(function () {
     $('#btnNext').hide();
     $('#btnBack').hide();
+    /*$('#btnNext').attr('disabled', true);
+    $('#btnBack').attr('disabled', true);*/
     return true;
 });
 

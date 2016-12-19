@@ -32,6 +32,14 @@ namespace psychoTest.Models.Researches
             return true;
         }
 
+        public static bool DeletePseudoById(string researchId)
+        {
+            Research r = DBMain.db.Researches.SingleOrDefault(x => x.id == researchId);
+            r.statusId = Core.EntityStatuses.deleted.val;
+            DBMain.db.SaveChanges();
+            return true;
+        }
+
         public static Research GetById(string researchId)
         {
             return DBMain.db.Researches.SingleOrDefault(x => x.id == researchId);
@@ -50,15 +58,14 @@ namespace psychoTest.Models.Researches
                 .FirstOrDefault();
         }
 
-        //получение списка всех исследований для таблицы индексной страницы исследований организации
-        public static List<CustomSelects.ResearchListView> GetAllForLinkResearch(string orgId)
+        //получение списка всех исследований для AJAX-таблицы индексной страницы исследований организации
+        public static List<CustomSelects.ResearchListView> GetAllForAjax(string orgId)
         {
             string query = $@"
 SELECT r.id
     ,r.name
     ,r.descr
-    ,r.dateCreate
-    ,rt.nameText AS typeDescr
+    ,(SELECT FORMAT(r.dateCreate, 'dd.MM.yyyy')) as dateCreate
 	,SUBSTRING((SELECT ',' + rg.name AS [text()]
 				FROM ResearchGroups rg
 				WHERE rg.id IN (
@@ -66,17 +73,29 @@ SELECT r.id
 					FROM ResearchGroupsItems rgi 
 					WHERE rgi.researchId=r.id)
 				FOR XML PATH('')), 2, 1000) AS groupNames
-    ,r.statusId
-    ,(SELECT 'info') AS info
-FROM Researches r, ResearchTypes rt
+    ,rt.nameText AS typeDescr
+    ,es.nameText AS statusDescr
+    ,info = (CASE rt.name
+		WHEN 'anonsurvey'
+			THEN N'Результатов: ' + CAST((SELECT COUNT(*) 
+					FROM ResearchSessions
+					WHERE researchId = r.id
+						AND statusId = @statusId
+						AND finished = @finished) AS nvarchar(10))
+		ELSE 'info'
+	  END)
+FROM Researches r, ResearchTypes rt, EntityStatuses es
 WHERE r.orgId = @orgId
     AND rt.id=r.typeId
+	AND es.id = r.statusId
 ORDER BY r.dateCreate DESC
 ";
-            SqlParameter[] pars = { new SqlParameter("orgId", orgId)};
-            List<CustomSelects.ResearchListView> list 
+            SqlParameter[] pars = { new SqlParameter("orgId", orgId)
+                                    ,new SqlParameter("statusId", Core.EntityStatuses.enabled.val)
+                                    ,new SqlParameter("finished", true)};
+            List<CustomSelects.ResearchListView> list
                 = DBMain.db.Database.SqlQuery<CustomSelects.ResearchListView>(query, pars).ToList();
-            
+
             return list;
         }
 
@@ -90,6 +109,65 @@ ORDER BY r.dateCreate DESC
                 return true;
             }
             else return false;
+        }
+
+        public bool Save()
+        {
+            DBMain.db.SaveChanges();
+            return true;
+        }
+
+        //получение таблицы срезов данных
+        public List<CustomSelects.DataSectionListView> GetDataSections()
+        {
+            string query = $@"
+SELECT 
+	rs.scenarioId
+	,(SELECT FORMAT(MIN(rs.dateStart), 'dd.MM.yyyy HH:mm:ss')) as dateBegin
+	,COUNT(*) as answersCount
+FROM ResearchSessions rs
+WHERE rs.researchId = @researchId 
+	AND rs.finished = @finished
+	AND rs.statusId = @statusActive
+GROUP BY rs.scenarioId
+ORDER BY dateBegin DESC
+";
+            SqlParameter[] pars = {
+                new SqlParameter("researchId", this.id)
+                ,new SqlParameter("finished", true)
+                ,new SqlParameter("statusActive", Core.EntityStatuses.enabled.val)
+            };
+            List<CustomSelects.DataSectionListView> list
+                = DBMain.db.Database.SqlQuery<CustomSelects.DataSectionListView>(query, pars).ToList();
+
+            return list;
+        }
+
+        public CustomSelects.DataSectionListView GetDataSectionByScenarioId(string scenarioId)
+        {
+            string query = $@"
+SELECT 
+	rs.scenarioId
+	,(SELECT FORMAT(MIN(rs.dateStart), 'dd.MM.yyyy HH:mm:ss')) as dateBegin
+	,COUNT(*) as answersCount
+FROM ResearchSessions rs
+WHERE rs.researchId = @researchId 
+	AND rs.finished = @finished
+	AND rs.statusId = @statusActive
+    AND rs.scenarioId = @scenarioId
+GROUP BY rs.scenarioId
+ORDER BY dateBegin DESC
+";
+            SqlParameter[] pars = {
+                new SqlParameter("researchId", this.id)
+                ,new SqlParameter("finished", true)
+                ,new SqlParameter("scenarioId", scenarioId)
+                ,new SqlParameter("statusActive", Core.EntityStatuses.enabled.val)
+            };
+            CustomSelects.DataSectionListView ds
+                = DBMain.db.Database.SqlQuery<CustomSelects.DataSectionListView>(query, pars).FirstOrDefault();
+
+            return ds;
         }
     }
 
@@ -105,6 +183,11 @@ ORDER BY r.dateCreate DESC
         public static List<ResearchType> GetTypes()
         {
             return DBMain.db.ResearchTypes.OrderBy(x => x.name).ToList(); ;
+        }
+
+        public static ResearchType GetById(int id)
+        {
+            return DBMain.db.ResearchTypes.SingleOrDefault(x => x.id == id);
         }
     }
 
@@ -157,6 +240,126 @@ WHERE rg.id = rgi.groupId
             return DBMain.db.Database.SqlQuery<ResearchGroup>(query, pars).ToList();
         }
     }
+
+    //таблица файлов RAW результатов исследований
+    public class ResearchDataSectionsRawResult
+    {
+        [Key]
+        public string id { get; set; }
+        public string scenarioId { get; set; }
+        public string researchId { get; set; }
+        public int statusId { get; set; }
+        public DateTime dateCreate { get; set; }
+        public string raw { get; set; }
+        public string filename { get; set; }
+        public int answersCount { get; set; }
+
+        public static ResearchDataSectionsRawResult GetById(string resultId)
+        {
+            return DBMain.db.ResearchDataSectionsRawResults.SingleOrDefault(x => x.id == resultId);
+        }
+
+        public bool Create()
+        {
+            DBMain.db.ResearchDataSectionsRawResults.Add(this);
+            DBMain.db.SaveChanges();
+            return true;
+        }
+
+        public static bool DeleteById(string resultId)
+        {
+            string query = @"DELETE FROM ResearchDataSectionsRawResults WHERE id=@id";
+            DBMain.db.Database.ExecuteSqlCommand(query, new SqlParameter("id", resultId));
+            return true;
+        }
+
+        public static ResearchDataSectionsRawResult GetByScenarioId(string scenarioId)
+        {
+            return DBMain.db.ResearchDataSectionsRawResults.FirstOrDefault(x => x.scenarioId == scenarioId);
+        }
+
+        public static ResearchDataSectionsRawResult FormAnonCalculateAndCreate(string scenarioId)
+        {
+            var sc = Scenarios.ResearchScenario.GetById(scenarioId);
+            var sessions = Sessions.ResearchSession.GetFinishedByScenarioId(sc.id);
+            var research = Research.GetById(sc.researchId);
+            ResearchDataSectionsRawResult dsrr = new ResearchDataSectionsRawResult();
+
+            dsrr.answersCount = 0;
+            dsrr.dateCreate = sessions[0].dateStart;
+            dsrr.filename = String.Format("kh-raw-{0}-{1}.csv"
+                                            , research.name
+                                            , dsrr.dateCreate.ToString("dd.MM.yyyy HH:mm:ss")); ;
+            dsrr.id = Guid.NewGuid().ToString();
+            dsrr.raw = "";
+            dsrr.researchId = sc.researchId;
+            dsrr.scenarioId = sc.id;
+            dsrr.statusId = Core.EntityStatuses.enabled.val;
+
+            //десереализуем шаблон опросника
+            Scenarios.Questionnaires.Questionnaire questionnaire
+                = (Scenarios.Questionnaires.Questionnaire)Scenarios.Questionnaires.Questionnaire
+                    .DeSerializeFromXmlString(
+                        sc.raw
+                        , typeof(Scenarios.Questionnaires.Questionnaire));
+
+            //построим заголовок файла
+            int questionsCount = 0;
+            foreach (Scenarios.Questionnaires.Question q in questionnaire.questions)
+            {
+                questionsCount++;
+
+                //вставляем q0 если есть преамбула
+                if (questionsCount == 1 && q.answers.Count() == 0)
+                {
+                    questionsCount--;
+                }
+
+                dsrr.raw += ";q" + questionsCount.ToString();
+            }
+            dsrr.raw += ";\r\n";
+
+            foreach (Sessions.ResearchSession rs in sessions)
+            {
+                dsrr.answersCount++;
+                //десереализуем заполненный опросник
+                Scenarios.Questionnaires.QuestionnaireWI filledQuestionnaire
+                    = (Scenarios.Questionnaires.QuestionnaireWI)Scenarios.Questionnaires.QuestionnaireWI
+                        .DeSerializeFromXmlString(
+                            rs.raw
+                            , typeof(Scenarios.Questionnaires.QuestionnaireWI));
+
+                //порядковый номер ответа
+                dsrr.raw += $"{dsrr.answersCount};";
+
+                //перебираем вопросы
+                foreach (Scenarios.Questionnaires.Question q in filledQuestionnaire.questions)
+                {
+                    //меняем указанные символы на палочки. это нужно для корректного представления 
+                    //в программе просмотра
+                    string answer = q.answer?.Replace(";", ",").Replace("\r", "|").Replace("\n", "|");
+
+                    dsrr.raw += $"{answer};";
+                }
+
+                dsrr.raw += "\r\n";
+            }
+
+            //если в момент добавления расчета происходит ошибка, значит результаты по сценарию уже посчитаны
+            //в этом случае вернем данные, которые уже в БД
+            try
+            {
+                DBMain.db.ResearchDataSectionsRawResults.Add(dsrr);
+                DBMain.db.SaveChanges();
+            }
+            catch (Exception)
+            {
+                dsrr = GetByScenarioId(sc.id);
+            }
+
+            return dsrr;
+        }
+    }
     #endregion
 
     namespace CustomSelects
@@ -167,11 +370,20 @@ WHERE rg.id = rgi.groupId
             public string id { get; set; }
             public string name { get; set; }
             public string descr { get; set; }
-            public DateTime dateCreate { get; set; }
+            public string dateCreate { get; set; }
             public string typeDescr { get; set; }
             public string groupNames { get; set; }
-            public int statusId { get; set; }
+            //public int statusId { get; set; }
+            public string statusDescr { get; set; }
             public string info { get; set; }
+        }
+
+        //данные для сводки срезов данных исследования
+        public class DataSectionListView
+        {
+            public string dateBegin { get; set; }
+            public string scenarioId { get; set; }
+            public int answersCount { get; set; }
         }
     }
 
@@ -213,15 +425,12 @@ WHERE rg.id = rgi.groupId
             [Required]
             public string researchId { get; set; }
             public string name { get; set; } 
+            public string descr { get; set; }
+            public string typeDescr { get; set; }
             public string password { get; set; }
-        }
-
-        public class ScenarioCU
-        {
-            [Required]
-            public string orgId { get; set; }
-            [Required]
-            public string researchId { get; set; }
+            public List<CustomSelects.DataSectionListView> dataSections { get; set; } 
+                = new List<CustomSelects.DataSectionListView>();
+            public Scenarios.ResearchScenario activeScenario { get; set; } = null;
         }
 
         public class Filling
@@ -233,6 +442,7 @@ WHERE rg.id = rgi.groupId
             public string action { get; set; }
             public string answer { get; set; }
 
+            //метод заполнения модели для вьюшки заполнения анкеты
             public void Fill(Scenarios.Questionnaires.QuestionnaireWI quest)
             {
                 curQuestionIdx = quest.curQuestionIdx;
@@ -301,6 +511,11 @@ WHERE rg.id = rgi.groupId
                 DBMain.db.ResearchScenario.Add(this);
                 DBMain.db.SaveChanges();
                 return true;
+            }
+
+            public static ResearchScenario GetById(string scenarioId)
+            {
+                return DBMain.db.ResearchScenario.SingleOrDefault(x => x.id == scenarioId);
             }
         }
 
@@ -485,6 +700,29 @@ WHERE rg.id = rgi.groupId
             {
                 return DBMain.db.ResearchSessions.SingleOrDefault(x => x.idShort == idShort
                                                                     && x.statusId == Core.EntityStatuses.enabled.val);
+            }
+            
+            public static bool DeletePseudoByScenarioId(string scenarioId)
+            {
+                string query = @"
+UPDATE ResearchSessions
+SET statusId=@statusId
+WHERE scenarioId=@scenarioId
+";
+                SqlParameter[] pars = {
+                    new SqlParameter("statusId", Core.EntityStatuses.deleted.val)
+                    ,new SqlParameter("scenarioId", scenarioId)
+                };
+                DBMain.db.Database.ExecuteSqlCommand(query, pars);
+                return true;
+            }
+
+            public static List<ResearchSession> GetFinishedByScenarioId(string scenarioId)
+            {
+                return DBMain.db.ResearchSessions
+                    .Where(x => x.scenarioId == scenarioId && x.finished)
+                    .OrderBy(x => x.dateFinish)
+                    .ToList();
             }
         }
     }

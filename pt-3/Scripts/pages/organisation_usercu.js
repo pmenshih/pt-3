@@ -1,8 +1,4 @@
-﻿$('#btnSubmit').click(function (e) {
-    if (!canSubmit) e.preventDefault();
-});
-
-var surnameValidated = true;
+﻿var surnameValidated = true;
 var emailValidated = true;
 
 $('#email').on("propertychange change click keyup input paste", function (e) {
