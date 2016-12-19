@@ -34,7 +34,7 @@ UI.EditableInput.Create('_manage_namechange', 'text');
 UI.EditableInput.Create('_manage_patronimchange', 'text');
 UI.EditableInput.Create('_manage_emailchange', 'email');
 UI.EditableInput.Create('_manage_phonechange', 'phone');
-UI.EditableRadio.Create('_manage_sexchange', '[{"value":"0","name":"Мужской"},{"value":"1","name":"Женский"}]');
+UI.EditableRadio.Create('_manage_sexchange', '[{"value":"0","name":"Женский"},{"value":"1","name":"Мужской"}]');
 
 var orgsListJson;
 AjaxCall("/organisation/listall", null, function (response, pars) {
@@ -74,7 +74,7 @@ $('#orgName').autoComplete({
 });
 
 
-$("form").submit(function (divId) {
+$("#formOrg form").submit(function (divId) {
 
     divId.preventDefault();
     var formData = new FormData();

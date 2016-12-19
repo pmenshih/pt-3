@@ -11,7 +11,8 @@ UI.EditableInput.Create = function (divId, fieldType, placeholder) {
 
 UI.EditableInput.Bind = function (divId, divClass, sHtml, placeholder) {
     var eHtml = sHtml.replace(/divPref/g, divId)
-                    .replace(new RegExp('@placeholder', 'g'), placeholder);
+    if (placeholder) eHtml = eHtml.replace(new RegExp('@placeholder', 'g'), placeholder);
+    else eHtml = eHtml.replace(new RegExp('@placeholder', 'g'), '');
     $('#' + divId).html(eHtml);
     $('#' + divId + 'inputval').addClass(divClass);
     $('#' + divId).on("click", "[id$='btnno']", function () { UI.EditableInput.Init(divId); });
