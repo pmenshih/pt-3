@@ -3,7 +3,7 @@ var dsTData = null;
 var gridDiv = 'dataSectionTable';
 var grid = null;
 
-UI.EditablePass.OkClick = function (divId) {
+UI.EditableInput.OkClick = function (divId) {
     if ($('#' + divId + 'Error').html().length != 0) return;
 
     var formData = new FormData();
@@ -16,16 +16,12 @@ UI.EditablePass.OkClick = function (divId) {
 
     AjaxCall(url
             , formData
-            , UI.EditablePass.ProcessServerAnswer);
+            , UI.EditableInput.ProcessServerAnswer);
 };
 
-<<<<<<< HEAD
-UI.EditablePass.Create('_research_setpassword', 'codeword');
-=======
 UI.EditableInput.Create('_research_setpassword', 'codeword');
 UI.EditableInput.Create('_research_setname', '', 'название исследования');
 UI.EditableInput.Create('_research_setdescr', '', 'описание исследования');
->>>>>>> origin/Dev
 
 
 $('#activeScenarioLnk').on("click", function () {
