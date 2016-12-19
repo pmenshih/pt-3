@@ -32,9 +32,13 @@
     </div>
 </div>
 
-<div class="devDiv" id="resTable">
-</div>
+<div id="researchesTable"></div>
 
 @Scripts.Render("/scripts/libcore.js")
 @Scripts.Render("/scripts/libuigrid.js")
+
+@Scripts.Render("/scripts/pnb.js")
+@Scripts.Render("/scripts/pnb.ui.js")
+@Scripts.Render("/scripts/pnb.ui.grid.js")
+
 @Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")

@@ -1,8 +1,8 @@
 ﻿//быдлокод
 //переменная, содержащая JSON данных для таблицы
 var rTData = null;
-var gridDiv = 'resTable';
-var grid = null;
+var gridDiv = 'researchesTable';
+var grid;
 
 /**** ОБЛАСТЬ МОДАЛЬНОГО ОКНА ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ ИССЛЕДОВАНИЯ *****/
 //биндим показ модального окна на нажатие кнопки "Удалить"
@@ -126,26 +126,31 @@ function RTGetDataCallback(response, pars)
     rTData = jQuery.parseJSON(answer.data);
 
     //заполняем столбцы
-    var columns = {};
+    var columns = [];
     columns[0] = {
         title: 'Название'
-        ,tpl: "<input type='hidden' id='@id@Idx' value='@@rowIdx@@'/><a href='/research/show?orgId=" + $.getUrlVar('orgId') + "&researchId=@id@' id='@id@Name'>@name@</a>"
+        , tpl: "<input type='hidden' id='@id@Idx' value='@@rowIdx@@'/><a href='/research/show?orgId=" + $.getUrlVar('orgId') + "&researchId=@id@' id='@id@Name'>@name@</a>"
+        ,sortable: "name"
     };
     columns[1] = {
         title: 'Информация'
-        ,tpl: "@info@"
+        , tpl: "@info@"
+        , sortable: 'info'
     };
     columns[2] = {
         title: 'Дата создания'
         , tpl: "<span id='@id@dateCreate'>@dateCreate@</span>"
+        , sortable: 'dateCreate'
     };
     columns[3] = {
         title: 'Тип'
         , tpl: "@typeDescr@"
+        , sortable: 'typeDescr'
     };
     columns[4] = {
         title: 'Статус'
         , tpl: "@statusDescr@"
+        ,sortable: "statusDescr"
     };
     //добавляем админский столбец
     if ($('#rTAllowCRUD').val()) {
@@ -155,8 +160,16 @@ function RTGetDataCallback(response, pars)
         };
     }
     //инициализируем грид
-    grid = new Grid(gridDiv, rTData, columns);
-    grid.Init();
+    //grid = new Grid(gridDiv, rTData, columns);
+    //grid.Init();
+
+    grid = new PnB.UI.Grid({
+        "divIdToDraw": gridDiv,
+        "dataSet": rTData,
+        "columns": columns,
+    });
+    grid.DrawComplete();
+
     //биндим событие клика по ссылке удаления исследования
     $("[id^='lnkDel']").click(function () { ResearchDeleteLnkClick(this.id); });
 }
