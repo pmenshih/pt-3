@@ -99,3 +99,29 @@ textarea {
 .autocomplete-suggestion b { font-weight: normal; color: #1f8dd6; }
 .autocomplete-suggestion.selected { background: #f0f0f0; }
 
+.hidden {display:none;}
+
+table.sort{
+border-spacing:0.1em;
+margin-bottom:1em;
+margin-top:1em
+}
+
+table.sort td{
+border:1px solid #CCCCCC;
+padding:0.3em 1em
+}
+
+table.sort thead td{
+cursor:pointer;
+cursor:hand;
+font-weight:bold;
+text-align:center;
+vertical-align:middle
+}
+
+table.sort thead td.curcol{
+background-color:#999999;
+color:#FFFFFF
+}
+

@@ -16,7 +16,7 @@ UI.EditableInput.OkClick = function (divId) {
             , UI.EditableInput.ProcessServerAnswer);
 };
 
-UI.EditableCheckbox.OkClick = function (divId) { 
+UI.EditableRadio.OkClick = function (divId) {
     var formData = new FormData();
     var url = divId.replace(/_/g, '/');  
     formData.append('val', $('#' + divId + 'inputval').val());
@@ -34,7 +34,7 @@ UI.EditableInput.Create('_manage_namechange', 'text');
 UI.EditableInput.Create('_manage_patronimchange', 'text');
 UI.EditableInput.Create('_manage_emailchange', 'email');
 UI.EditableInput.Create('_manage_phonechange', 'phone');
-UI.EditableCheckbox.Create('_manage_sexchange');
+UI.EditableRadio.Create('_manage_sexchange', '[{"value":"0","name":"Мужской"},{"value":"1","name":"Женский"}]');
 
 var orgsListJson;
 AjaxCall("/organisation/listall", null, function (response, pars) {
@@ -65,6 +65,46 @@ $('#orgName').autoComplete({
     renderItem: function (item, search) {
         search = search.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
         var re = new RegExp("(" + search.split(' ').join('|') + ")", "gi");
-        return '<div class="autocomplete-suggestion" data-val="' + item.name + '">' + item.name.replace(re, "<b>$1</b>") + '</div>';
+        return '<div class="autocomplete-suggestion" data-id="' + item.id + '" data-val="' + item.name + '">' + item.name.replace(re, "<b>$1</b>") + '</div>';
+    },
+    onSelect: function (e, term, item) {
+        var orgId = $('.autocomplete-suggestion').data('id');
+        $('#orgId').val(orgId);      
     }
 });
+
+
+$("form").submit(function (divId) {
+
+    divId.preventDefault();
+    var formData = new FormData();
+    var url = '/organisation/joinrequest';   
+    formData.append('orgId', $('#orgId').val());
+    formData.append('userEmail', $('#userEmail').val());
+
+    AjaxCall(url
+            , formData
+            , orgSubmit.ProcessServerAnswer);   
+   
+});
+
+orgSubmit.ProcessServerAnswer = function (response, formData) {
+    var answer = jQuery.parseJSON(response);
+    if (answer.result == '0') {
+        $('#formOrg form').hide();
+        $('#formOrg .hidden').show();
+        $('#formOrg .hidden').text('Ваш запрос на присоединение к организации ' + $('#orgName').val() + ' отправлен. Ожидайте ответа от менеджера.');
+    }
+    else if (answer.result == '2') {
+        $('#formOrg form').hide();
+        $('#formOrg .hidden').show();
+        $('#formOrg .hidden').text('Вы уже сделали запрос на присоединение.');
+    }
+    else {
+        alert(response);
+    }
+}
+
+
+
+// /organisation/joinrequest?orgId=[val]&userEmail=[val]

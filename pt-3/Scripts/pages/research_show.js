@@ -3,7 +3,7 @@ var dsTData = null;
 var gridDiv = 'dataSectionTable';
 var grid = null;
 
-UI.EditableInput.OkClick = function (divId) {
+UI.EditablePass.OkClick = function (divId) {
     if ($('#' + divId + 'Error').html().length != 0) return;
 
     var formData = new FormData();
@@ -16,10 +16,10 @@ UI.EditableInput.OkClick = function (divId) {
 
     AjaxCall(url
             , formData
-            , UI.EditableInput.ProcessServerAnswer);
+            , UI.EditablePass.ProcessServerAnswer);
 };
 
-UI.EditableInput.Create('_research_setpassword', 'codeword');
+UI.EditablePass.Create('_research_setpassword', 'codeword');
 
 
 $('#activeScenarioLnk').on("click", function () {

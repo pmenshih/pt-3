@@ -35,6 +35,7 @@
         <dt>Пол:</dt>
         <dd>           
             <div id="_manage_sexchange"></div>
+            <div id="radiolist"></div>
             <input type="hidden" id="val_manage_sexchange" value="@Model.sex" />
         </dd>
         <dt>Электронная почта:</dt>
@@ -88,14 +89,18 @@
         {
             <dt>Организация:</dt>
             <dd>
-                @using (Html.BeginForm("JoinRequest", "Organisation", FormMethod.Post))
+                <div id="formOrg">
+                    @using (Html.BeginForm("JoinRequest", "Organisation", FormMethod.Post))
                 {
-                    @Html.AntiForgeryToken()
-                    <input type="text" placeholder="Название организации" id="orgName" name="orgName" />
-                    <input type="hidden" name="userEmail" value="@Model.email" />
-                    <input type="submit" value="Отправить запрос" />
-                }
-            </dd>
+                        @Html.AntiForgeryToken()
+                        <input type="text" placeholder="Название организации" id="orgName" name="orgName" />
+                        <input type="hidden" name="orgId" id="orgId" value="" />
+                        <input type="hidden" name="userEmail" id="userEmail" value="@Model.email" />
+                        <input type="submit" id="orgSubmit" value="Отправить запрос" />
+                    }
+                    <div class="hidden"></div>
+                </div>
+            </dd>     
         }
     </dl>
 </div>
@@ -103,5 +108,5 @@
 @Scripts.Render("/scripts/jquery.auto-complete.js")
 @Scripts.Render("/scripts/libcore.js")
 @Scripts.Render("/scripts/libuieditableinput.js")
-@Scripts.Render("/scripts/libuieditablecheckbox.js")
+@Scripts.Render("/scripts/libuiradiolist.js")
 @Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")

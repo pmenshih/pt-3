@@ -1,4 +1,8 @@
-﻿$(':password').on("propertychange change click keyup input paste", function (e) {
+﻿
+UI.EditablePass.Create('idpass', '[{"id":"OldPassword","name":"Старый пароль"},{"id":"NewPassword","name":"Новый пароль"},{"id":"ConfirmPassword","name":"Новый пароль еще раз"}]');
+
+
+$(':password').on("propertychange change click keyup input paste", function (e) {
     FormValidate(this.id, 'password');
     SubmitButtonDisable();
 });
@@ -50,4 +54,6 @@ var confirmpass = $('#ConfirmPassword');
 var passFields = $(':password'),
 validResult = $("#validpass");
 passFields.on('input', comparingPasswords);
+
+
 

@@ -41,6 +41,8 @@ UI.EditableInput.ProcessServerAnswer = function (response, formData) {
     }
 }
 
+
+
 UI.EditableInput.ValidateError = function (divId, errMsg)
 {
     $('#' + divId + 'inputval').removeClass('not_error').addClass('error');
