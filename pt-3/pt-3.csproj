@@ -205,6 +205,7 @@
     <None Include="Properties\PublishProfiles\pt-3 dev N.pubxml" />
     <None Include="Properties\PublishProfiles\pt-3 dev.pubxml" />
     <None Include="Scripts\jquery-3.1.1.intellisense.js" />
+    <Content Include="Scripts\jquery.auto-complete.js" />
     <Content Include="Scripts\libuieditablecheckbox.js" />
     <Content Include="Scripts\jquery-3.1.1.js" />
     <Content Include="Scripts\jquery-3.1.1.min.js" />
