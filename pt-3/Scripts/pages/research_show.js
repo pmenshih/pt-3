@@ -211,7 +211,7 @@ function DSTGetDataCallback(response, pars) {
     if ($('#dsTViewerCoachAdmin').val()) {
         columns[2] = {
             title: ''
-        , tpl: "<a href='javascript:void(0)' id='lnkRaw@scenarioId@'>RAW</a> | <a href='javascript:void(0)'>Интерпретация</a>"
+        , tpl: "<a href='javascript:void(0)' id='lnkRaw@scenarioId@'>RAW</a> | <a href='/research/interpretation?orgId=" + $.getUrlVar('orgId') + "&researchId=" + $.getUrlVar('researchId') + "&scenarioId=@scenarioId@'>Интерпретация</a>"
         };
     }
     if ($('#dsTManagerCoachAdmin').val()) {

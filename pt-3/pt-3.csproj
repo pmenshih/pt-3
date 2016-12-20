@@ -226,6 +226,7 @@
     <Content Include="Scripts\pages\research_filling.js" />
     <Content Include="Scripts\pages\manage_changepassword.js" />
     <Content Include="Scripts\pages\organisation_usercu.js" />
+    <Content Include="Scripts\pages\research_interpretation.js" />
     <Content Include="Scripts\pages\research_scenariocu.js" />
     <Content Include="Scripts\pages\research_show.js" />
     <Content Include="Scripts\pnb.js" />
@@ -287,6 +288,7 @@
     <Content Include="Views\Research\Go.cshtml" />
     <Content Include="Views\Research\Filling.cshtml" />
     <Content Include="Views\Research\Finish.cshtml" />
+    <Content Include="Views\Research\Interpretation.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="imgs\" />

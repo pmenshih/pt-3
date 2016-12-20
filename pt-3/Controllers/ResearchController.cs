@@ -649,5 +649,16 @@ namespace psychoTest.Controllers
         {
             return View();
         }
+
+        public ActionResult Interpretation()
+        {
+            //проверка прав доступа
+
+            var model = new Models.Researches.Views.Interpretation();
+            model.orgId = Request.QueryString[RequestVals.orgId];
+            model.researchId = Request.QueryString[RequestVals.researchId];
+
+            return View(model);
+        }
     }
 }
