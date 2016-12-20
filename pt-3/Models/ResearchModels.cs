@@ -491,6 +491,12 @@ WHERE rg.id = rgi.groupId
                 }
             }
         }
+
+        public class Interpretation
+        {
+            public string orgId { get; set; }
+            public string researchId { get; set; }
+        }
     }
 
     namespace Scenarios

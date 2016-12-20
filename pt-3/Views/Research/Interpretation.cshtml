@@ -1,0 +1,10 @@
+﻿@model psychoTest.Models.Researches.Views.Interpretation
+@{
+    ViewBag.Title = "Interpretation";
+}
+
+<h2>Interpretation</h2>
+<a href="@($"/research/show?orgId={Model.orgId}&researchId={Model.researchId}")">вернуться к исследованию</a>
+
+@Scripts.Render("/scripts/pnb.js")
+@Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")
