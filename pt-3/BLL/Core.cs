@@ -12,6 +12,7 @@ using System.Net.Mail;
 using System.Configuration;
 using System.Collections.Generic;
 using System.Text;
+using System.Xml.Serialization;
 
 namespace psychoTest.Core
 {
@@ -158,6 +159,30 @@ namespace psychoTest.Core
             file.InputStream.Read(fileBytes, 0, Convert.ToInt32(file.ContentLength));
             return Encoding.UTF8.GetString(fileBytes);
         }
+
+        public static object DeSerializeFromXmlString(string xml, Type type)
+        {
+            XmlSerializer s = new XmlSerializer(type);
+
+            //преобразуем строку xml в поток
+            MemoryStream stream = new MemoryStream();
+            StreamWriter writer = new StreamWriter(stream);
+            writer.Write(xml);
+            writer.Flush();
+            stream.Position = 0;
+
+            //десериализуем поток в класс и возвращаем его
+            return s.Deserialize(stream);
+        }
+
+        public static string SerializeToXmlString(Type type, object instance)
+        {
+            XmlSerializer s = new XmlSerializer(type);
+            Core.Utf8StringWriter sw = new Core.Utf8StringWriter();
+            s.Serialize(sw, instance);
+            sw.Close();
+            return sw.ToString();
+        }
     }
 
     public sealed class Utf8StringWriter : StringWriter
@@ -256,6 +281,7 @@ namespace psychoTest.Core
     {
         public const string orgId = "orgId";
         public const string researchId = "researchId";
+        public const string scenarioId = "scenarioId";
         public const string val = "val";
         //адрес, куда попадает пользователь, не прошедший проверку прав доступа
         public const string nrURL = "/cabinet";

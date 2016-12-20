@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Web.Mvc;
 using psychoTest.Models.Researches;
+using psychoTest.Models.Researches.Interpretations;
 using psychoTest.Core;
 using System.Web.Script.Serialization;
 using System.Collections.Generic;
 using System.Text;
-using System.Linq;
+
 
 namespace psychoTest.Controllers
 {
     [Authorize]
     public class ResearchController : Controller
     {
+        public class UploadScenarioErrorsDesc { public string excMes1; public string excMes2; }
+
         //пользователь является контролёром, или зрителем, или менеджером указанной организации
         //или пользователь коуч, или администратор
         private bool RolesIsIVMCA(string orgId)
@@ -41,51 +44,6 @@ namespace psychoTest.Controllers
             return View(model);
         }
 
-        public ActionResult GetAll(string orgId)
-        {
-            AjaxAnswer answer = new AjaxAnswer();
-            answer.result = AjaxResults.CodeError;
-
-            //проверка права доступа
-            if (!RolesIsIVMCA(orgId))
-            {
-                answer.result = AjaxResults.NoRights;
-                return answer.JsonContentResult();
-            }
-
-            List<Models.Researches.CustomSelects.ResearchListView> res 
-                = Research.GetAllForAjax(orgId);
-
-            answer.data = new JavaScriptSerializer().Serialize(res);
-            answer.result = AjaxResults.Success;
-
-            return answer.JsonContentResult();
-        }
-
-        public ActionResult GetDataSections(string orgId, string researchId)
-        {
-            AjaxAnswer answer = new AjaxAnswer();
-            answer.result = AjaxResults.CodeError;
-
-            var research = Research.GetById(researchId);
-            var org = Models.Organisations.Organisation.GetById(orgId);
-
-            //проверка права доступа
-            if (org.id != research.orgId || !RolesIsIVMCA(orgId))
-            {
-                answer.result = AjaxResults.NoRights;
-                return answer.JsonContentResult();
-            }
-
-            List<Models.Researches.CustomSelects.DataSectionListView> ds
-                = research.GetDataSections();
-
-            answer.data = new JavaScriptSerializer().Serialize(ds);
-            answer.result = AjaxResults.Success;
-
-            return answer.JsonContentResult();
-        }
-
         public ActionResult Create()
         {
             var model = new Models.Researches.Views.Create();
@@ -96,91 +54,6 @@ namespace psychoTest.Controllers
             if (!Membership.isAdmin() && !Membership.isManager(model.orgId)) return Redirect(RequestVals.nrURL);
 
             return View(model);
-        }
-
-        [HttpPost]
-        public ActionResult Delete(string orgId, string researchId)
-        {
-            AjaxAnswer answer = new AjaxAnswer();
-
-            //проверка права доступа
-            if (!Membership.isAdmin() && !Membership.isManager(orgId))
-            {
-                answer.result = AjaxResults.NoRights;
-                return answer.JsonContentResult();
-            }
-
-            answer.result = AjaxResults.CodeError;
-            if (Research.DeletePseudoById(researchId))
-                answer.result = AjaxResults.Success;
-
-            return answer.JsonContentResult();
-        }
-        
-        [HttpPost]
-        public ActionResult DataSectionDelete(string orgId, string researchId, string scenarioId)
-        {
-            AjaxAnswer answer = new AjaxAnswer();
-
-            var org = Models.Organisations.Organisation.GetById(orgId);
-            var research = Research.GetById(researchId);
-
-            //проверка права доступа
-            if (org.id != research.orgId || (!Membership.isAdmin() && !Membership.isManager(orgId)))
-            {
-                answer.result = AjaxResults.NoRights;
-                return answer.JsonContentResult();
-            }
-
-            answer.result = AjaxResults.CodeError;
-            if (Models.Researches.Sessions.ResearchSession.DeletePseudoByScenarioId(scenarioId))
-                answer.result = AjaxResults.Success;
-
-            return answer.JsonContentResult();
-        }
-
-        public ActionResult DataSectionPrepareDownloadRaw(string orgId, string researchId, string scenarioId)
-        {
-            var research = Research.GetById(researchId);
-            var org = Models.Organisations.Organisation.GetById(orgId);
-
-            AjaxAnswer answer = new AjaxAnswer();
-            answer.result = AjaxResults.CodeError;
-
-            //проверка прав доступа
-            if (org.id != research.orgId || (!Membership.isAdmin() 
-                                                && !Membership.isViewer(orgId)
-                                                && !Membership.isCoach()))
-            {
-                answer.result = AjaxResults.NoRights;
-                return answer.JsonContentResult();
-            }
-
-            var dsrr = ResearchDataSectionsRawResult.GetByScenarioId(scenarioId);
-            //выясним, совпадает ли количество активных завершенных сессий с счетчиком ответов
-            //если да, то делать ничего не надо
-            //если нет и файл результатов уже существует, то его удалить
-            if (dsrr != null)
-            {
-                if (research.GetDataSectionByScenarioId(scenarioId).answersCount != dsrr.answersCount)
-                {
-                    ResearchDataSectionsRawResult.DeleteById(dsrr.id);
-                    dsrr = null;
-                }
-            }
-            
-            //если результатов нет
-            if (dsrr == null)
-            {
-                //определим тип исследования
-                if(ResearchType.GetById(research.typeId).name == "anonsurvey")
-                    dsrr = ResearchDataSectionsRawResult.FormAnonCalculateAndCreate(scenarioId);
-            }
-            
-            answer.data = dsrr.id;
-            answer.result = AjaxResults.Success;
-
-            return answer.JsonContentResult();
         }
 
         public ActionResult DataSectionDownloadRaw(string orgId
@@ -312,141 +185,8 @@ namespace psychoTest.Controllers
             string filename = String.Format("kh-scenario-{0}.xml"
                                             , DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss"));
             return Content(rs.raw, "text/xml");
-        }
-
-        public ActionResult UploadScenario()
-        {
-            var org = Models.Organisations.Organisation.GetById(Request[RequestVals.orgId]);
-            var research = Research.GetById(Request[RequestVals.researchId]);
-
-            AjaxAnswer answer = new AjaxAnswer();
-
-            //права
-            if (org.id != research.orgId || (!Membership.isAdmin() && !Membership.isManager(org.id)))
-            {
-                answer.result = AjaxResults.NoRights;
-                return answer.JsonContentResult();
-            }
-
-            //прочитаем файл в строку
-            string rawString = BLL.ReadUploadedFileToString(Request.Files["filename"]);
-
-            Models.Researches.Scenarios.Questionnaires.Questionnaire q
-                = new Models.Researches.Scenarios.Questionnaires.Questionnaire();
-
-            //пробуем десереализовать
-            try
-            {
-                q = (Models.Researches.Scenarios.Questionnaires.Questionnaire)Models.Researches
-                    .Scenarios.Questionnaires.Questionnaire.DeSerializeFromXmlString(
-                        rawString
-                        ,typeof(Models.Researches.Scenarios.Questionnaires.Questionnaire));
-            }
-            catch (Exception exc)
-            {
-                var errs = new UploadScenarioErrorsDesc() { excMes1 = exc.Message
-                                                            ,excMes2 = exc.InnerException?.Message };
-
-                answer.data = new JavaScriptSerializer().Serialize(errs);
-                answer.result = AjaxResults.ScenarioXMLError;
-                return answer.JsonContentResult();
-            }
-
-            //тут надо сделать что-то что нужно сделать перед сменой сценария исследования
-
-            //сохраняем новый сценарий в БД
-            Models.Researches.Scenarios.ResearchScenario scenario
-                    = new Models.Researches.Scenarios.ResearchScenario();
-            scenario.id = Guid.NewGuid().ToString();
-            scenario.dateCreate = DateTime.Now;
-            scenario.descr = q.descr;
-            scenario.name = q.name;
-            scenario.raw = rawString;
-            scenario.researchId = Request[RequestVals.researchId];
-            scenario.statusId = EntityStatuses.enabled.val;
-            scenario.Add();
-
-            answer.result = AjaxResults.Success;
-            return answer.JsonContentResult();
-        }
-
-        public class UploadScenarioErrorsDesc { public string excMes1; public string excMes2; }
-
-        //смена/установка кодового слова
-        public ActionResult SetPassword()
-        {
-            var org = Models.Organisations.Organisation.GetById(Request[RequestVals.orgId]);
-            var research = Research.GetById(Request[RequestVals.researchId]);
-            var valPassword = Request[RequestVals.val];
-
-            AjaxAnswer answer = new AjaxAnswer();
-
-            //права
-            if (org.id != research.orgId || (!Membership.isAdmin() && !Membership.isManager(org.id)))
-            {
-                answer.result = AjaxResults.NoRights;
-                return answer.JsonContentResult();
-            }
-
-            research.password = valPassword;
-
-            if (research.SetPassword())
-                answer.result = AjaxResults.Success;
-            else answer.result = AjaxResults.ResearchPasswordExist;
-
-            return answer.JsonContentResult();
-        }
-
-        //смена/установка названия сценария
-        public ActionResult SetName()
-        {
-            var org = Models.Organisations.Organisation.GetById(Request[RequestVals.orgId]);
-            var research = Research.GetById(Request[RequestVals.researchId]);
-            var valName = Request[RequestVals.val];
-
-            AjaxAnswer answer = new AjaxAnswer();
-
-            //права
-            if (org.id != research.orgId || (!Membership.isAdmin() && !Membership.isManager(org.id)))
-            {
-                answer.result = AjaxResults.NoRights;
-                return answer.JsonContentResult();
-            }
-
-            research.name = valName;
-
-            if (research.Save())
-                answer.result = AjaxResults.Success;
-            else answer.result = AjaxResults.ResearchPasswordExist;
-
-            return answer.JsonContentResult();
-        }
-
-        //смена/установка описания сценария
-        public ActionResult SetDescr()
-        {
-            var org = Models.Organisations.Organisation.GetById(Request[RequestVals.orgId]);
-            var research = Research.GetById(Request[RequestVals.researchId]);
-            var newVal = Request[RequestVals.val];
-
-            AjaxAnswer answer = new AjaxAnswer();
-
-            //права
-            if (org.id != research.orgId || (!Membership.isAdmin() && !Membership.isManager(org.id)))
-            {
-                answer.result = AjaxResults.NoRights;
-                return answer.JsonContentResult();
-            }
-
-            research.descr = newVal;
-
-            if (research.Save())
-                answer.result = AjaxResults.Success;
-            else answer.result = AjaxResults.ResearchPasswordExist;
-
-            return answer.JsonContentResult();
-        }
-
+        }        
+        
         [AllowAnonymous]
         public ActionResult Go(string code, string sid)
         {
@@ -517,8 +257,8 @@ namespace psychoTest.Controllers
 
             //десериализуем опросник
             Models.Researches.Scenarios.Questionnaires.QuestionnaireWI quest
-                = (Models.Researches.Scenarios.Questionnaires.QuestionnaireWI)Models.Researches
-                .Scenarios.Questionnaires.QuestionnaireWI.DeSerializeFromXmlString(rs.raw
+                = (Models.Researches.Scenarios.Questionnaires.QuestionnaireWI)BLL.DeSerializeFromXmlString(
+                    rs.raw
                     ,typeof(Models.Researches.Scenarios.Questionnaires.QuestionnaireWI));
 
             //проматываем все вопросы, если
@@ -567,8 +307,8 @@ namespace psychoTest.Controllers
 
             //десериализуем опросник
             Models.Researches.Scenarios.Questionnaires.QuestionnaireWI quest
-                = (Models.Researches.Scenarios.Questionnaires.QuestionnaireWI)Models.Researches
-                .Scenarios.Questionnaires.QuestionnaireWI.DeSerializeFromXmlString(rs.raw
+                = (Models.Researches.Scenarios.Questionnaires.QuestionnaireWI)BLL.DeSerializeFromXmlString(
+                    rs.raw
                     , typeof(Models.Researches.Scenarios.Questionnaires.QuestionnaireWI));
 
             if (model.action == "prev")
@@ -634,8 +374,9 @@ namespace psychoTest.Controllers
             }
 
             //сериализуем опросник в строку
-            string raw = quest.SerializeToXmlString(
-                            typeof(Models.Researches.Scenarios.Questionnaires.QuestionnaireWI));
+            string raw = BLL.SerializeToXmlString(
+                            typeof(Models.Researches.Scenarios.Questionnaires.QuestionnaireWI)
+                            ,quest);
             //сохраним сессию в БД
             rs.raw = raw;
             rs.Save();
@@ -658,7 +399,325 @@ namespace psychoTest.Controllers
             model.orgId = Request.QueryString[RequestVals.orgId];
             model.researchId = Request.QueryString[RequestVals.researchId];
 
+            string xml = @"
+<SpecificationInterpretation>
+	<Objects>
+		<Object type='table' id='table1' dataSource='this.sc.q1.answers'>
+			<Objects>
+				<Object title='Возраст' value='dataSource.text' />
+				<Object value='count(this.data.q1.answers.answer==dataSource.position)' />
+			</Objects>
+		</Object>
+	</Objects>
+</SpecificationInterpretation>
+";
+
+            if (!xml.Contains("<Interpretation>"))
+            {
+                xml = "<Interpretation>" + xml + "</Interpretation>";
+            }
+
+            Interpretation interpretation = BLL.DeSerializeFromXmlString(xml, typeof(Interpretation)) 
+                as Interpretation;
+
+            Models.Researches.Scenarios.ResearchScenario scenario
+                = Models.Researches.Scenarios.ResearchScenario.GetById(
+                    Request.QueryString[RequestVals.scenarioId]);
+
+            Models.Researches.Scenarios.Questionnaires.Questionnaire questionnaire
+                = BLL.DeSerializeFromXmlString(scenario.raw
+                    , typeof(Models.Researches.Scenarios.Questionnaires.Questionnaire)) 
+                as Models.Researches.Scenarios.Questionnaires.Questionnaire;
+
+            if (interpretation.sInt != null && interpretation.sInt.objects != null)
+            {
+                foreach (PXSObject sIntObject in interpretation.sInt.objects)
+                {
+                    if (!String.IsNullOrEmpty(sIntObject.dataSource))
+                    {
+                        dynamic b = questionnaire.questions[1].answers;
+
+                        foreach (var a in b)
+                        {
+                            a.value = "1";
+                            try
+                            {
+                                a.prop = "3";
+                            }
+                            catch (Exception exc) { }
+                        }
+                    }
+                }
+            }
+            
             return View(model);
         }
+        
+
+        #region AJAX-методы
+        //смена/установка описания сценария
+        public ActionResult SetDescr()
+        {
+            var org = Models.Organisations.Organisation.GetById(Request[RequestVals.orgId]);
+            var research = Research.GetById(Request[RequestVals.researchId]);
+            var newVal = Request[RequestVals.val];
+
+            AjaxAnswer answer = new AjaxAnswer();
+
+            //права
+            if (org.id != research.orgId || (!Membership.isAdmin() && !Membership.isManager(org.id)))
+            {
+                answer.result = AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            research.descr = newVal;
+
+            if (research.Save())
+                answer.result = AjaxResults.Success;
+            else answer.result = AjaxResults.ResearchPasswordExist;
+
+            return answer.JsonContentResult();
+        }
+
+        //смена/установка кодового слова
+        public ActionResult SetPassword()
+        {
+            var org = Models.Organisations.Organisation.GetById(Request[RequestVals.orgId]);
+            var research = Research.GetById(Request[RequestVals.researchId]);
+            var valPassword = Request[RequestVals.val];
+
+            AjaxAnswer answer = new AjaxAnswer();
+
+            //права
+            if (org.id != research.orgId || (!Membership.isAdmin() && !Membership.isManager(org.id)))
+            {
+                answer.result = AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            research.password = valPassword;
+
+            if (research.SetPassword())
+                answer.result = AjaxResults.Success;
+            else answer.result = AjaxResults.ResearchPasswordExist;
+
+            return answer.JsonContentResult();
+        }
+
+        //смена/установка названия сценария
+        public ActionResult SetName()
+        {
+            var org = Models.Organisations.Organisation.GetById(Request[RequestVals.orgId]);
+            var research = Research.GetById(Request[RequestVals.researchId]);
+            var valName = Request[RequestVals.val];
+
+            AjaxAnswer answer = new AjaxAnswer();
+
+            //права
+            if (org.id != research.orgId || (!Membership.isAdmin() && !Membership.isManager(org.id)))
+            {
+                answer.result = AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            research.name = valName;
+
+            if (research.Save())
+                answer.result = AjaxResults.Success;
+            else answer.result = AjaxResults.ResearchPasswordExist;
+
+            return answer.JsonContentResult();
+        }
+
+        public ActionResult GetDataSections(string orgId, string researchId)
+        {
+            AjaxAnswer answer = new AjaxAnswer();
+            answer.result = AjaxResults.CodeError;
+
+            var research = Research.GetById(researchId);
+            var org = Models.Organisations.Organisation.GetById(orgId);
+
+            //проверка права доступа
+            if (org.id != research.orgId || !RolesIsIVMCA(orgId))
+            {
+                answer.result = AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            List<Models.Researches.CustomSelects.DataSectionListView> ds
+                = research.GetDataSections();
+
+            answer.data = new JavaScriptSerializer().Serialize(ds);
+            answer.result = AjaxResults.Success;
+
+            return answer.JsonContentResult();
+        }
+
+        public ActionResult GetAll(string orgId)
+        {
+            AjaxAnswer answer = new AjaxAnswer();
+            answer.result = AjaxResults.CodeError;
+
+            //проверка права доступа
+            if (!RolesIsIVMCA(orgId))
+            {
+                answer.result = AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            List<Models.Researches.CustomSelects.ResearchListView> res
+                = Research.GetAllForAjax(orgId);
+
+            answer.data = new JavaScriptSerializer().Serialize(res);
+            answer.result = AjaxResults.Success;
+
+            return answer.JsonContentResult();
+        }
+
+        [HttpPost]
+        public ActionResult Delete(string orgId, string researchId)
+        {
+            AjaxAnswer answer = new AjaxAnswer();
+
+            //проверка права доступа
+            if (!Membership.isAdmin() && !Membership.isManager(orgId))
+            {
+                answer.result = AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            answer.result = AjaxResults.CodeError;
+            if (Research.DeletePseudoById(researchId))
+                answer.result = AjaxResults.Success;
+
+            return answer.JsonContentResult();
+        }
+
+        [HttpPost]
+        public ActionResult DataSectionDelete(string orgId, string researchId, string scenarioId)
+        {
+            AjaxAnswer answer = new AjaxAnswer();
+
+            var org = Models.Organisations.Organisation.GetById(orgId);
+            var research = Research.GetById(researchId);
+
+            //проверка права доступа
+            if (org.id != research.orgId || (!Membership.isAdmin() && !Membership.isManager(orgId)))
+            {
+                answer.result = AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            answer.result = AjaxResults.CodeError;
+            if (Models.Researches.Sessions.ResearchSession.DeletePseudoByScenarioId(scenarioId))
+                answer.result = AjaxResults.Success;
+
+            return answer.JsonContentResult();
+        }
+
+        public ActionResult DataSectionPrepareDownloadRaw(string orgId, string researchId, string scenarioId)
+        {
+            var research = Research.GetById(researchId);
+            var org = Models.Organisations.Organisation.GetById(orgId);
+
+            AjaxAnswer answer = new AjaxAnswer();
+            answer.result = AjaxResults.CodeError;
+
+            //проверка прав доступа
+            if (org.id != research.orgId || (!Membership.isAdmin()
+                                                && !Membership.isViewer(orgId)
+                                                && !Membership.isCoach()))
+            {
+                answer.result = AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            var dsrr = ResearchDataSectionsRawResult.GetByScenarioId(scenarioId);
+            //выясним, совпадает ли количество активных завершенных сессий с счетчиком ответов
+            //если да, то делать ничего не надо
+            //если нет и файл результатов уже существует, то его удалить
+            if (dsrr != null)
+            {
+                if (research.GetDataSectionByScenarioId(scenarioId).answersCount != dsrr.answersCount)
+                {
+                    ResearchDataSectionsRawResult.DeleteById(dsrr.id);
+                    dsrr = null;
+                }
+            }
+
+            //если результатов нет
+            if (dsrr == null)
+            {
+                //определим тип исследования
+                if (ResearchType.GetById(research.typeId).name == "anonsurvey")
+                    dsrr = ResearchDataSectionsRawResult.FormAnonCalculateAndCreate(scenarioId);
+            }
+
+            answer.data = dsrr.id;
+            answer.result = AjaxResults.Success;
+
+            return answer.JsonContentResult();
+        }
+
+        public ActionResult UploadScenario()
+        {
+            var org = Models.Organisations.Organisation.GetById(Request[RequestVals.orgId]);
+            var research = Research.GetById(Request[RequestVals.researchId]);
+
+            AjaxAnswer answer = new AjaxAnswer();
+
+            //права
+            if (org.id != research.orgId || (!Membership.isAdmin() && !Membership.isManager(org.id)))
+            {
+                answer.result = AjaxResults.NoRights;
+                return answer.JsonContentResult();
+            }
+
+            //прочитаем файл в строку
+            string rawString = BLL.ReadUploadedFileToString(Request.Files["filename"]);
+
+            Models.Researches.Scenarios.Questionnaires.Questionnaire q
+                = new Models.Researches.Scenarios.Questionnaires.Questionnaire();
+
+            //пробуем десереализовать
+            try
+            {
+                q = (Models.Researches.Scenarios.Questionnaires.Questionnaire)BLL.DeSerializeFromXmlString(
+                        rawString
+                        , typeof(Models.Researches.Scenarios.Questionnaires.Questionnaire));
+            }
+            catch (Exception exc)
+            {
+                var errs = new UploadScenarioErrorsDesc()
+                {
+                    excMes1 = exc.Message
+                                                            ,
+                    excMes2 = exc.InnerException?.Message
+                };
+
+                answer.data = new JavaScriptSerializer().Serialize(errs);
+                answer.result = AjaxResults.ScenarioXMLError;
+                return answer.JsonContentResult();
+            }
+
+            //тут надо сделать что-то что нужно сделать перед сменой сценария исследования
+
+            //сохраняем новый сценарий в БД
+            Models.Researches.Scenarios.ResearchScenario scenario
+                    = new Models.Researches.Scenarios.ResearchScenario();
+            scenario.id = Guid.NewGuid().ToString();
+            scenario.dateCreate = DateTime.Now;
+            scenario.descr = q.descr;
+            scenario.name = q.name;
+            scenario.raw = rawString;
+            scenario.researchId = Request[RequestVals.researchId];
+            scenario.statusId = EntityStatuses.enabled.val;
+            scenario.Add();
+
+            answer.result = AjaxResults.Success;
+            return answer.JsonContentResult();
+        }
+        #endregion
     }
 }
