@@ -33,12 +33,12 @@ namespace psychoTest.Controllers
         public ActionResult Index()
         {
             var model = new Models.Researches.Views.Index();
-            model.orgId = Request.QueryString[RequestVals.orgId];
+            model.orgId = Request.QueryString[RequestVars.orgId];
             model.researches = Research.GetAllForAjax(model.orgId);
             model.orgResearchsGroups = ResearchGroupsItems.GetByOrgId(model.orgId);
 
             //проверка права доступа
-            if (!RolesIsIVMCA(model.orgId)) return Redirect(RequestVals.nrURL);
+            if (!RolesIsIVMCA(model.orgId)) return Redirect(RequestVars.nrURL);
             
             return View(model);
         }
@@ -46,11 +46,11 @@ namespace psychoTest.Controllers
         public ActionResult Create()
         {
             var model = new Models.Researches.Views.Create();
-            model.orgId = Request.QueryString[RequestVals.orgId];
+            model.orgId = Request.QueryString[RequestVars.orgId];
             model.groups = ResearchGroupsItems.GetByOrgId(model.orgId);
 
             //проверка права доступа
-            if (!Membership.isAdmin() && !Membership.isManager(model.orgId)) return Redirect(RequestVals.nrURL);
+            if (!Membership.isAdmin() && !Membership.isManager(model.orgId)) return Redirect(RequestVars.nrURL);
 
             return View(model);
         }
@@ -83,7 +83,7 @@ namespace psychoTest.Controllers
         public ActionResult Create(Models.Researches.Views.CreateSubmit model)
         {
             //права
-            if(!Membership.isAdmin() && !Membership.isManager(model.orgId)) return Redirect(RequestVals.nrURL);
+            if(!Membership.isAdmin() && !Membership.isManager(model.orgId)) return Redirect(RequestVars.nrURL);
 
             //проверим валидность параметров
             if (!ModelState.IsValid) throw new Exception(Core.ErrorMessages.ResearchCreateValidate);
@@ -124,18 +124,18 @@ namespace psychoTest.Controllers
                 rgi.Create();
             }
 
-            string url = $@"/research/show?{RequestVals.orgId}={model.orgId}&{RequestVals.researchId}={r.id}";
+            string url = $@"/research/show?{RequestVars.orgId}={model.orgId}&{RequestVars.researchId}={r.id}";
             return Redirect(url);
         }
 
         public ActionResult Show()
         {
             //сбор параметров запроса
-            var org = Models.Organisations.Organisation.GetById(Request.QueryString[RequestVals.orgId]);
-            var research = Research.GetById(Request.QueryString[RequestVals.researchId]);
+            var org = Models.Organisations.Organisation.GetById(Request.QueryString[RequestVars.orgId]);
+            var research = Research.GetById(Request.QueryString[RequestVars.researchId]);
 
             //проверка на принадлежность исследования организации и права доступа
-            if (org.id != research.orgId || !RolesIsIVMCA(org.id)) return Redirect(RequestVals.nrURL);
+            if (org.id != research.orgId || !RolesIsIVMCA(org.id)) return Redirect(RequestVars.nrURL);
 
             var model = new Models.Researches.Views.Show();
             model.name = research.name;
@@ -394,9 +394,9 @@ namespace psychoTest.Controllers
         //смена/установка описания сценария
         public ActionResult SetDescr()
         {
-            var org = Models.Organisations.Organisation.GetById(Request[RequestVals.orgId]);
-            var research = Research.GetById(Request[RequestVals.researchId]);
-            var newVal = Request[RequestVals.val];
+            var org = Models.Organisations.Organisation.GetById(Request[RequestVars.orgId]);
+            var research = Research.GetById(Request[RequestVars.researchId]);
+            var newVal = Request[RequestVars.val];
 
             AjaxAnswer answer = new AjaxAnswer();
 
@@ -419,9 +419,9 @@ namespace psychoTest.Controllers
         //смена/установка кодового слова
         public ActionResult SetPassword()
         {
-            var org = Models.Organisations.Organisation.GetById(Request[RequestVals.orgId]);
-            var research = Research.GetById(Request[RequestVals.researchId]);
-            var valPassword = Request[RequestVals.val];
+            var org = Models.Organisations.Organisation.GetById(Request[RequestVars.orgId]);
+            var research = Research.GetById(Request[RequestVars.researchId]);
+            var valPassword = Request[RequestVars.val];
 
             AjaxAnswer answer = new AjaxAnswer();
 
@@ -444,9 +444,9 @@ namespace psychoTest.Controllers
         //смена/установка названия сценария
         public ActionResult SetName()
         {
-            var org = Models.Organisations.Organisation.GetById(Request[RequestVals.orgId]);
-            var research = Research.GetById(Request[RequestVals.researchId]);
-            var valName = Request[RequestVals.val];
+            var org = Models.Organisations.Organisation.GetById(Request[RequestVars.orgId]);
+            var research = Research.GetById(Request[RequestVars.researchId]);
+            var valName = Request[RequestVars.val];
 
             AjaxAnswer answer = new AjaxAnswer();
 
@@ -598,8 +598,8 @@ namespace psychoTest.Controllers
 
         public ActionResult UploadScenario()
         {
-            var org = Models.Organisations.Organisation.GetById(Request[RequestVals.orgId]);
-            var research = Research.GetById(Request[RequestVals.researchId]);
+            var org = Models.Organisations.Organisation.GetById(Request[RequestVars.orgId]);
+            var research = Research.GetById(Request[RequestVars.researchId]);
 
             AjaxAnswer answer = new AjaxAnswer();
 
@@ -647,7 +647,7 @@ namespace psychoTest.Controllers
             scenario.descr = q.descr;
             scenario.name = q.name;
             scenario.raw = rawString;
-            scenario.researchId = Request[RequestVals.researchId];
+            scenario.researchId = Request[RequestVars.researchId];
             scenario.statusId = EntityStatuses.enabled.val;
             scenario.Add();
 

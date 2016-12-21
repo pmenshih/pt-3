@@ -65,35 +65,22 @@ namespace psychoTest.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Login(LoginViewModel model, string returnUrl)
+        public async Task<ActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
-            //если введен номер телефона
-            if (!model.Login.Contains("@"))
-            {
-                model.Login = Models.Users.User.GetByPhone(model.Login)?.Email;
-                if(model.Login == null)
-                {
-                    ViewData["serverError"] = Core.ErrorMessages.LoginIncorrect;
-                    return View(model);
-                }
-            }
-
-            // This doesn't count login failures towards account lockout
-            // To enable password failures to trigger account lockout, change to shouldLockout: true
             var result = await SignInManager.PasswordSignInAsync(model.Login, model.Password, model.RememberMe, shouldLockout: true);
             switch (result)
             {
                 case SignInStatus.Success:
-                    return RedirectToLocal(returnUrl);
+                    return RedirectToLocal(model.ReturnUrl);
                 case SignInStatus.LockedOut:
                     return View("Lockout");
                 case SignInStatus.RequiresVerification:
-                    return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = model.RememberMe });
+                    return RedirectToAction("SendCode", new { ReturnUrl = model.ReturnUrl, RememberMe = model.RememberMe });
                 case SignInStatus.Failure:
                 default:
                     ViewData["serverError"] = Core.ErrorMessages.LoginFail;

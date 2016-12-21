@@ -232,6 +232,7 @@
     <Content Include="Scripts\pnb.js" />
     <Content Include="Scripts\pnb.ui.grid.js" />
     <Content Include="Scripts\pnb.ui.js" />
+    <Content Include="Scripts\pnb.validation.js" />
     <Content Include="Scripts\respond.js" />
     <Content Include="Scripts\respond.matchmedia.addListener.js" />
     <Content Include="Scripts\respond.matchmedia.addListener.min.js" />

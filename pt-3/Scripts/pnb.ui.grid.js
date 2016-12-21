@@ -4,6 +4,7 @@
     function Grid(_properties) {
         var self = this;
         var props = function () {
+            if (!_properties) _properties = true;
             return {
                 "divIdToDraw"                   : _properties["divIdToDraw"],
                 "dataSet"                       : _properties["dataSet"],
@@ -72,7 +73,7 @@
         this.DeleteRow = function (idx) {
             props["dataSet"].splice(idx, 1);
             self.DrawBody();
-        }
+        };
 
         function TableTagChecker(html) {
             if (html.slice(0, 7) === "<table>" && html.slice(-8) === "</table>") return html;

@@ -1,48 +1,27 @@
 ﻿@using psychoTest.Models
+@using psychoTest.Core
 @model LoginViewModel
 
-<h2>@ViewBag.Title.</h2>
-<div class="row">
+<div>
     <form action="/account/login" method="post">
-        
-    </form>
-    @using (Html.BeginForm("Login", "Account", new { ReturnUrl = ViewBag.ReturnUrl }, FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
-    {
+        <input type="hidden" name="ReturnUrl" value="@Request.QueryString[RequestVars.returnUrl]" />
         @Html.AntiForgeryToken()
-        <hr />
-        <div class="form-group">
-            @Html.LabelFor(m => m.Login, new { @class = "col-md-2 control-label" })
-            <div class="col-md-10">
-                @Html.TextBoxFor(m => m.Login, new { @class = "form-control" })
-            </div>
-        </div>
-        <div class="form-group">
-            @Html.LabelFor(m => m.Password, "Пароль", new { @class = "col-md-2 control-label" })
-            <div class="col-md-10">
-                @Html.PasswordFor(m => m.Password, new { @class = "form-control" })
-                @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger" })
-            </div>
-        </div>
-        <div class="form-group">
-            <div class="col-md-offset-2 col-md-10">
-                <a href="/account/forgotpassword">Забыли пароль?</a>
-            </div>
-        </div>
-        <div class="form-group">
-            <div class="col-md-offset-2 col-md-10">
-                <div class="checkbox">
-                    @Html.CheckBoxFor(m => m.RememberMe)
-                    @Html.LabelFor(m => m.RememberMe, "Запомните меня")
-                </div>
-            </div>
-        </div>
-        <div class="form-group">
-            <div class="col-md-offset-2 col-md-10">
-                <input type="submit" value="Войти" class="btn btn-default" />
-            </div>
-        </div>
-        <p>
-            <a href="/account/register">Зарегистрироваться</a>
-        </p>
-    }
+        <div id="loginValidate" class="inputValidateErrorDescr"></div>
+        <input type="text" name="Login" id="login" placeholder="Электронная почта"/>
+        <br />
+        <div id="passwordValidate" class="inputValidateErrorDescr"></div>
+        <input type="password" name="Password" id="password" placeholder="Пароль" />
+        <br />
+        <label><input type="checkbox" name="RememberMe" />Запомнить меня</label>
+        <br />
+        <input type="submit" value="Войти" class="btn btn-default" />
+        <br />
+        <a href="/account/forgotpassword">Забыли пароль?</a>
+        <br />
+        <a href="/account/register">Зарегистрироваться</a>
+    </form>
 </div>
+
+@Scripts.Render("/scripts/pnb.js")
+@Scripts.Render("/scripts/pnb.validation.js")
+@Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")
