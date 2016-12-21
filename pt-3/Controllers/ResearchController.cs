@@ -391,69 +391,6 @@ namespace psychoTest.Controllers
             return View();
         }
 
-        public ActionResult Interpretation()
-        {
-            //проверка прав доступа
-
-            var model = new Models.Researches.Views.Interpretation();
-            model.orgId = Request.QueryString[RequestVals.orgId];
-            model.researchId = Request.QueryString[RequestVals.researchId];
-
-            string xml = @"
-<SpecificationInterpretation>
-	<Objects>
-		<Object type='table' id='table1' dataSource='this.sc.q1.answers'>
-			<Objects>
-				<Object title='Возраст' value='dataSource.text' />
-				<Object value='count(this.data.q1.answers.answer==dataSource.position)' />
-			</Objects>
-		</Object>
-	</Objects>
-</SpecificationInterpretation>
-";
-
-            if (!xml.Contains("<Interpretation>"))
-            {
-                xml = "<Interpretation>" + xml + "</Interpretation>";
-            }
-
-            Interpretation interpretation = BLL.DeSerializeFromXmlString(xml, typeof(Interpretation)) 
-                as Interpretation;
-
-            Models.Researches.Scenarios.ResearchScenario scenario
-                = Models.Researches.Scenarios.ResearchScenario.GetById(
-                    Request.QueryString[RequestVals.scenarioId]);
-
-            Models.Researches.Scenarios.Questionnaires.Questionnaire questionnaire
-                = BLL.DeSerializeFromXmlString(scenario.raw
-                    , typeof(Models.Researches.Scenarios.Questionnaires.Questionnaire)) 
-                as Models.Researches.Scenarios.Questionnaires.Questionnaire;
-
-            if (interpretation.sInt != null && interpretation.sInt.objects != null)
-            {
-                foreach (PXSObject sIntObject in interpretation.sInt.objects)
-                {
-                    if (!String.IsNullOrEmpty(sIntObject.dataSource))
-                    {
-                        dynamic b = questionnaire.questions[1].answers;
-
-                        foreach (var a in b)
-                        {
-                            a.value = "1";
-                            try
-                            {
-                                a.prop = "3";
-                            }
-                            catch (Exception exc) { }
-                        }
-                    }
-                }
-            }
-            
-            return View(model);
-        }
-        
-
         #region AJAX-методы
         //смена/установка описания сценария
         public ActionResult SetDescr()

@@ -496,40 +496,6 @@ WHERE rg.id = rgi.groupId
         }
     }
 
-    namespace Interpretations
-    {
-        public class PXSObject
-        {
-            [XmlAttribute]
-            public string type { get; set; }
-            [XmlAttribute]
-            public string id { get; set; }
-            [XmlAttribute]
-            public string dataSource { get; set; }
-            [XmlAttribute]
-            public string title { get; set; }
-            [XmlAttribute]
-            public string value { get; set; }
-
-            [XmlArray("Objects")]
-            [XmlArrayItem("Object", typeof(PXSObject))]
-            public PXSObject[] objects { get; set; }
-        }
-
-        public class SpecificationInterpretation
-        {
-            [XmlArray("Objects")]
-            [XmlArrayItem("Object", typeof(PXSObject))]
-            public PXSObject[] objects { get; set; }
-        }
-
-        public class Interpretation
-        {
-            [XmlElement(ElementName = "SpecificationInterpretation")]
-            public SpecificationInterpretation sInt { get; set; }
-        }
-    }
-
     namespace Scenarios
     {
         public class ResearchScenario
