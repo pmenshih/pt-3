@@ -10,27 +10,45 @@
 <div>
     Показать: <a href="#">Акторов</a> | <a href="#">Контролёров</a> | <a href="#">Зрителей</a> | <a href="#">Менеджеров</a>
 </div>
-<input type="text" class="filter" name="liveFilter" />
 
+<div class='filters'>
+    <div class='filter-container'>
+        <input autocomplete='off' class='filter' name='surname' placeholder='Фамилия' data-col='Фамилия' />
+    </div>
+    <div class='filter-container'>
+        <input autocomplete='off' class='filter' name='name' placeholder='Имя' data-col='Имя' />
+    </div>
+    <div class='filter-container'>
+        <input autocomplete='off' class='filter' name='patronim' placeholder='Отчество' data-col='Отчество' />
+    </div>
+    <div class='filter-container'>
+        <input autocomplete='off' class='filter' name='email' placeholder='Почта' data-col='Почта' />
+    </div>
+    <div class='filter-container'>
+        <input autocomplete='off' class='filter' name='phone' placeholder='Телефон' data-col='Телефон' />
+    </div>
+    <div class='clearfix'></div>
+</div>
+</div>
 <table class="table sort sortable">
     <thead>
-        <tr>
-            <th>
+        <tr id='filter_table'>
+            <th class="surname">                
                 Фамилия
             </th>
-            <th>
+            <th class="name">                
                 Имя
             </th>
-            <th>
+            <th class="patronim">               
                 Отчество
             </th>
-            <th>
+            <th class="email">               
                 Почта
             </th>
-            <th>
+            <th class="phone">              
                 Телефон
             </th>
-            <th>
+            <th class="">
                 Роли
             </th>
             <th class="nosort">
@@ -45,19 +63,19 @@
         @foreach (psychoTest.Models.Organisations.Views.UsersUserEntity user in Model.orgUsers)
         {
             <tr>
-                <td>
+                <td class="surname">
                     @user.surname
                 </td>
-                <td>
+                <td class="name">
                     @user.name
                 </td>
-                <td>
+                <td class="patronim">
                     @user.patronim
                 </td>
-                <td>
+                <td class="email">
                     @user.email
                 </td>
-                <td>
+                <td class="phone">
                     @user.phone
                 </td>
                 <td>

@@ -7,7 +7,6 @@ using System.Data.SqlClient;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Serialization;
-using System.IO;
 
 namespace psychoTest.Models.Researches
 {
@@ -170,7 +169,7 @@ ORDER BY dateBegin DESC
             return ds;
         }
     }
-
+    
     #region Вспомогательные таблицы
     //таблица типов исследований
     public class ResearchType
@@ -298,8 +297,7 @@ WHERE rg.id = rgi.groupId
 
             //десереализуем шаблон опросника
             Scenarios.Questionnaires.Questionnaire questionnaire
-                = (Scenarios.Questionnaires.Questionnaire)Scenarios.Questionnaires.Questionnaire
-                    .DeSerializeFromXmlString(
+                = (Scenarios.Questionnaires.Questionnaire)Core.BLL.DeSerializeFromXmlString(
                         sc.raw
                         , typeof(Scenarios.Questionnaires.Questionnaire));
 
@@ -324,8 +322,7 @@ WHERE rg.id = rgi.groupId
                 dsrr.answersCount++;
                 //десереализуем заполненный опросник
                 Scenarios.Questionnaires.QuestionnaireWI filledQuestionnaire
-                    = (Scenarios.Questionnaires.QuestionnaireWI)Scenarios.Questionnaires.QuestionnaireWI
-                        .DeSerializeFromXmlString(
+                    = (Scenarios.Questionnaires.QuestionnaireWI)Core.BLL.DeSerializeFromXmlString(
                             rs.raw
                             , typeof(Scenarios.Questionnaires.QuestionnaireWI));
 
@@ -491,6 +488,12 @@ WHERE rg.id = rgi.groupId
                 }
             }
         }
+
+        public class Interpretation
+        {
+            public string orgId { get; set; }
+            public string researchId { get; set; }
+        }
     }
 
     namespace Scenarios
@@ -532,30 +535,6 @@ WHERE rg.id = rgi.groupId
 
                 [XmlAttribute]
                 public string descr { get; set; }
-
-                public static object DeSerializeFromXmlString(string xml, Type type)
-                {
-                    XmlSerializer s = new XmlSerializer(type);
-
-                    //преобразуем строку xml в поток
-                    MemoryStream stream = new MemoryStream();
-                    StreamWriter writer = new StreamWriter(stream);
-                    writer.Write(xml);
-                    writer.Flush();
-                    stream.Position = 0;
-
-                    //десериализуем поток в класс и возвращаем его
-                    return s.Deserialize(stream);
-                }
-
-                public string SerializeToXmlString(Type type)
-                {
-                    XmlSerializer s = new XmlSerializer(type);
-                    Core.Utf8StringWriter sw = new Core.Utf8StringWriter();
-                    s.Serialize(sw, this);
-                    sw.Close();
-                    return sw.ToString();
-                }
 
                 public int FindNearestAvailableQ(int curQI, string direction)
                 {
