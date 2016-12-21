@@ -5,7 +5,7 @@
 	License: http://www.opensource.org/licenses/mit-license.php
 */
 
-(function($){
+var autoComplete = (function(){
     $.fn.autoComplete = function(options){
         var o = $.extend({}, $.fn.autoComplete.defaults, options);
 

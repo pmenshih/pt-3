@@ -1,8 +1,15 @@
 ﻿//(function ($) {
+(function (window) {
+    var multifilters = (function(options){
+       "use strict";
+
+
+     });
+})(window);
     
-//$.fn.multifilter = function (options) {
-var multifilter = (function(options){
-    "use strict";
+$.fn.multifilter = function (options) {
+
+    
     var settings = $.extend({
         'target': $('table'),
         'method': 'thead' // This can be thead or class
@@ -28,6 +35,7 @@ var multifilter = (function(options){
             var col = rows.first().find('td.' + $this.data('col') + '');
             var col_index = rows.first().find('td').index(col);
         };
+
 
         $this.change(function () {
             var filter = $this.val();
