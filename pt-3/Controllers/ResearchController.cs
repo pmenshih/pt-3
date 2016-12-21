@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Web.Mvc;
 using psychoTest.Models.Researches;
-using psychoTest.Models.Researches.Interpretations;
 using psychoTest.Core;
 using System.Web.Script.Serialization;
 using System.Collections.Generic;
