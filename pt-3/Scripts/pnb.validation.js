@@ -15,36 +15,40 @@
             props = _properties;
         };
 
-        this.InputValidator = function (obj, tpl, allowEmpty) {
+        this.ClearInput = function (obj) {
             var descrDiv = document.getElementById(obj.id + "Validate");
-            
-            function ClearInput() {
-                obj.classList.remove(props["cssError"]);
-                if (descrDiv)
-                    while (descrDiv.hasChildNodes()) {
-                        descrDiv.removeChild(descrDiv.firstChild);
-                    }
-            }
 
+            obj.classList.remove(props["cssError"]);
+            if (descrDiv)
+                while (descrDiv.hasChildNodes()) {
+                    descrDiv.removeChild(descrDiv.firstChild);
+                }
+        };
+
+        this.InputValidator = function (obj, tpl, allowEmpty) {
             obj.addEventListener("keydown", function () {
-                ClearInput();
+                self.ClearInput(obj);
             });
 
             obj.addEventListener("paste", function () {
-                ClearInput();
+                self.ClearInput(obj);
             });
 
             obj.addEventListener("blur", function () {
-                var hasError = self.NotMatchWithTemplate(obj.value, tpl);
-
-                ClearInput();
-                if (allowEmpty && !obj.value) return;
-
-                if (hasError) {
-                    obj.classList.add(props["cssError"]);
-                    descrDiv.innerHTML = hasError;
-                }
+                self.InputValidate(obj, tpl);
             });
+        };
+
+        this.InputValidate = function (obj, tpl, allowEmpty) {
+            var hasError = this.NotMatchWithTemplate(obj.value, tpl);
+
+            this.ClearInput(obj);
+            if (allowEmpty && !obj.value) return;
+
+            if (hasError) {
+                obj.classList.add(props["cssError"]);
+                document.getElementById(obj.id + "Validate").innerHTML = hasError;
+            }
         };
 
         this.NotMatchWithTemplate = function (val, tpl) {
@@ -73,7 +77,7 @@
                 default:
                     return "true";
             }
-        }
+        };
     }
 
     window.PnB.Validation = window.PnB.Validation || Validation;
