@@ -30,6 +30,15 @@ textarea {
 .uiGridSortableTh {
     cursor: pointer;
 }
+
+.inputValidateErrorDescr {
+    color: red;
+}
+
+.inputValidateError {
+    border: 1px solid red;
+    background-color: #ff2020;
+}
 /*****  КОНЕЦ ОБЛАСТИ КЛАССОВ, КОТОРЫЕ НУЖНО СОХРАНИТЬ ИЛИ ПЕРЕРАБОТАТЬ *****/
 
 

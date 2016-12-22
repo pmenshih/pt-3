@@ -3,18 +3,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace psychoTest.Models
 {
-    public class ExternalLoginConfirmationViewModel
-    {
-        [Required]
-        [Display(Name = "Email")]
-        public string Email { get; set; }
-    }
-
-    public class ExternalLoginListViewModel
-    {
-        public string ReturnUrl { get; set; }
-    }
-
     public class ForgotViewModel
     {
         [Required]
@@ -25,16 +13,13 @@ namespace psychoTest.Models
     public class LoginViewModel
     {
         [Required]
-        [Display(Name = "Телефон/Почта")]
         public string Login { get; set; }
 
         [Required]
-        [DataType(DataType.Password)]
-        [Display(Name = "Password")]
         public string Password { get; set; }
 
-        [Display(Name = "Remember me?")]
         public bool RememberMe { get; set; }
+        public string ReturnUrl { get; set; }
     }
 
     public class RegisterViewModel

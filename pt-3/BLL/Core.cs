@@ -277,12 +277,13 @@ namespace psychoTest.Core
     }
 
     //набор переменных HTTP-запроса
-    public class RequestVals
+    public class RequestVars
     {
         public const string orgId = "orgId";
         public const string researchId = "researchId";
         public const string scenarioId = "scenarioId";
         public const string val = "val";
+        public const string returnUrl = "ReturnUrl";
         //адрес, куда попадает пользователь, не прошедший проверку прав доступа
         public const string nrURL = "/cabinet";
     }
