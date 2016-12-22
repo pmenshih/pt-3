@@ -6,9 +6,17 @@
 
 <h2>@ViewBag.Title</h2>
 
+
+
 <a href="/organisation/usercu?orgId=@Model.orgId">Добавить пользователя</a> | <a href="/organisation/usersimport?orgId=@Model.orgId">Загрузка из файла</a>
-<div>
-    Показать: <a href="#">Акторов</a> | <a href="#">Контролёров</a> | <a href="#">Зрителей</a> | <a href="#">Менеджеров</a>
+<div class='checkcontainer'>
+    Показать: 
+    <input type='checkbox' name='filter' checked  value="Актор" /> Акторов<br />
+    <input type='checkbox' name='filter' checked  value="Контролёр" /> Контролёров<br />
+    <input type='checkbox' name='filter' checked  value="Зритель" /> Зрителей<br />
+    <input type='checkbox' name='filter' checked  value="Менеджер" /> Менеджеров<br />
+
+    <a href="#">Акторов</a> | <a href="#">Контролёров</a> | <a href="#">Зрителей</a> | <a href="#">Менеджеров</a>
 </div>
 
 <div class='filters'>
@@ -29,8 +37,8 @@
     </div>
     <div class='clearfix'></div>
 </div>
-</div>
-<table class="table sort sortable">
+
+<table class="table datatbl sort sortable">
     <thead>
         <tr id='filter_table'>
             <th class="surname">                
@@ -62,7 +70,7 @@
     <tbody>
         @foreach (psychoTest.Models.Organisations.Views.UsersUserEntity user in Model.orgUsers)
         {
-            <tr>
+            <tr data-rowtype="@if (user.roles != null){@user.roles.Replace("manager", "Менеджер").Replace("actor", "Актор").Replace("inspector", "Контролёр").Replace("viewer", "Зритель")}">
                 <td class="surname">
                     @user.surname
                 </td>
@@ -78,12 +86,7 @@
                 <td class="phone">
                     @user.phone
                 </td>
-                <td>
-                    @if (user.roles != null)
-                {
-                        @user.roles.Replace("manager", "Менеджер").Replace("actor", "Актор").Replace("inspector", "Контролёр").Replace("viewer", "Зритель")
-                    }
-                </td>
+                <td class="role">@if (user.roles != null){@user.roles.Replace("manager", "Менеджер").Replace("actor", "Актор").Replace("inspector", "Контролёр").Replace("viewer", "Зритель")}</td>
                 <td>
                     <a href="#">Ссылка</a>
                 </td>

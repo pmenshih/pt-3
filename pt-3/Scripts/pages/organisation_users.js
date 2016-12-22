@@ -1,15 +1,52 @@
-﻿//(function ($) {
-(function (window) {
+﻿(function (window) {
     var multifilters = (function(options){
        "use strict";
 
 
      });
 })(window);
-    
-$.fn.multifilter = function (options) {
 
-    
+
+
+
+
+$('.checkcontainer').on('change', 'input[type="checkbox"]', function () {
+    var cbs = $('.checkcontainer').find('input[type="checkbox"]');
+    var all_checked_types = [];
+    $('.filter').each(function () {
+        Filter1($(this));
+    });
+    $.each(cbs, function (idx, obj) { 
+        Filter2(obj);
+    });
+
+    /*
+    Filter2($(this));
+    */
+});
+
+/*
+function Filter3() {
+    var cbs = $('.checkcontainer');
+    $.each(cbs, function (idx, obj) { 
+        Filter2(obj);
+    });
+}
+*/
+
+function Filter2(obj) {
+    var mycheckbox = obj;    
+    var ckbox = mycheckbox.value;
+    var rowtype = 'tr[data-rowtype="' + ckbox + '"]';
+    var state = mycheckbox.checked;
+    var filtered = $('.datatbl tbody tr:visible').filter(function () {
+        if ($(this).data('rowtype') == mycheckbox.value)
+            return true;
+        else return false;  
+    }).toggle(mycheckbox.checked);
+}
+
+$.fn.multifilter = function (options) {    
     var settings = $.extend({
         'target': $('table'),
         'method': 'thead' // This can be thead or class
@@ -36,115 +73,51 @@ $.fn.multifilter = function (options) {
             var col_index = rows.first().find('td').index(col);
         };
 
-
         $this.change(function () {
-            var filter = $this.val();
-            rows.each(function () {
-                var row = $(this);
-                var cell = $(row.children(item_tag)[col_index]);
-                if (filter) {
-                    if (cell.text().toLowerCase().indexOf(filter.toLowerCase()) !== -1) {
-                        cell.attr('data-filtered', 'positive');
-                    } else {
-                        cell.attr('data-filtered', 'negative');
-                    }
-                    if (row.find(item_tag + "[data-filtered=negative]").size() > 0) {
-                        row.hide();
-                    } else {
-                        if (row.find(item_tag + "[data-filtered=positive]").size() > 0) {
-                            row.show();
-                        }
-                    }
-                } else {
-                    cell.attr('data-filtered', 'positive');
-                    if (row.find(item_tag + "[data-filtered=negative]").size() > 0) {
-                        row.hide();
-                    } else {
-                        if (row.find(item_tag + "[data-filtered=positive]").size() > 0) {
-                            row.show();
-                        }
-                    }
-                }
+            Filter1($(this));
+
+            $.each($('input[type="checkbox"]'), function (idx, val) {
+                Filter2(val);
             });
-            return false;
-        }).keyup(function () {
-            $this.change();
-        });
+        }).keyup(function () { $this.change(); });
     });
 }
   
-$('.filter').multifilter();
+function Filter1(obj, rows) {
+    var filter = obj.val();
+    var rows = $('table').find($("tr"));
+    var item_tag = 'td';
+    var col = $('table').find('th:Contains(' + obj.data('col') + ')');
+    var col_index = $('table').find($('thead th')).index(col);
+    rows.each(function () {
+        var row = $(this);
+        var cell = $(row.children(item_tag)[col_index]);
 
-
-
-
-//})(jQuery);
-
-/*
-
-
-
-$.fn.Filter = function () {
-   
-    var filterTarget = $(this);
-    var child;
-    if ($(this).is('table')) {
-        child = 'tbody > tr';
-    }
-     
-    var hide;
-    var show;
-    var filter;
-
-
-    
-        
-    document.getElementById('')   
-
-    var filterSelector = document.querySelectorAll('.filter');
-    for (var i = 0; i < filterSelector.length; i++) {
-        filterSelector[i].addEventListener('keyup', DoFiltering);
-    }   
-        
-    function DoFiltering() {
-        filter = $(this).val();
-        hide = $(filterTarget).find(child + ':not(:Contains("' + filter + '"))');
-        show = $(filterTarget).find(child + ':Contains("' + filter + '")');
-        hide.slideUp(500);
-        show.slideDown(500);
-    }
-
-    var $rows = $('tbody > tr'),
-    $filters = $('#filter_table input');
-
-    var $i = $filters.filter(function () {
-        return $.trim(this.value).length > 0;
-    })
-
-    var cls = '.' +$i.map(function () {
-        return this.className
-        }).get().join(',.');
-
-
-    jQuery.expr[':'].Contains = function (a, i, m) {
-        return jQuery(a).text().toLowerCase().indexOf(m[3].toLowerCase()) >= 0;
-    };
-}
-
-
-
-function getElementByTagPointClass(selector)
-{
-    var tagName = selector.split('.')[0];
-    var className = selector.split('.')[1];
-    var elems = document.getElementsByTagName(tagName);
-    for (var i = 0; i < elems.length; ++i) {
-        var classesArr = elems[i].className.split(/\s+/);
-        for (var j = 0; j < classesArr.length; ++j) {
-            if (classesArr[j] == className) return elems[i];
+        if (filter) {
+            if (cell.text().toLowerCase().indexOf(filter.toLowerCase()) !== -1) {
+                cell.attr('data-filtered', 'positive');
+            } else {
+                cell.attr('data-filtered', 'negative');
+            }
+            if (row.find(item_tag + "[data-filtered=negative]").size() > 0) {
+                row.hide();
+            } else {
+                if (row.find(item_tag + "[data-filtered=positive]").size() > 0) {
+                    row.show();
+                }
+            }
+        } else {
+            cell.attr('data-filtered', 'positive');
+            if (row.find(item_tag + "[data-filtered=negative]").size() > 0) {
+                row.hide();
+            } else {
+                if (row.find(item_tag + "[data-filtered=positive]").size() > 0) {
+                    row.show();
+                }
+            }
         }
-    }
+    });
+    return false;
 }
-*/
-//$('table').Filter();
 
+$('.filter').multifilter();
