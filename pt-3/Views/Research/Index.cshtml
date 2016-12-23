@@ -8,8 +8,8 @@
 
 @if (psychoTest.Core.Membership.isAdmin() || psychoTest.Core.Membership.isManager(Model.orgId))
 {
-    <div>
-        <a href="/research/create?@psychoTest.Core.RequestVals.orgId=@Model.orgId">Создать исследование</a>
+    <div> 
+        <a href="/research/create?@psychoTest.Core.RequestVars.orgId=@Model.orgId">Создать исследование</a>
     </div>
 }
 

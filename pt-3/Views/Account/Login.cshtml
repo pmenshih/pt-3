@@ -6,7 +6,7 @@
     <form action="/account/login" method="post">
         <input type="hidden" name="ReturnUrl" value="@Request.QueryString[RequestVars.returnUrl]" />
         @Html.AntiForgeryToken()
-        <div id="loginValidate" class="inputValidateErrorDescr"></div>
+        
         <input type="text" name="Login" id="login" placeholder="Электронная почта"/>
         <br />
         <div id="passwordValidate" class="inputValidateErrorDescr"></div>

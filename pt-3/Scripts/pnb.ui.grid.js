@@ -45,7 +45,7 @@
                 props["columns"].forEach(function (colItem, colIdx, colArr) {
                     var tpl = colItem.tpl;
                     if (tpl) {
-                        if (tpl.indexOf('@') != -1) {
+                        if (tpl.indexOf('@') !== -1) {
                             Object.keys(rowItem).forEach(function (item, i, arr) {
                                 tpl = tpl.replace(new RegExp('@' + item + '@', 'g'), rowItem[item]);
                             });

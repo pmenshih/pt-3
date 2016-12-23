@@ -16,7 +16,7 @@
     <RootNamespace>psychoTest</RootNamespace>
     <AssemblyName>pt-3</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
-    <MvcBuildViews>false</MvcBuildViews>
+    <MvcBuildViews>true</MvcBuildViews>
     <UseIISExpress>true</UseIISExpress>
     <IISExpressSSLPort>44339</IISExpressSSLPort>
     <IISExpressAnonymousAuthentication />
@@ -315,7 +315,7 @@
           <AutoAssignPort>True</AutoAssignPort>
           <DevelopmentServerPort>53242</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
-          <IISUrl>http://localhost:53242/</IISUrl>
+          <IISUrl>http://localhost:58103/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>
           <UseCustomServer>False</UseCustomServer>
           <CustomServerUrl>
