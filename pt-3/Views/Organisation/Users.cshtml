@@ -19,52 +19,32 @@
     <a href="#">Акторов</a> | <a href="#">Контролёров</a> | <a href="#">Зрителей</a> | <a href="#">Менеджеров</a>
 </div>
 
-<div class='filters'>
-    <div class='filter-container'>
-        <input autocomplete='off' class='filter' name='surname' placeholder='Фамилия' data-col='Фамилия' />
-    </div>
-    <div class='filter-container'>
-        <input autocomplete='off' class='filter' name='name' placeholder='Имя' data-col='Имя' />
-    </div>
-    <div class='filter-container'>
-        <input autocomplete='off' class='filter' name='patronim' placeholder='Отчество' data-col='Отчество' />
-    </div>
-    <div class='filter-container'>
-        <input autocomplete='off' class='filter' name='email' placeholder='Почта' data-col='Почта' />
-    </div>
-    <div class='filter-container'>
-        <input autocomplete='off' class='filter' name='phone' placeholder='Телефон' data-col='Телефон' />
-    </div>
-    <div class='clearfix'></div>
-</div>
-
 <table class="table datatbl sort sortable">
-    <thead>
+        <thead>
         <tr id='filter_table'>
-            <th class="surname">                
-                Фамилия
+            <th class="surname"> 
+<input autocomplete='off' class='filter' id='surname' placeholder='Фамилия' />			
+                
             </th>
-            <th class="name">                
-                Имя
+            <th class="name">    
+ <input autocomplete='off' class='filter' id='name' placeholder='Имя' />            
+                
             </th>
-            <th class="patronim">               
-                Отчество
+            <th class="patronim">  
+<input autocomplete='off' class='filter' id='patronim' placeholder='Отчество' />			
+                
             </th>
-            <th class="email">               
-                Почта
+            <th class="email">   
+<input autocomplete='off' class='filter' id='email' placeholder='Почта' />			
+                
             </th>
-            <th class="phone">              
-                Телефон
+            <th class="phone">  
+<input autocomplete='off' class='filter' id='phone' placeholder='Телефон' />			
+                
             </th>
             <th class="">
-                Роли
-            </th>
-            <th class="nosort">
-                Результаты
-            </th>
-            <th class="nosort">
-
-            </th>
+                Роль
+            </th>            
         </tr>
     </thead>
     <tbody>
@@ -87,12 +67,7 @@
                     @user.phone
                 </td>
                 <td class="role">@if (user.roles != null){@user.roles.Replace("manager", "Менеджер").Replace("actor", "Актор").Replace("inspector", "Контролёр").Replace("viewer", "Зритель")}</td>
-                <td>
-                    <a href="#">Ссылка</a>
-                </td>
-                <td>
-                    <a href="/organisation/usercu?orgId=@Model.orgId&userId=@user.id">Редактировать</a> | <a href="/organisation/userdelete?orgId=@Model.orgId&userId=@user.id">Удалить</a>
-                </td>
+            
             </tr>
         }
     </tbody>

@@ -12,7 +12,7 @@ $('#surname').on("propertychange change click keyup input paste", function (e) {
 
 function FormValidate(id,type)
 {
-    if (Validate($('#' + id).val(), type).length != 0) {
+    if (Validate($('#' + id).val(), type).length !== 0) {
         $('#' + id).addClass('devValidateError');
         return false;
     } else {
