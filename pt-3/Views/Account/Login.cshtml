@@ -24,4 +24,6 @@
 
 @Scripts.Render("/scripts/pnb.js")
 @Scripts.Render("/scripts/pnb.validation.js")
-@Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")
+@Scripts.Render("/scripts/lib.js")
+@*@Scripts.Render($"/scripts/pages/{Request.Url.LocalPath.Trim('/').Replace("/", "_")}.js")
+*@

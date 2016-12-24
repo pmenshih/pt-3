@@ -43,25 +43,21 @@ function Validate(val, type)
             errMsg = 'Ошибка заполнения поля';
             if (!regexp.test(val)) return errMsg;
             else return '';
-            break;
         case 'email':
             var regexp = /^[\w!#$%&'*+\-/=?\^_`{|}~]+(\.[\w!#$%&'*+\-/=?\^_`{|}~]+)*@((([\-\w]+\.)+[a-zA-Z]{2,4})|(([0-9]{1,3}\.){3}[0-9]{1,3}))$/i;
             errMsg = 'Неккоректный формат адреса почты';
             if (!regexp.test(val)) return errMsg;
             else return '';
-            break;
         case 'phone':
             var regexp = /^\d{11,15}$/i;
             errMsg = 'Неккоректный формат телефона';
             if (!regexp.test(val)) return errMsg;
             else return '';
-            break;
         case 'password':
             var regexp = /^(.{0,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{4,})|(.{1,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{3,})|(.{2,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{2,})|(.{3,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{1,})|(.{4,}(([a-zA-Z][^a-zA-Z])|([^a-zA-Z][a-zA-Z])).{0,})$/i;
             errMsg = 'Неккоректный пароль';
             if (!regexp.test(val)) return errMsg;
             else return '';
-            break;
         case 'codeword':
             var regexp = /^[a-zA-Z\d_]{5,15}$/i;
             errMsg = 'Может содержать только латинские буквы, цифры и символ \'_\'. Не может быть короче 5 и длиннее 15 символов.';
