@@ -1,0 +1,11 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "noEmitOnError": true,
+    "removeComments": true,
+    "target": "es5",
+    "noFallthroughCasesInSwitch": true
+    //,"allowJs": true
+  }
+}
