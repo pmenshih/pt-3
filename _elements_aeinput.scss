@@ -1,0 +1,144 @@
+﻿$fontPath: "/fonts/";
+$color1: #333;
+$color2: #496dff;
+$color3: #dbe6f6;
+$baseHeight: 2.5rem;
+$basePadding: .75rem;
+$resXS: 600;
+
+@mixin transit($tr){
+  -webkit-transition: $tr;
+  -moz-transition: $tr;
+  -ms-transition: $tr;
+  -o-transition: $tr;
+  transition: $tr;
+}
+@mixin fonts($name, $file){
+  @font-face {
+    font-family: $name;
+    src: url($fontPath + $file + ".ttf"),
+    url($fontPath + $file + ".woff"),
+    url($fontPath + $file + ".eot");
+  }
+}
+@mixin media($width) {
+    @media screen and (max-width: $width+"px") { @content; }
+}
+@mixin resolution($res, $ppx) {
+    @media  only screen and (-webkit-min-device-pixel-ratio: $ppx),
+            only screen and (min-resolution: $res+"dpi"), 
+            only screen and (min-resolution: $ppx+"dppx") { 
+        @content;
+   }
+}
+@include fonts(MyriadBold, MyriadPro-BoldCond);
+
+%boxSize {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+html {
+    // инициализация rem
+    @include resolution(1, 1) {
+        font: 300 17px/1.2 'Roboto', sans-serif;
+    }
+    @include resolution(120, 1.3) {
+        font: 300 25px/1.2 'Roboto', sans-serif;
+    }        
+}
+
+// блок отображения и редактирования свойства учетной записи пользователя 
+// вида [надпись]: [эелемент+кнопки управления]
+.fField {
+    border-top: 1px solid $color3;
+    // костыль, исправляющий "нюансы" поведения inline-block
+    font-size: 0;
+    * {
+        // отображение эффекта перехода
+        @include transit(all .5s);
+        display: inline-block;
+    }
+    span:first-child {
+        width: 20%;
+        @extend %boxSize;
+        padding: 0 1rem;
+        font-weight: 500;
+        font-size: $basePadding;
+        vertical-align: middle;
+        @include media($resXS) {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding-top: $basePadding;
+        }
+    }
+    div {
+        width: 80%;
+        @include media($resXS) {
+            width: 100%;
+        }
+    }
+}
+
+// инпут свойства учетной записи
+.els_aei {
+    color: $color1;
+    padding: $basePadding 0;
+    line-height: $baseHeight;
+    @include media($resXS) {
+        text-align: center;
+    }
+    * {
+        cursor: pointer;
+        display: inline-block;
+        vertical-align: middle;
+    }
+    input[type=text] {
+        border: solid 1px transparent;
+        @extend %boxSize;
+        width: 70%;
+        font-size: .9rem;
+        line-height: $baseHeight;
+        padding: 0 1rem;
+        outline: 0;
+        @include media($resXS) {
+            width: 100%;
+            margin-bottom: $basePadding;
+        }
+        &:focus {
+            background-color: #fff8e1;
+            border-color: #ffecb3;
+        }
+    }
+    label {
+        font-size: $basePadding;
+        color: $color2;
+        i {
+            fill: $color2;
+            width: $baseHeight;
+            height: $baseHeight;
+            svg {
+                width: 100%;
+                height: 100%;
+            }
+        }
+    }
+    button {
+        -webkit-appearance: none;
+        padding: 0 $basePadding;
+        height: $baseHeight;
+        font: .9rem MyriadBold;
+        border: none;
+        margin-left: $basePadding;
+    }
+    button#ok {
+        background-color: $color2;
+        color: #fff;
+    }
+    button#cancel {
+        color: #b2c0d4;
+        background-color: $color3;
+    }
+}
