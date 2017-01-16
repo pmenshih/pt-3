@@ -1,0 +1,697 @@
+/*--------------------------------edit box--------------------------------*/
+
+.editBox {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: left;
+}
+.edit_field {
+  position: relative;
+  color: $textHead;
+  .ready_input {
+    padding: 13px 0;
+    @include media(screen,768){
+      padding: 0 15px;
+      text-align: center;
+    }
+    .input_field {
+      display: inline-block;
+      vertical-align: middle;
+      width: 74%;
+      position: relative;
+      @include media(screen,768){
+        width: 70%;
+      }
+      @include media(screen,600){
+        width: 100%;
+        margin-bottom: 10px;
+      }
+    }
+    .dropCountry {
+      top: 100%;
+      left: 0;
+      width: 100%;
+      height: 0;
+      position: absolute;
+      .hide & {z-index: 1;}
+      .country_selected {
+        position: absolute;
+        bottom: 100%;
+        left: 0;
+        height: 40px;
+        width: 0;
+        overflow: hidden;
+        border: 1px solid transparent;
+        cursor: pointer;
+        &::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 20px;
+          height: 40px;
+          background: transparent url("../svg/arrow_down.svg") center center no-repeat;
+          -webkit-background-size: 40px auto;
+          background-size: 40px auto;
+        }
+        img {
+          display: block;
+          width: 26px;
+          height: 18px;
+          margin: 11px 10px;
+        }
+        .hide & {
+          width: 60px;
+          border-color: $field_bord;
+          background-color: #fff;
+        }
+        &.active ~ ul {
+          display: block;
+        }
+      }
+      ul {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        border: 1px solid transparent;
+        background-color: #fff;
+        @extend %boxSize;
+        @include boxShadow(0,6px,12px,0,rgba(178,179,179,0.5));
+        li {
+          @extend .layout;
+          cursor: pointer;
+          @include media(screen,768){
+            text-align: left;
+          }
+          span {
+            float: left;
+            height: 40px;
+            width: 46px;
+            img {
+              display: block;
+              width: 26px;
+              height: 18px;
+              margin: 11px 10px;
+            }
+          }
+          p {
+            font-size: 0.75rem;
+            padding: 12px 12px 12px 52px;
+          }
+          &:hover {
+            @include media(hover,1025){
+              background-color: $field_a;
+            }
+
+          }
+        }
+      }
+      & ~ input[type=text] {
+        .hide & {padding-left: 75px;}
+      }
+    }
+    .dropCompany {
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      .hide & {z-index: 1;}
+      .company_selected {
+        @extend %fullBlock;
+        @extend %boxSize;
+        overflow: hidden;
+        border: 1px solid transparent;
+        cursor: pointer;
+        background-color: #fff;
+        font-size: 0.9rem;
+        line-height: 40px;
+        padding: 0 15px;
+        letter-spacing: 0.15px;
+        &::after {
+          content: "";
+          position: absolute;
+          top: 1px;
+          right: 1px;
+          width: 40px;
+          height: 40px;
+          background: $field_a url("../svg/arrow_down.svg") center center no-repeat;
+          -webkit-background-size: 40px auto;
+          background-size: 40px auto;
+          opacity: 0;
+        }
+        .hide & {
+          border-color: $field_bord;
+          &::after {opacity: 1}
+        }
+        &.active ~ ul {
+          display: block;
+        }
+      }
+      ul {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        border: 1px solid transparent;
+        background-color: #fff;
+        @extend %boxSize;
+        @include boxShadow(0,6px,12px,0,rgba(178,179,179,0.5));
+        li {
+          @extend .layout;
+          cursor: pointer;
+          text-align: left;
+          p {
+            font-size: 0.75rem;
+            padding: 8px 15px;
+          }
+          &:hover {
+            @include media(hover,1025){
+              background-color: $field_a;
+            }
+
+          }
+        }
+      }
+    }
+    input[type=text],
+    input[type=password] {
+      border: 1px solid transparent;
+      background-color: transparent;
+      @include transit(all 0.3s);
+      display: block;
+      font-size: 0.9rem;
+      line-height: 40px;
+      padding: 0 15px;
+      width: 100%;
+      @extend %boxSize;
+      @include media(screen,600){
+        border-color: rgba($cancel,0.2);
+      }
+      .hide & {
+        background-color: #fff;
+        border-color: $bg;
+      }
+      &:focus {
+        background-color: $field_a;
+        border-color: $field_bord;
+      }
+      &.valid {
+        border-color: green;
+      }
+      &.invalid {
+        border-color: red;
+      }
+    }
+    input[type=radio],
+    input[type=checkbox]{
+      display: none;
+      & ~ span {
+        position: relative;
+        padding-left: 30px;
+        line-height: 40px;
+        font-size: 0.9rem;
+        display: block;
+        cursor: pointer;
+        &::before {
+          content: "";
+          position: absolute;
+          top: 10px;
+          left: 0;
+          width: 20px;
+          height: 20px;
+          border: 1px solid $cancel;
+        }
+        &::after {
+          content: "";
+          position: absolute;
+          opacity: 0;
+        }
+      }
+      &:checked {
+        & ~ span {
+          &::before {
+            border-color: $ico;
+          }
+          &::after {
+            opacity: 1;
+          }
+        }
+      }
+    }
+    input[type=checkbox]{
+      & ~ span {
+        &::after {
+          top: 0;
+          left: -8px;
+          width: 40px;
+          height: 40px;
+          background: transparent url("../svg/check.svg") center center no-repeat;
+          -webkit-background-size: 100% 100%;
+          background-size: 100% 100%;
+        }
+      }
+      &:checked {
+        & ~ span {
+          &::before {
+            background-color: $ico;
+          }
+        }
+      }
+    }
+    input[type=radio] {
+      & ~ span {
+        &::before {
+          border-radius: 50%;
+        }
+        &::after {
+          border-radius: 50%;
+          top: 16px;
+          left: 6px;
+          width: 10px;
+          height: 10px;
+          background-color: $cancel;
+        }
+      }
+      &:checked {
+        & ~ span {
+          &::after {
+            background-color: $ico;
+          }
+        }
+      }
+    }
+    .caption {
+      display: none;
+      text-transform: uppercase;
+      font-size: 0.62rem;
+      font-weight: 500;
+      margin-bottom: 3px;
+      .hide & {
+        display: block;
+      }
+    }
+    button {
+      display: inline-block;
+      vertical-align: middle;
+      text-transform: uppercase;
+      background-color: transparent;
+      padding: 0 10px;
+      font: 0.9rem/40px MyriadBold;
+      border: none;
+      opacity: 0;
+      @include transit(all 0.3s);
+      .hide & {
+        opacity: 1;
+      }
+      &.agree {
+        color: #fff;
+        background-color: $ico;
+        @include media(screen,1024){
+          background-color: $ico_h;
+        }
+        &:hover {
+          @include media(hover,1025){
+            background-color: $ico_h;
+          }
+        }
+      }
+      &.cancel {
+        color: $cancel;
+        @include media(screen,1024){
+          background-color: $bg;
+        }
+        &:hover {
+          @include media(hover,1025){
+            background-color: $bg;
+          }
+        }
+      }
+    }
+    .check {
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 30px;
+    }
+  }
+  .edit_input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    @extend %fullBlock;
+    overflow: hidden;
+    cursor: pointer;
+    @include transit(all 0.3s);
+    .label_text {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      @include translate(100%,-50%);
+      @include transit(transform 0.3s);
+      @include media(screen,1024){
+        @include translate(0,-50%);
+      }
+      @include media(screen,600){
+        left: 50%;
+        right: auto;
+        top: auto;
+        bottom: 15px;
+        margin-left: 20px;
+        @include translate(-50%,-50%);
+      }
+      i {
+        fill: $ico;
+        width: 40px;
+        height: 40px;
+        position: absolute;
+        right: 100%;
+        top: -10px;
+      }
+      span {
+        font-size: 0.75rem;
+        display: block;
+        padding: 0 15px 0 0;
+        text-transform: lowercase;
+        color: $ico;
+      }
+    }
+    &:hover .label_text {
+      @include media(hover,1025){
+        @include translate(0,-50%);
+      }
+    }
+    .hide & {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+}
+.confirm_field {
+  padding: 20px 0;
+  line-height: 1.5;
+  @extend %boxSize;
+  &.inputs {padding-top: 0}
+  p {
+    margin-bottom: 10px;
+  }
+  label {
+    display: block;
+    margin-bottom: 13px;
+    @include media(screen,768){
+      padding: 0 15px;
+    }
+    input {
+      font-size: 0.9rem;
+      line-height: 40px;
+      padding: 0 15px;
+      width: 74%;
+      @extend %boxSize;
+      border: 1px solid $bg;
+      @include media(screen,768){
+        width: 70%;
+      }
+      @include media(screen,600){
+        width: 100%;
+      }
+      &:focus {
+        background-color: $field_a;
+        border-color: $field_bord;
+      }
+    }
+  }
+  .caption {
+    text-transform: uppercase;
+    font-size: 0.62rem;
+    font-weight: 500;
+    margin-bottom: 3px;
+    display: block;
+  }
+  a {
+    font-size: 0.75rem;
+    color: $ico;
+    display: inline-block;
+    &:hover {
+      @include media(hover,1025){
+        text-decoration: underline;
+      }
+    }
+
+
+  }
+  .button {
+    padding: 0 10px;
+    font: 0.9rem/40px MyriadBold;
+    text-transform: uppercase;
+    border: none;
+    &.agree {
+      background-color: $ico;
+      color: #fff;
+      &:hover {
+        @include media(hover,1025){
+          background-color: $ico_h;
+          text-decoration: none;
+        }
+      }
+    }
+    &.cancel {
+      background-color: transparent;
+      color: $cancel;
+      margin-right: 30px;
+      @include media(screen,1024){
+        background-color: $bg;
+      }
+      @include media(screen,600){
+        margin: 0 0 10px;
+      }
+      &:hover {
+        @include media(hover,1025){
+          background-color: $bg;
+          text-decoration: none;
+        }
+      }
+    }
+
+  }
+
+}
+.approveBox {
+  &_mess {
+    display: none;
+    background-color: $approveBG;
+    text-align: center;
+    font-size: 0.95rem;
+    &.active {display: block}
+    i,p {
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 40px;
+    }
+    i {width: 40px; height: 40px;}
+    button {
+      color: $ico;
+      border: none;
+      background-color: transparent;
+      border-radius: 0;
+      font: inherit;
+      &:hover {
+        @include media(hover,1025){
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+  &_finish {
+    display: none;
+    background-color: $field;
+    margin: 20px auto 0;
+    max-width: 800px;
+    @include media(screen,600){
+      margin: 0 auto;
+    }
+    i {
+      float: left;
+      width: 200px;
+      height: 200px;
+      @include media(screen,1024){
+        width: 150px;
+        height: 150px;
+      }
+      @include media(screen,600){
+        display: block;
+        float: none;
+        margin: 0 auto;
+      }
+    }
+    .approveText {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      padding: 35px 125px 15px 215px;
+      @include media(screen,768){
+        padding: 35px 40px 15px 190px;
+      }
+      @include media(screen,600){
+        padding: 15px;
+        text-align: center;
+      }
+      p {
+        margin-bottom: 30px;
+      }
+      form {
+        width: 100%;
+        overflow: hidden;
+        font-size: 0;
+        margin-bottom: 15px;
+        .input_field {
+          display: inline-block;
+          width: 74%;
+          margin-right: 1%;
+          vertical-align: middle;
+          input {
+            display: block;
+            width: 100%;
+            line-height: 40px;
+            @extend %boxSize;
+            border: 1px solid $bg;
+            padding: 0 15px;
+            font-size: 0.9rem;
+            &:focus {
+              background-color: $field_a;
+              border-color: $field_bord;
+            }
+          }
+        }
+        button {
+          display: inline-block;
+          vertical-align: middle;
+          width: 25%;
+          text-transform: uppercase;
+          @extend %boxSize;
+          text-align: center;
+          font: 0.9rem/40px MyriadBold;
+          border: none;
+          color: #fff;
+          background-color: $ico;
+          &:hover {
+            @include media(hover,1025){
+              background-color: $ico_h;
+            }
+          }
+        }
+
+      }
+      a {
+        font-size: 0.75rem;
+        color: $ico;
+        display: inline-block;
+        &:hover {
+          @include media(hover,1025){
+            text-decoration: underline;
+          }
+        }
+      }
+    }
+    &.active {display: block}
+  }
+}
+
+/*--------------------------------form box--------------------------------*/
+
+.formBox {
+  background-color: #fff;
+  padding: 60px 100px;
+  @include media(screen,880){
+    padding: 40px 60px;
+  }
+  @include media(screen,768){
+    padding: 40px;
+  }
+  @include media(screen,600){
+    padding: 20px;
+    text-align: center;
+  }
+  h2 {
+    font-size: 1.4rem;
+    font-weight: 300;
+    margin-bottom: 35px;
+  }
+  fieldset {
+    display: block;
+    width: 100%;
+    border-top: 1px solid $bg;
+    font-size: 0;
+    @include transit(background-color 0.3s);
+    @include media(screen,768){
+      padding: 15px 0;
+    }
+    .title {
+      display: inline-block;
+      vertical-align: middle;
+      width: 20%;
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 0 15px;
+      @extend %boxSize;
+      @include media(screen,768){
+        display: block;
+        width: 100%;
+        margin-bottom: 15px;
+        text-align: center;
+        font-size: 0.85rem;
+      }
+    }
+    .edit_field {
+      display: inline-block;
+      font-size: 1rem;
+      vertical-align: middle;
+      width: 80%;
+      @include media(screen,768){
+        display: block;
+        width: 100%;
+      }
+      &.mob_padding {
+        @include media(screen,600){
+          padding-bottom: 42px;
+        }
+      }
+    }
+    .confirm_field {
+      margin-left: 20%;
+      font-size: 0.8rem;
+      vertical-align: middle;
+      width: 80%;
+      //padding-right: 40px;
+      display: none;
+      &.active {display: block}
+      @include media(screen,768){
+        margin: 10px 0 0;
+        width: auto;
+        padding-right: 0;
+        text-align: center;
+      }
+      @include media(screen,600){
+        margin: 0;
+      }
+    }
+    &.hide {
+      background-color: $field;
+      .confirm_field {
+        &.inputs {display: block}
+      }
+      .edit_field {
+        &.mob_padding {
+          padding-bottom: 0;
+        }
+      }
+    }
+    &:hover {
+      @include media(hover,1025){
+        background-color: $field;
+      }
+    }
+
+  }
+}
+
