@@ -24,13 +24,6 @@ $resXS: 600;
 @mixin media($width) {
     @media screen and (max-width: $width+"px") { @content; }
 }
-@mixin resolution($res, $ppx) {
-    @media  only screen and (-webkit-min-device-pixel-ratio: $ppx),
-            only screen and (min-resolution: $res+"dpi"), 
-            only screen and (min-resolution: $ppx+"dppx") { 
-        @content;
-   }
-}
 @include fonts(MyriadBold, MyriadPro-BoldCond);
 
 %boxSize {
@@ -41,12 +34,7 @@ $resXS: 600;
 
 html {
     // инициализация rem
-    @include resolution(1, 1) {
-        font: 300 17px/1.2 'Roboto', sans-serif;
-    }
-    @include resolution(120, 1.3) {
-        font: 300 25px/1.2 'Roboto', sans-serif;
-    }        
+    font: 300 17px/1.2 'Roboto', sans-serif;
 }
 
 // блок отображения и редактирования свойства учетной записи пользователя 
